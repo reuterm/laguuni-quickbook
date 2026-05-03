@@ -28,7 +28,7 @@ type FetchImplementation = typeof fetch
 
 export type FetchHttpClientOptions = {
   baseUrl: string
-  fetchImplementation?: FetchImplementation
+  fetchImplementation: FetchImplementation
 }
 
 export function normalizeApiBaseUrl(baseUrl: string): string {
@@ -45,10 +45,7 @@ export class FetchHttpClient implements HttpClient {
   readonly #baseUrl: string
   readonly #fetchImplementation: FetchImplementation
 
-  constructor({
-    baseUrl,
-    fetchImplementation = createDefaultFetchImplementation(),
-  }: FetchHttpClientOptions) {
+  constructor({ baseUrl, fetchImplementation }: FetchHttpClientOptions) {
     this.#baseUrl = normalizeApiBaseUrl(baseUrl)
     this.#fetchImplementation = fetchImplementation
   }
@@ -83,18 +80,6 @@ export class FetchHttpClient implements HttpClient {
       status: response.status,
     }
   }
-}
-
-function createDefaultFetchImplementation(): FetchImplementation {
-  if (typeof globalThis.fetch === 'function') {
-    return globalThis.fetch.bind(globalThis)
-  }
-
-  if (typeof window !== 'undefined') {
-    return window.fetch.bind(window)
-  }
-
-  throw new Error('No fetch implementation is available in this runtime')
 }
 
 function createHeaders(

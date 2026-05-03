@@ -35,6 +35,7 @@ export function AppProviders({ apiBaseUrl, children }: AppProvidersProps) {
     const api = new LaguuniApiClient({
       client: new FetchHttpClient({
         baseUrl: apiBaseUrl,
+        fetchImplementation: globalThis.fetch.bind(globalThis),
       }),
     })
     const settingsStore = new LocalSettingsStore({

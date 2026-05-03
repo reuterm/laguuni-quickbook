@@ -21,29 +21,21 @@ describe('normalizeApiBaseUrl', () => {
 })
 
 describe('FetchHttpClient', () => {
-  it('prefers the global fetch implementation when both global and window fetch exist', async () => {
-    const globalFetch = vi.fn(async (input: string | URL) => {
-      return new Response(
-        JSON.stringify({ source: 'global', url: String(input) }),
-        {
-          status: 200,
-        },
-      )
-    })
-    const windowFetch = vi.fn(async (input: string | URL) => {
-      return new Response(
-        JSON.stringify({ source: 'window', url: String(input) }),
-        {
-          status: 200,
-        },
-      )
-    })
-
-    vi.stubGlobal('window', { fetch: windowFetch })
-    vi.stubGlobal('fetch', globalFetch)
+  it('uses the injected fetch implementation', async () => {
+    const fetchImplementation: typeof fetch = vi.fn(
+      async (input: string | URL | Request) => {
+        return new Response(
+          JSON.stringify({ source: 'injected', url: String(input) }),
+          {
+            status: 200,
+          },
+        )
+      },
+    )
 
     const client = new FetchHttpClient({
       baseUrl: 'https://shop.example.test',
+      fetchImplementation,
     })
 
     await expect(
@@ -55,13 +47,12 @@ describe('FetchHttpClient', () => {
       }),
     ).resolves.toEqual({
       data: {
-        source: 'global',
+        source: 'injected',
         url: 'https://shop.example.test/api/test.json',
       },
       status: 200,
     })
 
-    expect(globalFetch).toHaveBeenCalledOnce()
-    expect(windowFetch).not.toHaveBeenCalled()
+    expect(fetchImplementation).toHaveBeenCalledOnce()
   })
 })
