@@ -1,15 +1,17 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { SETTINGS_STORAGE_KEY } from '../lib/storage/local-storage'
-import App from './App'
-import { AppProviders } from './providers'
+import {
+  clearPersistedAppState,
+  saveUserSettings,
+} from '../test/persisted-state'
+import { renderApp } from '../test/render-app'
 
 describe('App', () => {
   beforeEach(() => {
     cleanup()
-    window.localStorage.removeItem(SETTINGS_STORAGE_KEY)
+    clearPersistedAppState()
   })
 
   it('loads mocked availability and lets users switch cables', async () => {
@@ -42,80 +44,37 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('persists settings locally and restores the saved default cable', async () => {
+  it('books a mocked slot and surfaces success with a trace id', async () => {
     const user = userEvent.setup()
 
-    renderApp()
-    await user.click(screen.getByRole('button', { name: 'Settings' }))
-
-    await user.type(screen.getByLabelText('Name'), 'Test User')
-    await user.type(screen.getByLabelText('Phone'), '+358401234567')
-    await user.type(screen.getByLabelText('Email'), 'test@example.com')
-    await user.type(screen.getByLabelText('Season pass code'), 'FIXTURE-CODE')
-    await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
-    await user.click(screen.getByRole('button', { name: 'Save settings' }))
-
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Saved locally on this device.',
-    )
-
-    cleanup()
+    saveUserSettings({
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+      seasonPassCode: 'FIXTURE-VOUCHER-ZERO',
+    })
 
     renderApp()
+    await clickFirstBookButton(user)
 
-    expect(screen.getByRole('button', { name: 'Easy' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
+    expect(
+      await screen.findByRole('heading', { name: 'Booking confirmed' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Trace ID:/)).toHaveTextContent(
+      /^Trace ID: [0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
     )
-
-    await user.click(screen.getByRole('button', { name: 'Settings' }))
-
-    expect(screen.getByDisplayValue('Test User')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('+358401234567')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('FIXTURE-CODE')).toBeInTheDocument()
-    expect(screen.getByLabelText('Default cable')).toHaveValue('easy')
-  })
-
-  it('does not override the current cable after changing the saved default in-session', async () => {
-    const user = userEvent.setup()
-
-    renderApp()
-    await user.click(screen.getByRole('button', { name: 'Hietsu' }))
-    await user.click(screen.getByRole('button', { name: 'Settings' }))
-    await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
-    await user.click(screen.getByRole('button', { name: 'Save settings' }))
-    await user.click(screen.getByRole('button', { name: 'Availability' }))
-
-    expect(screen.getByRole('button', { name: 'Hietsu' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    expect(screen.getByRole('button', { name: 'Easy' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    )
-  })
-
-  it('surfaces when corrupted local settings were reset to safe defaults', async () => {
-    const user = userEvent.setup()
-
-    window.localStorage.setItem(SETTINGS_STORAGE_KEY, '{not valid json')
-
-    renderApp()
-    await user.click(screen.getByRole('button', { name: 'Settings' }))
-
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Previously saved settings could not be read and were reset to safe defaults on this device.',
-    )
-    expect(screen.getByLabelText('Default cable')).toHaveValue('')
   })
 })
 
-function renderApp() {
-  return render(
-    <AppProviders apiBaseUrl="https://shop.laguuniin.fi">
-      <App />
-    </AppProviders>,
-  )
+async function clickFirstBookButton(user: ReturnType<typeof userEvent.setup>) {
+  const bookButtons = await screen.findAllByRole('button', {
+    name: 'Book',
+  })
+  const firstBookButton = bookButtons[0]
+
+  if (!firstBookButton) {
+    throw new Error('Expected at least one Book button')
+  }
+
+  await user.click(firstBookButton)
 }

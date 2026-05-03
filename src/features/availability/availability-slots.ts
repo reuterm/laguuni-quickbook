@@ -1,0 +1,103 @@
+import type {
+  BookingSegment,
+  CapacitySegment,
+  DailyAvailabilityWindow,
+} from '../../domain/slot'
+import { formatMinuteOfDay } from './availability-format'
+import type { AvailabilitySlot } from './availability-model'
+
+const SLOT_DURATION_MINUTES = 60
+const FALLBACK_TOTAL_CAPACITY = 4
+
+export function createAvailabilitySlots(
+  dailyWindow: DailyAvailabilityWindow,
+): readonly AvailabilitySlot[] {
+  const totalCapacity = inferTotalCapacity(dailyWindow.capacitySegments)
+  const cableId = dailyWindow.cableId
+  const slotStartMinutes = listBookableHourStartMinutes(
+    dailyWindow.bookingSegments,
+  )
+
+  return slotStartMinutes.flatMap((startMinute) => {
+    const capacitySegment = findCoveringCapacitySegment(
+      dailyWindow.capacitySegments,
+      startMinute,
+    )
+
+    if (!capacitySegment) {
+      return []
+    }
+
+    return {
+      availabilityLabel: formatAvailabilityLabel(
+        totalCapacity,
+        capacitySegment.occupiedCapacity,
+      ),
+      endTime: formatMinuteOfDay(startMinute + SLOT_DURATION_MINUTES),
+      id: `${dailyWindow.date}-${startMinute}`,
+      selection: {
+        cableId,
+        date: dailyWindow.date,
+        endTime: formatMinuteOfDay(startMinute + SLOT_DURATION_MINUTES),
+        startTime: formatMinuteOfDay(startMinute),
+      },
+      startTime: formatMinuteOfDay(startMinute),
+    }
+  })
+}
+
+function listBookableHourStartMinutes(
+  bookingSegments: readonly BookingSegment[],
+): readonly number[] {
+  const slotStarts = new Set<number>()
+
+  for (const segment of bookingSegments) {
+    if (!segment.isBookable) {
+      continue
+    }
+
+    for (
+      let startMinute = roundUpToHour(segment.startMinute);
+      startMinute + SLOT_DURATION_MINUTES <= segment.endMinute;
+      startMinute += SLOT_DURATION_MINUTES
+    ) {
+      slotStarts.add(startMinute)
+    }
+  }
+
+  return [...slotStarts].sort((left, right) => left - right)
+}
+
+function findCoveringCapacitySegment(
+  capacitySegments: readonly CapacitySegment[],
+  startMinute: number,
+): CapacitySegment | undefined {
+  return capacitySegments.find(
+    (segment) =>
+      segment.startMinute <= startMinute &&
+      segment.endMinute >= startMinute + SLOT_DURATION_MINUTES,
+  )
+}
+
+function inferTotalCapacity(
+  capacitySegments: readonly CapacitySegment[],
+): number {
+  return capacitySegments.reduce(
+    (highestOccupiedCapacity, segment) =>
+      Math.max(highestOccupiedCapacity, segment.occupiedCapacity),
+    FALLBACK_TOTAL_CAPACITY,
+  )
+}
+
+function formatAvailabilityLabel(
+  totalCapacity: number,
+  occupiedCapacity: number,
+): string {
+  const freeCapacity = Math.max(totalCapacity - occupiedCapacity, 0)
+
+  return `${freeCapacity}/${totalCapacity} free`
+}
+
+function roundUpToHour(minuteOfDay: number): number {
+  return Math.ceil(minuteOfDay / SLOT_DURATION_MINUTES) * SLOT_DURATION_MINUTES
+}

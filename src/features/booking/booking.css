@@ -1,0 +1,44 @@
+.booking-state {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #dce6f2;
+  border-radius: 1rem;
+  background: #f8fbff;
+}
+
+.booking-state--progress {
+  border-color: #c3d3e6;
+}
+
+.booking-state--success {
+  border-color: #a9d5b0;
+  background: #f4fcf5;
+}
+
+.booking-state--payment {
+  border-color: #f1d18a;
+  background: #fffaf0;
+}
+
+.booking-state--failure {
+  border-color: #efb1b8;
+  background: #fff5f6;
+}
+
+.booking-state__title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.booking-state__link {
+  justify-self: start;
+  text-decoration: none;
+}
+
+.booking-state__trace {
+  margin: 0;
+  color: #4a627b;
+  font-size: 0.95rem;
+}

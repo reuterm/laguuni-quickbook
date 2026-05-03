@@ -1,20 +1,34 @@
+import { useCallback } from 'react'
+
 import '../availability.css'
 
-import { useAppServices } from '../../../app/providers'
-import { getCableById, SUPPORTED_CABLES } from '../../../domain/cable'
+import { useLaguuniApi } from '../../../app/providers'
+import type { BookingSlotSelection } from '../../../domain/booking'
+import { getCableById } from '../../../domain/cable'
+import { useBookingFlow } from '../../booking/use-booking-flow'
 import { useAvailabilityOverview } from '../use-availability-overview'
 import { useAvailabilityScope } from '../use-availability-scope'
-import { AvailabilityDayGroups } from './AvailabilityDayGroups'
+import { AvailabilityBookingStatus } from './AvailabilityBookingStatus'
+import { AvailabilityCableSelector } from './AvailabilityCableSelector'
+import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 
 type AvailabilityScreenProps = {
   isActive: boolean
 }
 
 export function AvailabilityScreen({ isActive }: AvailabilityScreenProps) {
-  const { api } = useAppServices()
+  const api = useLaguuniApi()
   const { selectedCable, selectCable } = useAvailabilityScope()
   const activeCable = getCableById(selectedCable)
   const availabilityState = useAvailabilityOverview(api, selectedCable)
+  const { bookSelection, bookingState, isBookingInProgress, traceId } =
+    useBookingFlow()
+  const handleBookSelection = useCallback(
+    (selection: BookingSlotSelection) => {
+      void bookSelection(selection)
+    },
+    [bookSelection],
+  )
 
   return (
     <section
@@ -28,46 +42,26 @@ export function AvailabilityScreen({ isActive }: AvailabilityScreenProps) {
           Book a one-hour cable slot
         </h2>
         <p className="screen-copy">
-          Browse mocked storefront availability grouped by date. Booking actions
-          stay visible here, while the booking flow itself lands in phase 7.
+          Browse mocked storefront availability grouped by date and book the
+          selected one-hour slot with your locally saved checkout details.
         </p>
       </header>
 
-      <fieldset className="cable-switch">
-        <legend className="screen-kicker">Supported cables</legend>
-        {SUPPORTED_CABLES.map((cable) => (
-          <button
-            key={cable.id}
-            type="button"
-            className={`cable-button${
-              selectedCable === cable.id ? ' cable-button--active' : ''
-            }`}
-            onClick={() => selectCable(cable.id)}
-            aria-pressed={selectedCable === cable.id}
-          >
-            {cable.label}
-          </button>
-        ))}
-      </fieldset>
+      <AvailabilityBookingStatus
+        bookingState={bookingState}
+        traceId={traceId}
+      />
 
-      {availabilityState.status === 'loading' ? (
-        <p className="availability-status">Loading mocked availability…</p>
-      ) : availabilityState.status === 'error' ? (
-        <div className="empty-state" role="alert">
-          <h3 className="day-group__title">Availability unavailable</h3>
-          <p className="screen-copy">{availabilityState.message}</p>
-        </div>
-      ) : availabilityState.dayGroups.length === 0 ? (
-        <div className="empty-state">
-          <h3 className="day-group__title">No bookable slots in range</h3>
-          <p className="screen-copy">
-            No bookable one-hour slots are available for {activeCable.label} in
-            the loaded range.
-          </p>
-        </div>
-      ) : (
-        <AvailabilityDayGroups dayGroups={availabilityState.dayGroups} />
-      )}
+      <AvailabilityCableSelector
+        onSelectCable={selectCable}
+        selectedCable={selectedCable}
+      />
+
+      <AvailabilityOverviewContent
+        activeCableLabel={activeCable.label}
+        availabilityState={availabilityState}
+        onBookSelection={isBookingInProgress ? undefined : handleBookSelection}
+      />
 
       <p className="screen-note">
         Current cable: <strong>{activeCable.label}</strong> (product{' '}

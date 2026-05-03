@@ -4,7 +4,7 @@ import type { DailyAvailabilityWindow } from '../../domain/slot'
 import { createAvailabilitySlots } from './availability-service'
 
 describe('createAvailabilitySlots', () => {
-  it('formats free capacity from occupied-capacity segments', () => {
+  it('falls back to four total capacity while fixtures only expose occupied counts', () => {
     const dailyWindow: DailyAvailabilityWindow = {
       bookingSegments: [
         {
@@ -33,7 +33,6 @@ describe('createAvailabilitySlots', () => {
           cableId: 'pro',
           date: '2026-05-03',
           endTime: '13:00',
-          productId: '6',
           startTime: '12:00',
         },
         startTime: '12:00',
@@ -46,7 +45,6 @@ describe('createAvailabilitySlots', () => {
           cableId: 'pro',
           date: '2026-05-03',
           endTime: '14:00',
-          productId: '6',
           startTime: '13:00',
         },
         startTime: '13:00',
@@ -83,7 +81,6 @@ describe('createAvailabilitySlots', () => {
           cableId: 'easy',
           date: '2026-05-03',
           endTime: '14:00',
-          productId: '7',
           startTime: '13:00',
         },
         startTime: '13:00',
@@ -96,7 +93,6 @@ describe('createAvailabilitySlots', () => {
           cableId: 'easy',
           date: '2026-05-03',
           endTime: '15:00',
-          productId: '7',
           startTime: '14:00',
         },
         startTime: '14:00',

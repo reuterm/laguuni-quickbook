@@ -151,12 +151,26 @@ export const laguuniHandlers = [
 
   http.post(
     `${TEST_API_BASE_URL}/api/laguuni/fi_FI/baskets/:basketToken/items/new.json`,
-    () => HttpResponse.json(addToBasketFixture),
+    async ({ request }) => {
+      const body = await readRequestBody(request)
+
+      if (!isValidAddToBasketBody(body)) {
+        return invalidRequestBodyResponse('add reservation')
+      }
+
+      return HttpResponse.json(addToBasketFixture)
+    },
   ),
 
   http.post(
     `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
-    ({ params }) => {
+    async ({ params, request }) => {
+      const body = await readRequestBody(request)
+
+      if (!isValidCheckoutBody(body)) {
+        return invalidRequestBodyResponse('submit checkout')
+      }
+
       if (String(params.basketToken) === 'fixture-basket-payment') {
         return HttpResponse.json(checkoutPaymentRequiredFixture)
       }
@@ -188,4 +202,67 @@ function invalidQueryResponse(operation: string) {
     },
     { status: 400 },
   )
+}
+
+function invalidRequestBodyResponse(operation: string) {
+  return HttpResponse.json(
+    {
+      errorCode: 'UNEXPECTED_BODY',
+      errorMessage: `Unexpected request body for ${operation}.`,
+      status: 'error',
+    },
+    { status: 400 },
+  )
+}
+
+async function readRequestBody(request: Request): Promise<unknown> {
+  try {
+    return await request.json()
+  } catch {
+    return null
+  }
+}
+
+function isValidAddToBasketBody(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    value.count === 1 &&
+    typeof value.product_id === 'string' &&
+    value.reservation_count === 1 &&
+    isStorefrontDate(value.reservation_datestart) &&
+    isStorefrontTime(value.reservation_timeend) &&
+    isStorefrontTime(value.reservation_timestart) &&
+    value.resource_count === 1 &&
+    value.version === 'fi_FI'
+  )
+}
+
+function isValidCheckoutBody(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    value.allowmarketing === 0 &&
+    value.consolidated === 0 &&
+    value.country === null &&
+    Array.isArray(value.deliveryRules) &&
+    typeof value.email === 'string' &&
+    value.master === 1 &&
+    value.more === null &&
+    typeof value.name === 'string' &&
+    value.payment === 'bambora' &&
+    typeof value.phone === 'string' &&
+    value.terms_accepted === 1 &&
+    value.version === 'fi_FI'
+  )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function isStorefrontDate(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{1,2}\.\d{1,2}\.\d{4}$/.test(value)
+}
+
+function isStorefrontTime(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{2}\.\d{2}$/.test(value)
 }

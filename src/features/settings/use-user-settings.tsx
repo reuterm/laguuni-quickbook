@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react'
 
-import { useAppServices } from '../../app/providers'
+import { useUserSettingsStore } from '../../app/providers'
 import type { SettingsRecoveryIssue, UserSettings } from '../../domain/settings'
 
 type UserSettingsController = {
@@ -19,7 +19,7 @@ type UserSettingsController = {
 const UserSettingsContext = createContext<UserSettingsController | null>(null)
 
 export function UserSettingsProvider({ children }: PropsWithChildren) {
-  const { settingsStore } = useAppServices()
+  const settingsStore = useUserSettingsStore()
   const [initialSettingsState] = useState(() => settingsStore.loadState())
   const [settings, setSettings] = useState(initialSettingsState.settings)
   const [recoveryIssue, setRecoveryIssue] = useState(

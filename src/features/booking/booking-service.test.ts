@@ -1,25 +1,20 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
+import { LocalDiagnosticsStore } from '../diagnostics/logs'
 import { DefaultBookingService } from './booking-service'
 
 const selection = {
   cableId: 'pro' as const,
-  count: 1 as const,
-  date: '14.5.2026',
-  endTime: '16.00',
-  productId: '6',
-  reservationCount: 1 as const,
-  resourceCount: 1 as const,
-  startTime: '15.00',
+  date: '2026-05-14',
+  endTime: '16:00',
+  startTime: '15:00',
 }
 
 const profile = {
   email: 'test@example.com',
   name: 'Test User',
-  paymentMethod: 'bambora' as const,
   phone: '+358401234567',
-  termsAccepted: true as const,
 }
 
 function createApiStub(): LaguuniApi {
@@ -82,6 +77,7 @@ describe('DefaultBookingService', () => {
 
     vi.mocked(api.lookupCode).mockResolvedValueOnce({
       errorCode: 'GENERAL_ERROR',
+      errorMessage: 'Antamasi koodi on virheellinen.',
       status: 'invalid',
     })
 
@@ -94,10 +90,121 @@ describe('DefaultBookingService', () => {
         selection,
       }),
     ).resolves.toEqual({
-      reason: 'GENERAL_ERROR',
+      errorCode: 'GENERAL_ERROR',
+      message: 'Antamasi koodi on virheellinen.',
       status: 'failed',
+      step: 'code',
     })
 
     expect(api.submitCheckout).not.toHaveBeenCalled()
   })
+
+  it('fails early when required booking profile details are missing', async () => {
+    const api = createApiStub()
+    const service = new DefaultBookingService({ api })
+
+    await expect(
+      service.book({
+        profile: {
+          ...profile,
+          email: ' ',
+        },
+        selection,
+      }),
+    ).resolves.toEqual({
+      errorCode: 'missing-profile',
+      message: 'Missing required profile fields: email',
+      status: 'failed',
+      step: 'profile',
+    })
+
+    expect(api.createBasket).not.toHaveBeenCalled()
+  })
+
+  it('logs booking flow events without persisting raw code or profile data', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      platform: 'Vitest Browser',
+      storage: createMemoryStorage(),
+      traceId: 'lqk-fixedtrace',
+    })
+    const api = createApiStub()
+    const service = new DefaultBookingService({
+      api,
+      diagnostics,
+    })
+
+    await expect(
+      service.book({
+        code: 'FIXTURE-VOUCHER-ZERO',
+        profile,
+        selection,
+      }),
+    ).resolves.toEqual({
+      orderId: 'fixture-order-id',
+      status: 'success',
+    })
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(exportedLogs).toContain('lqk-fixedtrace')
+    expect(exportedLogs).toContain('booking.started')
+    expect(exportedLogs).not.toContain('FIXTURE-VOUCHER-ZERO')
+    expect(exportedLogs).not.toContain('test@example.com')
+    expect(exportedLogs).not.toContain('+358401234567')
+  })
+
+  it('keeps checkout diagnostics on safe codes instead of raw error messages', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      platform: 'Vitest Browser',
+      storage: createMemoryStorage(),
+      traceId: 'lqk-fixedtrace',
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockResolvedValueOnce({
+      errorCode: 'GENERAL_ERROR',
+      message: 'Fixture checkout failed.',
+      status: 'failed',
+    })
+
+    const service = new DefaultBookingService({
+      api,
+      diagnostics,
+    })
+
+    await expect(
+      service.book({
+        profile,
+        selection,
+      }),
+    ).resolves.toEqual({
+      errorCode: 'GENERAL_ERROR',
+      message: 'Fixture checkout failed.',
+      status: 'failed',
+      step: 'checkout',
+    })
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(exportedLogs).toContain('GENERAL_ERROR')
+    expect(exportedLogs).not.toContain('Fixture checkout failed.')
+  })
 })
+
+function createMemoryStorage() {
+  const values = new Map<string, string>()
+
+  return {
+    getItem(key: string) {
+      return values.get(key) ?? null
+    },
+    removeItem(key: string) {
+      values.delete(key)
+    },
+    setItem(key: string, value: string) {
+      values.set(key, value)
+    },
+  }
+}

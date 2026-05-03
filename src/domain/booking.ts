@@ -1,74 +1,67 @@
 import type { CableId } from './cable'
 
-export type BasketToken = string
-
-export type BookingSelection = {
+export type BookingSlotSelection = {
   cableId: CableId
-  productId: string
   date: string
-  startTime: string
   endTime: string
-  count: 1
-  resourceCount: 1
-  reservationCount: 1
+  startTime: string
 }
 
 export type BookingProfile = {
   email: string
   name: string
   phone: string
-  paymentMethod: 'bambora'
-  termsAccepted: true
 }
 
-export type CodeLookupSource = 'valuecard' | 'discount' | 'voucher'
+export type BookingCodeSource = 'valuecard' | 'discount' | 'voucher'
 
-export type AcceptedCodePayload = {
-  amount?: string | undefined
-  balance?: number | string | undefined
-  code?: string | undefined
-  remainingBalanceCents?: number | string | undefined
-  remainingValue?: string | undefined
-  status: 'ok'
-}
-
-export type InvalidCodePayload = {
-  errorCode?: string | undefined
-  errorMessage?: string | undefined
-  status: 'error'
-}
-
-export type CodeLookupPayload = AcceptedCodePayload | InvalidCodePayload
-
-export type CodeLookupResult =
+export type BookingCodeValidationResult =
   | {
-      status: 'invalid'
-      errorCode: string | null
-    }
-  | {
-      status: 'accepted'
-      payload: AcceptedCodePayload
       remainingBalanceCents: number | null
-      source: CodeLookupSource
+      source: BookingCodeSource
+      status: 'accepted'
+    }
+  | {
+      errorCode: string | null
+      errorMessage: string | null
+      status: 'invalid'
     }
 
-export type BookingResult =
-  | {
-      orderId: string | null
-      status: 'success'
-    }
-  | {
-      orderId: string | null
-      redirectUrl: string | null
-      status: 'payment_required'
-    }
-  | {
-      reason: string
-      status: 'failed'
-    }
+export type BookingCheckoutFailure = {
+  errorCode: string | null
+  message: string
+  status: 'failed'
+}
+
+type BookingCheckoutSuccess = {
+  orderId: string | null
+  status: 'success'
+}
+
+type BookingCheckoutPaymentRequired = {
+  orderId: string | null
+  redirectUrl: string | null
+  status: 'payment_required'
+}
+
+export type BookingCheckoutResult =
+  | BookingCheckoutFailure
+  | BookingCheckoutPaymentRequired
+  | BookingCheckoutSuccess
+
+export type BookingFailureStep = 'checkout' | 'code' | 'profile' | 'unexpected'
+
+export type BookingFlowFailure = BookingCheckoutFailure & {
+  step: BookingFailureStep
+}
+
+export type BookingFlowResult =
+  | BookingCheckoutPaymentRequired
+  | BookingCheckoutSuccess
+  | BookingFlowFailure
 
 export type BookingRequest = {
   code?: string | null
   profile: BookingProfile
-  selection: BookingSelection
+  selection: BookingSlotSelection
 }

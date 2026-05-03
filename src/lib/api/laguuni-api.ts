@@ -1,7 +1,8 @@
 import type {
-  BasketToken,
-  BookingResult,
-  CodeLookupResult,
+  BookingCheckoutResult,
+  BookingCodeValidationResult,
+  BookingProfile,
+  BookingSlotSelection,
 } from '../../domain/booking'
 import type { CableId } from '../../domain/cable'
 import type { AvailableDate, DailyAvailabilityWindow } from '../../domain/slot'
@@ -20,11 +21,13 @@ import {
   submitCheckout as submitCheckoutRequest,
 } from './booking-api'
 import type { HttpClient } from './client'
+import type { BasketToken } from './storefront-booking'
 
 export type LaguuniApi = {
-  addReservationToBasket(
-    args: AddReservationArgs,
-  ): Promise<AddReservationResponse>
+  addReservationToBasket(args: {
+    basketToken: BasketToken
+    selection: BookingSlotSelection
+  }): Promise<AddReservationResponse>
   createBasket(): Promise<BasketToken>
   getAvailableDates(
     cableId: CableId,
@@ -34,8 +37,11 @@ export type LaguuniApi = {
     cableId: CableId,
     date: string,
   ): Promise<DailyAvailabilityWindow>
-  lookupCode(args: LookupCodeArgs): Promise<CodeLookupResult>
-  submitCheckout(args: SubmitCheckoutArgs): Promise<BookingResult>
+  lookupCode(args: LookupCodeArgs): Promise<BookingCodeValidationResult>
+  submitCheckout(args: {
+    basketToken: BasketToken
+    profile: BookingProfile
+  }): Promise<BookingCheckoutResult>
 }
 
 export type LaguuniApiClientOptions = {
@@ -80,7 +86,7 @@ export class LaguuniApiClient implements LaguuniApi {
   async lookupCode({
     basketToken,
     code,
-  }: LookupCodeArgs): Promise<CodeLookupResult> {
+  }: LookupCodeArgs): Promise<BookingCodeValidationResult> {
     return lookupCodeRequest(this.#client, {
       basketToken,
       code,
@@ -90,7 +96,7 @@ export class LaguuniApiClient implements LaguuniApi {
   async submitCheckout({
     basketToken,
     profile,
-  }: SubmitCheckoutArgs): Promise<BookingResult> {
+  }: SubmitCheckoutArgs): Promise<BookingCheckoutResult> {
     return submitCheckoutRequest(this.#client, {
       basketToken,
       profile,

@@ -1,16 +1,20 @@
 import type {
-  AcceptedCodePayload,
-  BasketToken,
+  BookingCheckoutResult,
+  BookingCodeSource,
+  BookingCodeValidationResult,
   BookingProfile,
-  BookingResult,
-  BookingSelection,
-  CodeLookupPayload,
-  CodeLookupResult,
-  InvalidCodePayload,
+  BookingSlotSelection,
 } from '../../domain/booking'
+import { getCableById } from '../../domain/cable'
 import { isRecord } from '../type-guards'
 import type { HttpClient, HttpResponse } from './client'
 import { expectResponse } from './response'
+import type {
+  AcceptedCodePayload,
+  BasketToken,
+  CodeLookupPayload,
+  InvalidCodePayload,
+} from './storefront-booking'
 
 export type AddReservationResponse = {
   basket: string
@@ -25,7 +29,7 @@ export type LookupCodeArgs = {
 
 export type AddReservationArgs = {
   basketToken: BasketToken
-  selection: BookingSelection
+  selection: BookingSlotSelection
 }
 
 export type SubmitCheckoutArgs = {
@@ -50,15 +54,16 @@ export async function addReservationToBasket(
   client: HttpClient,
   { basketToken, selection }: AddReservationArgs,
 ): Promise<AddReservationResponse> {
+  const { productId } = getCableById(selection.cableId)
   const response = await client.request({
     body: {
-      count: selection.count,
-      product_id: selection.productId,
-      reservation_count: selection.reservationCount,
-      reservation_datestart: selection.date,
-      reservation_timeend: selection.endTime,
-      reservation_timestart: selection.startTime,
-      resource_count: selection.resourceCount,
+      count: 1,
+      product_id: productId,
+      reservation_count: 1,
+      reservation_datestart: formatStorefrontDate(selection.date),
+      reservation_timeend: formatStorefrontTime(selection.endTime),
+      reservation_timestart: formatStorefrontTime(selection.startTime),
+      resource_count: 1,
       version: 'fi_FI',
     },
     decoder: decodeAddReservationResponse,
@@ -81,24 +86,17 @@ export async function createBasket(client: HttpClient): Promise<BasketToken> {
 export async function lookupCode(
   client: HttpClient,
   { basketToken, code }: LookupCodeArgs,
-): Promise<CodeLookupResult> {
+): Promise<BookingCodeValidationResult> {
   const valueCardResponse = await client.request({
     decoder: decodeCodeLookupPayload,
     path: `/api/laguuni/valuecards/${code}/public.json`,
   })
 
   if (valueCardResponse.status === 200) {
-    const payload = expectAcceptedCodePayload(
-      valueCardResponse,
-      'load value card',
+    return createAcceptedCodeLookupResult(
+      expectAcceptedCodePayload(valueCardResponse, 'load value card'),
+      'valuecard',
     )
-
-    return {
-      payload,
-      remainingBalanceCents: readRemainingBalanceCents(payload),
-      source: 'valuecard',
-      status: 'accepted',
-    }
   }
 
   const discountResponse = await client.request({
@@ -107,14 +105,10 @@ export async function lookupCode(
   })
 
   if (discountResponse.status === 200) {
-    const payload = expectAcceptedCodePayload(discountResponse, 'load discount')
-
-    return {
-      payload,
-      remainingBalanceCents: readRemainingBalanceCents(payload),
-      source: 'discount',
-      status: 'accepted',
-    }
+    return createAcceptedCodeLookupResult(
+      expectAcceptedCodePayload(discountResponse, 'load discount'),
+      'discount',
+    )
   }
 
   const voucherResponse = await client.request({
@@ -127,14 +121,10 @@ export async function lookupCode(
   })
 
   if (voucherResponse.status === 200) {
-    const payload = expectAcceptedCodePayload(voucherResponse, 'load voucher')
-
-    return {
-      payload,
-      remainingBalanceCents: readRemainingBalanceCents(payload),
-      source: 'voucher',
-      status: 'accepted',
-    }
+    return createAcceptedCodeLookupResult(
+      expectAcceptedCodePayload(voucherResponse, 'load voucher'),
+      'voucher',
+    )
   }
 
   if (
@@ -149,6 +139,7 @@ export async function lookupCode(
 
     return {
       errorCode: readErrorCode(payload),
+      errorMessage: readErrorMessage(payload),
       status: 'invalid',
     }
   }
@@ -161,7 +152,7 @@ export async function lookupCode(
 export async function submitCheckout(
   client: HttpClient,
   { basketToken, profile }: SubmitCheckoutArgs,
-): Promise<BookingResult> {
+): Promise<BookingCheckoutResult> {
   const response = await client.request({
     body: {
       allowmarketing: 0,
@@ -172,9 +163,9 @@ export async function submitCheckout(
       master: 1,
       more: null,
       name: profile.name,
-      payment: profile.paymentMethod,
+      payment: 'bambora',
       phone: profile.phone,
-      terms_accepted: profile.termsAccepted ? 1 : 0,
+      terms_accepted: 1,
       version: 'fi_FI',
     },
     decoder: decodeCheckoutResponse,
@@ -186,7 +177,9 @@ export async function submitCheckout(
 
   if (checkout.status === 'error') {
     return {
-      reason: checkout.errorCode ?? checkout.errorMessage ?? 'checkout-error',
+      errorCode: checkout.errorCode ?? null,
+      message:
+        checkout.errorMessage ?? checkout.errorCode ?? 'Checkout failed.',
       status: 'failed',
     }
   }
@@ -202,6 +195,17 @@ export async function submitCheckout(
   return {
     orderId: checkout.order ?? null,
     status: 'success',
+  }
+}
+
+function createAcceptedCodeLookupResult(
+  payload: AcceptedCodePayload,
+  source: BookingCodeSource,
+): Extract<BookingCodeValidationResult, { status: 'accepted' }> {
+  return {
+    remainingBalanceCents: readRemainingBalanceCents(payload),
+    source,
+    status: 'accepted',
   }
 }
 
@@ -237,6 +241,10 @@ function expectInvalidCodePayload(
 
 function readErrorCode(payload: InvalidCodePayload): string | null {
   return payload.errorCode ?? null
+}
+
+function readErrorMessage(payload: InvalidCodePayload): string | null {
+  return payload.errorMessage ?? null
 }
 
 function readRemainingBalanceCents(
@@ -289,6 +297,7 @@ function decodeAddReservationResponse(value: unknown): AddReservationResponse {
   return {
     basket,
     itemId,
+    decoder: decodeAddReservationResponse,
     status,
   }
 }
@@ -431,4 +440,22 @@ function readOptionalNumberOrString(
   }
 
   return field
+}
+
+function formatStorefrontDate(date: string): string {
+  const [year, month, day] = date.split('-')
+
+  if (!year || !month || !day) {
+    throw new Error(`Booking date must be YYYY-MM-DD, received "${date}"`)
+  }
+
+  return `${Number(day)}.${Number(month)}.${year}`
+}
+
+function formatStorefrontTime(time: string): string {
+  if (!/^\d{2}:\d{2}$/.test(time)) {
+    throw new Error(`Booking time must be HH:MM, received "${time}"`)
+  }
+
+  return time.replace(':', '.')
 }

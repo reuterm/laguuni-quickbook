@@ -8,6 +8,7 @@ import { AppProviders } from './providers'
 
 const rootElement = document.getElementById('root')
 const appConfig = createAppConfig({
+  VITE_APP_VERSION: import.meta.env.VITE_APP_VERSION,
   VITE_LAGUUNI_API_BASE_URL: import.meta.env.VITE_LAGUUNI_API_BASE_URL,
 })
 
@@ -17,7 +18,10 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <AppProviders apiBaseUrl={appConfig.apiBaseUrl}>
+    <AppProviders
+      apiBaseUrl={appConfig.apiBaseUrl}
+      appVersion={appConfig.appVersion}
+    >
       <App />
     </AppProviders>
   </StrictMode>,

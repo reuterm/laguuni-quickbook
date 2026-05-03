@@ -9,6 +9,7 @@ import {
   type BookingService,
   DefaultBookingService,
 } from '../features/booking/booking-service'
+import { LocalDiagnosticsStore } from '../features/diagnostics/logs'
 import { FetchHttpClient } from '../lib/api/client'
 import { type LaguuniApi, LaguuniApiClient } from '../lib/api/laguuni-api'
 import {
@@ -17,21 +18,27 @@ import {
   type UserSettingsStore,
 } from '../lib/storage/local-storage'
 
-type AppServices = {
+type AppDependencies = {
   api: LaguuniApi
-  apiBaseUrl: string
   bookingService: BookingService
   settingsStore: UserSettingsStore
+  traceId: string
 }
 
-const AppServicesContext = createContext<AppServices | null>(null)
+const AppDependenciesContext = createContext<AppDependencies | null>(null)
 
 type AppProvidersProps = PropsWithChildren<{
   apiBaseUrl: string
+  appVersion: string
 }>
 
-export function AppProviders({ apiBaseUrl, children }: AppProvidersProps) {
-  const services = useMemo<AppServices>(() => {
+export function AppProviders({
+  apiBaseUrl,
+  appVersion,
+  children,
+}: AppProvidersProps) {
+  const dependencies = useMemo<AppDependencies>(() => {
+    const browserStorage = createBrowserStorage()
     const api = new LaguuniApiClient({
       client: new FetchHttpClient({
         baseUrl: apiBaseUrl,
@@ -39,30 +46,53 @@ export function AppProviders({ apiBaseUrl, children }: AppProvidersProps) {
       }),
     })
     const settingsStore = new LocalSettingsStore({
-      storage: createBrowserStorage(),
+      storage: browserStorage,
+    })
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion,
+      storage: browserStorage,
     })
 
     return {
       api,
-      apiBaseUrl,
-      bookingService: new DefaultBookingService({ api }),
+      bookingService: new DefaultBookingService({
+        api,
+        diagnostics,
+      }),
       settingsStore,
+      traceId: diagnostics.traceId,
     }
-  }, [apiBaseUrl])
+  }, [apiBaseUrl, appVersion])
 
   return (
-    <AppServicesContext.Provider value={services}>
+    <AppDependenciesContext.Provider value={dependencies}>
       {children}
-    </AppServicesContext.Provider>
+    </AppDependenciesContext.Provider>
   )
 }
 
-export function useAppServices(): AppServices {
-  const services = useContext(AppServicesContext)
+function useAppDependencies(): AppDependencies {
+  const dependencies = useContext(AppDependenciesContext)
 
-  if (services === null) {
-    throw new Error('App services must be used within AppProviders')
+  if (dependencies === null) {
+    throw new Error('App dependencies must be used within AppProviders')
   }
 
-  return services
+  return dependencies
+}
+
+export function useLaguuniApi(): LaguuniApi {
+  return useAppDependencies().api
+}
+
+export function useBookingService(): BookingService {
+  return useAppDependencies().bookingService
+}
+
+export function useUserSettingsStore(): UserSettingsStore {
+  return useAppDependencies().settingsStore
+}
+
+export function useDiagnosticsTraceId(): string {
+  return useAppDependencies().traceId
 }

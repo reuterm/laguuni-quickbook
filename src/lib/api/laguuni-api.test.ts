@@ -84,6 +84,7 @@ describe('LaguuniApiClient', () => {
       }),
     ).resolves.toEqual({
       errorCode: 'GENERAL_ERROR',
+      errorMessage: null,
       status: 'invalid',
     })
   })
@@ -127,6 +128,34 @@ describe('LaguuniApiClient', () => {
       remainingBalanceCents: 0,
       source: 'voucher',
       status: 'accepted',
+    })
+  })
+
+  it('maps checkout submission failures without leaking flow-specific steps', async () => {
+    const api = new LaguuniApiClient({
+      client: createSequentialHttpClient({
+        data: {
+          errorCode: 'GENERAL_ERROR',
+          errorMessage: 'Fixture checkout failed.',
+          status: 'error',
+        },
+        status: 200,
+      }),
+    })
+
+    await expect(
+      api.submitCheckout({
+        basketToken: 'fixture-basket-token',
+        profile: {
+          email: 'test@example.com',
+          name: 'Test User',
+          phone: '+358401234567',
+        },
+      }),
+    ).resolves.toEqual({
+      errorCode: 'GENERAL_ERROR',
+      message: 'Fixture checkout failed.',
+      status: 'failed',
     })
   })
 })

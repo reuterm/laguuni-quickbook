@@ -1,11 +1,9 @@
-import type {
-  AvailabilityDayGroup,
-  AvailabilitySlotSelection,
-} from '../availability-service'
+import type { BookingSlotSelection } from '../../../domain/booking'
+import type { AvailabilityDayGroup } from '../availability-service'
 
 type AvailabilityDayGroupsProps = {
   dayGroups: readonly AvailabilityDayGroup[]
-  onBookSelection?: ((selection: AvailabilitySlotSelection) => void) | undefined
+  onBookSelection?: ((selection: BookingSlotSelection) => void) | undefined
 }
 
 export function AvailabilityDayGroups({
