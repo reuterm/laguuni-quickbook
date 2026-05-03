@@ -1,28 +1,28 @@
 import '../settings.css'
 
-import { type ChangeEvent, type FormEvent, useState } from 'react'
+import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react'
 
 import { isCableId, SUPPORTED_CABLES } from '../../../domain/cable'
 import type {
   SettingsRecoveryIssue,
   UserSettings,
 } from '../../../domain/settings'
+import { useUserSettings } from '../use-user-settings'
 
 type SettingsScreenProps = {
-  recoveryIssue: SettingsRecoveryIssue | null
-  settings: UserSettings
-  onSave: (settings: UserSettings) => void
+  isActive: boolean
 }
 
 type EditableField = Exclude<keyof UserSettings, 'defaultCable'>
 
-export function SettingsScreen({
-  recoveryIssue,
-  settings,
-  onSave,
-}: SettingsScreenProps) {
+export function SettingsScreen({ isActive }: SettingsScreenProps) {
+  const { recoveryIssue, saveSettings, settings } = useUserSettings()
   const [draftSettings, setDraftSettings] = useState<UserSettings>(settings)
   const [isSaved, setIsSaved] = useState(false)
+
+  useEffect(() => {
+    setDraftSettings(settings)
+  }, [settings])
 
   function handleFieldChange(field: EditableField) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -47,12 +47,16 @@ export function SettingsScreen({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    onSave(draftSettings)
+    saveSettings(draftSettings)
     setIsSaved(true)
   }
 
   return (
-    <section className="screen-card" aria-labelledby="settings-title">
+    <section
+      className="screen-card"
+      aria-labelledby="settings-title"
+      hidden={!isActive}
+    >
       <header className="screen-header">
         <p className="screen-kicker">Local settings</p>
         <h2 id="settings-title" className="screen-title">

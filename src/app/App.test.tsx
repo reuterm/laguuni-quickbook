@@ -77,6 +77,26 @@ describe('App', () => {
     expect(screen.getByLabelText('Default cable')).toHaveValue('easy')
   })
 
+  it('does not override the current cable after changing the saved default in-session', async () => {
+    const user = userEvent.setup()
+
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Hietsu' }))
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+    await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+    await user.click(screen.getByRole('button', { name: 'Availability' }))
+
+    expect(screen.getByRole('button', { name: 'Hietsu' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Easy' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+  })
+
   it('surfaces when corrupted local settings were reset to safe defaults', async () => {
     const user = userEvent.setup()
 

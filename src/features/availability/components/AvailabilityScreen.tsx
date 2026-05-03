@@ -1,29 +1,27 @@
 import '../availability.css'
 
 import { useAppServices } from '../../../app/providers'
-import {
-  type CableId,
-  getCableById,
-  SUPPORTED_CABLES,
-} from '../../../domain/cable'
+import { getCableById, SUPPORTED_CABLES } from '../../../domain/cable'
 import { useAvailabilityOverview } from '../use-availability-overview'
+import { useAvailabilityScope } from '../use-availability-scope'
 import { AvailabilityDayGroups } from './AvailabilityDayGroups'
 
 type AvailabilityScreenProps = {
-  selectedCable: CableId
-  onSelectCable: (cableId: CableId) => void
+  isActive: boolean
 }
 
-export function AvailabilityScreen({
-  selectedCable,
-  onSelectCable,
-}: AvailabilityScreenProps) {
+export function AvailabilityScreen({ isActive }: AvailabilityScreenProps) {
   const { api } = useAppServices()
+  const { selectedCable, selectCable } = useAvailabilityScope()
   const activeCable = getCableById(selectedCable)
   const availabilityState = useAvailabilityOverview(api, selectedCable)
 
   return (
-    <section className="screen-card" aria-labelledby="availability-title">
+    <section
+      className="screen-card"
+      aria-labelledby="availability-title"
+      hidden={!isActive}
+    >
       <header className="screen-header">
         <p className="screen-kicker">Availability overview</p>
         <h2 id="availability-title" className="screen-title">
@@ -44,7 +42,7 @@ export function AvailabilityScreen({
             className={`cable-button${
               selectedCable === cable.id ? ' cable-button--active' : ''
             }`}
-            onClick={() => onSelectCable(cable.id)}
+            onClick={() => selectCable(cable.id)}
             aria-pressed={selectedCable === cable.id}
           >
             {cable.label}
