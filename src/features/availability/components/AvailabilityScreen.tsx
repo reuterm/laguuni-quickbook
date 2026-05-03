@@ -1,35 +1,26 @@
+import '../availability.css'
+
+import { useAppServices } from '../../../app/providers'
 import {
   type CableId,
   getCableById,
   SUPPORTED_CABLES,
 } from '../../../domain/cable'
+import { useAvailabilityOverview } from '../use-availability-overview'
+import { AvailabilityDayGroups } from './AvailabilityDayGroups'
 
 type AvailabilityScreenProps = {
   selectedCable: CableId
   onSelectCable: (cableId: CableId) => void
 }
 
-const PLACEHOLDER_DAYS = [
-  {
-    title: 'Next bookable day',
-    copy: 'Date loading and slot grouping arrive in phase 5 with mocked storefront data.',
-  },
-  {
-    title: 'Capacity overview',
-    copy: 'Capacity labels and deterministic Book actions land once the mocked API flow is wired.',
-  },
-] as const
-
-const PLACEHOLDER_SLOTS = [
-  { time: '15:00', availability: 'Capacity fixture pending', action: 'Book' },
-  { time: '16:00', availability: 'Booking seam pending', action: 'Book' },
-] as const
-
 export function AvailabilityScreen({
   selectedCable,
   onSelectCable,
 }: AvailabilityScreenProps) {
+  const { api } = useAppServices()
   const activeCable = getCableById(selectedCable)
+  const availabilityState = useAvailabilityOverview(api, selectedCable)
 
   return (
     <section className="screen-card" aria-labelledby="availability-title">
@@ -39,8 +30,8 @@ export function AvailabilityScreen({
           Book a one-hour cable slot
         </h2>
         <p className="screen-copy">
-          The shell already supports all three cables. Live dates, slot
-          capacity, and mocked booking actions come in the next skeleton phases.
+          Browse mocked storefront availability grouped by date. Booking actions
+          stay visible here, while the booking flow itself lands in phase 7.
         </p>
       </header>
 
@@ -61,30 +52,24 @@ export function AvailabilityScreen({
         ))}
       </fieldset>
 
-      <div className="placeholder-grid">
-        {PLACEHOLDER_DAYS.map((day) => (
-          <article key={day.title} className="placeholder-card">
-            <h3 className="placeholder-card__title">{day.title}</h3>
-            <p className="placeholder-card__copy">{day.copy}</p>
-          </article>
-        ))}
-      </div>
-
-      <div className="slot-list">
-        {PLACEHOLDER_SLOTS.map((slot) => (
-          <article key={slot.time} className="slot-row">
-            <div className="slot-row__meta">
-              <span className="slot-row__time">{slot.time}</span>
-              <span className="slot-row__availability">
-                {slot.availability}
-              </span>
-            </div>
-            <button type="button" className="slot-book" disabled>
-              {slot.action}
-            </button>
-          </article>
-        ))}
-      </div>
+      {availabilityState.status === 'loading' ? (
+        <p className="availability-status">Loading mocked availability…</p>
+      ) : availabilityState.status === 'error' ? (
+        <div className="empty-state" role="alert">
+          <h3 className="day-group__title">Availability unavailable</h3>
+          <p className="screen-copy">{availabilityState.message}</p>
+        </div>
+      ) : availabilityState.dayGroups.length === 0 ? (
+        <div className="empty-state">
+          <h3 className="day-group__title">No bookable slots in range</h3>
+          <p className="screen-copy">
+            No bookable one-hour slots are available for {activeCable.label} in
+            the loaded range.
+          </p>
+        </div>
+      ) : (
+        <AvailabilityDayGroups dayGroups={availabilityState.dayGroups} />
+      )}
 
       <p className="screen-note">
         Current cable: <strong>{activeCable.label}</strong> (product{' '}

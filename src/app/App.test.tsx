@@ -1,14 +1,21 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 
+import { SETTINGS_STORAGE_KEY } from '../lib/storage/local-storage'
 import App from './App'
+import { AppProviders } from './providers'
 
 describe('App', () => {
-  it('shows the availability shell and navigates to settings', async () => {
+  beforeEach(() => {
+    cleanup()
+    window.localStorage.removeItem(SETTINGS_STORAGE_KEY)
+  })
+
+  it('loads mocked availability and lets users switch cables', async () => {
     const user = userEvent.setup()
 
-    render(<App />)
+    renderApp()
 
     expect(
       screen.getByRole('heading', { name: 'Book a one-hour cable slot' }),
@@ -17,12 +24,78 @@ describe('App', () => {
       'aria-pressed',
       'true',
     )
+    expect(await screen.findAllByText('4/4 free')).not.toHaveLength(0)
+    expect(
+      await screen.findAllByRole('button', { name: 'Book' }),
+    ).not.toHaveLength(0)
+
+    await user.click(screen.getByRole('button', { name: 'Hietsu' }))
+
+    expect(screen.getByRole('button', { name: 'Hietsu' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(
+      await screen.findByText(
+        'No bookable one-hour slots are available for Hietsu in the loaded range.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('persists settings locally and restores the saved default cable', async () => {
+    const user = userEvent.setup()
+
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    await user.type(screen.getByLabelText('Name'), 'Test User')
+    await user.type(screen.getByLabelText('Phone'), '+358401234567')
+    await user.type(screen.getByLabelText('Email'), 'test@example.com')
+    await user.type(screen.getByLabelText('Season pass code'), 'FIXTURE-CODE')
+    await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Saved locally on this device.',
+    )
+
+    cleanup()
+
+    renderApp()
+
+    expect(screen.getByRole('button', { name: 'Easy' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
 
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
-    expect(
-      screen.getByRole('heading', { name: 'Booking details' }),
-    ).toBeInTheDocument()
-    expect(screen.getByLabelText('Season pass code')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Test User')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('+358401234567')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('FIXTURE-CODE')).toBeInTheDocument()
+    expect(screen.getByLabelText('Default cable')).toHaveValue('easy')
+  })
+
+  it('surfaces when corrupted local settings were reset to safe defaults', async () => {
+    const user = userEvent.setup()
+
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, '{not valid json')
+
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Previously saved settings could not be read and were reset to safe defaults on this device.',
+    )
+    expect(screen.getByLabelText('Default cable')).toHaveValue('')
   })
 })
+
+function renderApp() {
+  return render(
+    <AppProviders apiBaseUrl="https://shop.laguuniin.fi">
+      <App />
+    </AppProviders>,
+  )
+}

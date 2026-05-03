@@ -1,0 +1,45 @@
+.settings-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.field label {
+  font-weight: 700;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  border: 1px solid #c3d3e6;
+  border-radius: 0.9rem;
+  padding: 0.9rem 1rem;
+  background: #ffffff;
+  color: #102235;
+}
+
+.field-help {
+  margin: 0;
+  color: #4a627b;
+  font-size: 0.95rem;
+}
+
+.form-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 48rem) {
+  .field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,8 +1,56 @@
-import { DEFAULT_CABLE_ID, SUPPORTED_CABLES } from '../../../domain/cable'
+import '../settings.css'
 
-const DEFAULT_CABLE = DEFAULT_CABLE_ID
+import { type ChangeEvent, type FormEvent, useState } from 'react'
 
-export function SettingsScreen() {
+import { isCableId, SUPPORTED_CABLES } from '../../../domain/cable'
+import type {
+  SettingsRecoveryIssue,
+  UserSettings,
+} from '../../../domain/settings'
+
+type SettingsScreenProps = {
+  recoveryIssue: SettingsRecoveryIssue | null
+  settings: UserSettings
+  onSave: (settings: UserSettings) => void
+}
+
+type EditableField = Exclude<keyof UserSettings, 'defaultCable'>
+
+export function SettingsScreen({
+  recoveryIssue,
+  settings,
+  onSave,
+}: SettingsScreenProps) {
+  const [draftSettings, setDraftSettings] = useState<UserSettings>(settings)
+  const [isSaved, setIsSaved] = useState(false)
+
+  function handleFieldChange(field: EditableField) {
+    return (event: ChangeEvent<HTMLInputElement>) => {
+      setDraftSettings((currentSettings) => ({
+        ...currentSettings,
+        [field]: event.target.value,
+      }))
+      setIsSaved(false)
+    }
+  }
+
+  function handleDefaultCableChange(event: ChangeEvent<HTMLSelectElement>) {
+    const nextCableId = event.target.value
+
+    setDraftSettings((currentSettings) => ({
+      ...currentSettings,
+      defaultCable:
+        nextCableId === '' ? null : isCableId(nextCableId) ? nextCableId : null,
+    }))
+    setIsSaved(false)
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    onSave(draftSettings)
+    setIsSaved(true)
+  }
+
   return (
     <section className="screen-card" aria-labelledby="settings-title">
       <header className="screen-header">
@@ -11,12 +59,18 @@ export function SettingsScreen() {
           Booking details
         </h2>
         <p className="screen-copy">
-          This placeholder screen reserves the structure for local profile
-          persistence in phase 6.
+          Save your booking details locally on this device so later booking
+          steps can reuse them without a backend account.
         </p>
       </header>
 
-      <form className="settings-form">
+      {recoveryIssue !== null ? (
+        <p className="status-note" role="alert">
+          {getRecoveryMessage(recoveryIssue)}
+        </p>
+      ) : null}
+
+      <form className="settings-form" onSubmit={handleSubmit}>
         <div className="field-grid">
           <div className="field">
             <label htmlFor="name">Name</label>
@@ -25,6 +79,8 @@ export function SettingsScreen() {
               name="name"
               autoComplete="name"
               placeholder="Test User"
+              value={draftSettings.name}
+              onChange={handleFieldChange('name')}
             />
           </div>
 
@@ -35,6 +91,8 @@ export function SettingsScreen() {
               name="phone"
               autoComplete="tel"
               placeholder="+358 40 123 4567"
+              value={draftSettings.phone}
+              onChange={handleFieldChange('phone')}
             />
           </div>
 
@@ -46,6 +104,8 @@ export function SettingsScreen() {
               autoComplete="email"
               placeholder="test@example.com"
               type="email"
+              value={draftSettings.email}
+              onChange={handleFieldChange('email')}
             />
           </div>
 
@@ -54,7 +114,9 @@ export function SettingsScreen() {
             <input
               id="season-pass-code"
               name="seasonPassCode"
-              placeholder="Stored locally in phase 6"
+              placeholder="Optional"
+              value={draftSettings.seasonPassCode}
+              onChange={handleFieldChange('seasonPassCode')}
             />
           </div>
         </div>
@@ -64,8 +126,10 @@ export function SettingsScreen() {
           <select
             id="default-cable"
             name="defaultCable"
-            defaultValue={DEFAULT_CABLE}
+            value={draftSettings.defaultCable ?? ''}
+            onChange={handleDefaultCableChange}
           >
+            <option value="">No default cable</option>
             {SUPPORTED_CABLES.map((cable) => (
               <option key={cable.id} value={cable.id}>
                 {cable.label}
@@ -74,11 +138,29 @@ export function SettingsScreen() {
           </select>
         </div>
 
-        <p className="field-help">
-          The form is intentionally local-only. Browser storage wiring arrives
-          in a later phase.
-        </p>
+        <div className="form-actions">
+          <button type="submit" className="primary-action">
+            Save settings
+          </button>
+
+          <p className="status-note" role="status">
+            {isSaved
+              ? 'Saved locally on this device.'
+              : 'Settings stay in this browser only.'}
+          </p>
+        </div>
       </form>
     </section>
   )
+}
+
+function getRecoveryMessage(recoveryIssue: SettingsRecoveryIssue): string {
+  switch (recoveryIssue) {
+    case 'invalid-fields':
+      return 'Some previously saved settings were invalid and were reset to safe defaults on this device.'
+    case 'unsupported-version':
+      return 'Previously saved settings used an unsupported format and were reset to safe defaults on this device.'
+    case 'invalid-format':
+      return 'Previously saved settings could not be read and were reset to safe defaults on this device.'
+  }
 }
