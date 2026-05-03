@@ -8,6 +8,16 @@ export type UserSettings = {
   defaultCable: CableId | null
 }
 
+export type SettingsRecoveryIssue =
+  | 'invalid-fields'
+  | 'invalid-format'
+  | 'unsupported-version'
+
+export type UserSettingsLoadResult = {
+  recoveryIssue: SettingsRecoveryIssue | null
+  settings: UserSettings
+}
+
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   name: '',
   phone: '',

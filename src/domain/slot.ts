@@ -15,25 +15,12 @@ export type BookingSegment = {
 export type CapacitySegment = {
   startMinute: number
   endMinute: number
-  freeCapacity: number
+  occupiedCapacity: number
 }
-
-export type TimeOptionsByStartTime = Readonly<Record<string, readonly string[]>>
 
 export type DailyAvailabilityWindow = {
   cableId: CableId
   date: string
-  startTimes: readonly string[]
-  endTimesByStartTime: TimeOptionsByStartTime
   bookingSegments: readonly BookingSegment[]
-  tomorrowBookingSegments: readonly BookingSegment[]
   capacitySegments: readonly CapacitySegment[]
-  tomorrowCapacitySegments: readonly CapacitySegment[]
-}
-
-export type AvailabilitySnapshot = {
-  cableId: CableId
-  anchorDate: string
-  availableDates: readonly AvailableDate[]
-  dailyWindow: DailyAvailabilityWindow
 }

@@ -34,7 +34,7 @@ describe('normalizeAvailableDates', () => {
 })
 
 describe('normalizeDailyAvailabilityWindow', () => {
-  it('keeps booking and capacity segments separate', () => {
+  it('keeps booking and capacity segments as the normalized daily source of truth', () => {
     const availabilityWindow = normalizeDailyAvailabilityWindow(
       'easy',
       '2026-05-03',
@@ -44,8 +44,10 @@ describe('normalizeDailyAvailabilityWindow', () => {
       ),
     )
 
-    expect(availabilityWindow.startTimes).toEqual([])
-    expect(availabilityWindow.endTimesByStartTime).toEqual({})
+    expect(availabilityWindow).toMatchObject({
+      cableId: 'easy',
+      date: '2026-05-03',
+    })
     expect(availabilityWindow.bookingSegments[1]).toEqual({
       endMinute: 900,
       isBookable: true,
@@ -53,10 +55,9 @@ describe('normalizeDailyAvailabilityWindow', () => {
     })
     expect(availabilityWindow.capacitySegments[1]).toEqual({
       endMinute: 900,
-      freeCapacity: 0,
+      occupiedCapacity: 0,
       startMinute: 720,
     })
-    expect(availabilityWindow.tomorrowBookingSegments).toHaveLength(3)
     expect(easyAvailabilityFixture.availableDates).toHaveLength(20)
   })
 })

@@ -47,7 +47,7 @@ export class FetchHttpClient implements HttpClient {
 
   constructor({
     baseUrl,
-    fetchImplementation = fetch,
+    fetchImplementation = createDefaultFetchImplementation(),
   }: FetchHttpClientOptions) {
     this.#baseUrl = normalizeApiBaseUrl(baseUrl)
     this.#fetchImplementation = fetchImplementation
@@ -83,6 +83,14 @@ export class FetchHttpClient implements HttpClient {
       status: response.status,
     }
   }
+}
+
+function createDefaultFetchImplementation(): FetchImplementation {
+  if (typeof window !== 'undefined') {
+    return window.fetch.bind(window)
+  }
+
+  return globalThis.fetch.bind(globalThis)
 }
 
 function createHeaders(

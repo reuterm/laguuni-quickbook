@@ -36,7 +36,7 @@ export const laguuniHandlers = [
 
   http.get(
     `${TEST_API_BASE_URL}/api/laguuni/products/:productId/availabledates/:anchorDate.json`,
-    ({ params }) => {
+    ({ params, request }) => {
       const productId = String(params.productId)
       const fixture =
         availabilityFixtureByProductId[
@@ -48,6 +48,20 @@ export const laguuniHandlers = [
           { errorCode: 'UNKNOWN_PRODUCT', status: 'error' },
           { status: 404 },
         )
+      }
+
+      const url = new URL(request.url)
+
+      if (
+        !matchesSearchParams(url, {
+          count: '1',
+          field: 'hourlyfrom',
+          mode: 'hours',
+          required_resources: 'true',
+          resource_count: '1',
+        })
+      ) {
+        return invalidQueryResponse('available dates')
       }
 
       return HttpResponse.json(fixture.availableDates)
@@ -74,6 +88,10 @@ export const laguuniHandlers = [
 
       if (url.searchParams.get('capacity') === 'true') {
         return HttpResponse.json(fixture.availableTimesCapacity)
+      }
+
+      if (url.searchParams.get('count') !== '1') {
+        return invalidQueryResponse('availability times')
       }
 
       return HttpResponse.json(fixture.availableTimesCount)
@@ -108,8 +126,16 @@ export const laguuniHandlers = [
 
   http.get(
     `${TEST_API_BASE_URL}/api/laguuni/vouchers/:code.json`,
-    ({ params }) => {
+    ({ params, request }) => {
       const code = String(params.code)
+      const url = new URL(request.url)
+
+      if (
+        url.searchParams.get('action') !== 'check' ||
+        !url.searchParams.get('basket')
+      ) {
+        return invalidQueryResponse('voucher lookup')
+      }
 
       if (code === 'FIXTURE-VOUCHER-ZERO') {
         return HttpResponse.json(voucherAcceptedZeroFixture)
@@ -143,3 +169,23 @@ export const laguuniHandlers = [
     },
   ),
 ]
+
+function matchesSearchParams(
+  url: URL,
+  expectedParams: Record<string, string>,
+): boolean {
+  return Object.entries(expectedParams).every(
+    ([key, value]) => url.searchParams.get(key) === value,
+  )
+}
+
+function invalidQueryResponse(operation: string) {
+  return HttpResponse.json(
+    {
+      errorCode: 'UNEXPECTED_QUERY',
+      errorMessage: `Unexpected query parameters for ${operation}.`,
+      status: 'error',
+    },
+    { status: 400 },
+  )
+}

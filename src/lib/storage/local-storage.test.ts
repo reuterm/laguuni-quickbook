@@ -28,6 +28,16 @@ describe('LocalSettingsStore', () => {
       phone: '',
       seasonPassCode: '',
     })
+    expect(store.loadState()).toEqual({
+      recoveryIssue: null,
+      settings: {
+        defaultCable: null,
+        email: '',
+        name: '',
+        phone: '',
+        seasonPassCode: '',
+      },
+    })
   })
 
   it('stores versioned settings payloads and reloads them', () => {
@@ -52,6 +62,7 @@ describe('LocalSettingsStore', () => {
     const store = new LocalSettingsStore({ storage })
 
     expect(store.load()).toEqual(FIXTURE_SETTINGS)
+    expect(store.loadState().recoveryIssue).toBeNull()
   })
 
   it('falls back to defaults for malformed JSON and unsupported versions', () => {
@@ -76,12 +87,32 @@ describe('LocalSettingsStore', () => {
       phone: '',
       seasonPassCode: '',
     })
+    expect(invalidJsonStore.loadState()).toEqual({
+      recoveryIssue: 'invalid-format',
+      settings: {
+        defaultCable: null,
+        email: '',
+        name: '',
+        phone: '',
+        seasonPassCode: '',
+      },
+    })
     expect(unsupportedVersionStore.load()).toEqual({
       defaultCable: null,
       email: '',
       name: '',
       phone: '',
       seasonPassCode: '',
+    })
+    expect(unsupportedVersionStore.loadState()).toEqual({
+      recoveryIssue: 'unsupported-version',
+      settings: {
+        defaultCable: null,
+        email: '',
+        name: '',
+        phone: '',
+        seasonPassCode: '',
+      },
     })
   })
 
@@ -105,6 +136,16 @@ describe('LocalSettingsStore', () => {
       name: 'Test User',
       phone: '',
       seasonPassCode: '',
+    })
+    expect(store.loadState()).toEqual({
+      recoveryIssue: 'invalid-fields',
+      settings: {
+        defaultCable: null,
+        email: '',
+        name: 'Test User',
+        phone: '',
+        seasonPassCode: '',
+      },
     })
   })
 })

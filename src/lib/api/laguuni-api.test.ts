@@ -41,17 +41,13 @@ describe('LaguuniApiClient', () => {
       '2026-05-03',
     )
 
-    expect(availabilityWindow.startTimes).toEqual(
-      hietsuAvailabilityFixture.availableTimesCount.starttimes,
-    )
-    expect(availabilityWindow.endTimesByStartTime).toEqual(
-      Array.isArray(hietsuAvailabilityFixture.availableTimesCount.endtimes)
-        ? {}
-        : hietsuAvailabilityFixture.availableTimesCount.endtimes,
-    )
+    expect(availabilityWindow).toMatchObject({
+      cableId: 'hietsu',
+      date: '2026-05-03',
+    })
     expect(availabilityWindow.capacitySegments[1]).toEqual({
       endMinute: 780,
-      freeCapacity: 0,
+      occupiedCapacity: 0,
       startMinute: 720,
     })
   })

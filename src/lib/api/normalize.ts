@@ -4,7 +4,6 @@ import type {
   BookingSegment,
   CapacitySegment,
   DailyAvailabilityWindow,
-  TimeOptionsByStartTime,
 } from '../../domain/slot'
 import { isRecord, isStringArray } from '../type-guards'
 
@@ -97,14 +96,6 @@ export function normalizeDailyAvailabilityWindow(
     cableId,
     capacitySegments: normalizeCapacitySegments(capacityResponse.tuples),
     date,
-    endTimesByStartTime: normalizeEndTimesByStartTime(countResponse.endtimes),
-    startTimes: countResponse.starttimes,
-    tomorrowBookingSegments: normalizeBookingSegments(
-      countResponse.tomorrowtuples,
-    ),
-    tomorrowCapacitySegments: normalizeCapacitySegments(
-      capacityResponse.tomorrowtuples,
-    ),
   }
 }
 
@@ -121,21 +112,11 @@ function normalizeBookingSegments(
 function normalizeCapacitySegments(
   tuples: readonly RawAvailabilityTuple[],
 ): readonly CapacitySegment[] {
-  return tuples.map(([startMinute, endMinute, freeCapacity]) => ({
+  return tuples.map(([startMinute, endMinute, occupiedCapacity]) => ({
     endMinute,
-    freeCapacity,
+    occupiedCapacity,
     startMinute,
   }))
-}
-
-function normalizeEndTimesByStartTime(
-  endTimes: RawAvailableTimesResponse['endtimes'],
-): TimeOptionsByStartTime {
-  if (isRawEndTimesByStartTime(endTimes)) {
-    return endTimes
-  }
-
-  return {}
 }
 
 function isRawAvailableDateTuple(

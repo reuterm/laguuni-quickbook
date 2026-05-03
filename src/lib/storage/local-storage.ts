@@ -1,5 +1,9 @@
 import { type CableId, isCableId } from '../../domain/cable'
-import { DEFAULT_USER_SETTINGS, type UserSettings } from '../../domain/settings'
+import {
+  DEFAULT_USER_SETTINGS,
+  type UserSettings,
+  type UserSettingsLoadResult,
+} from '../../domain/settings'
 import { isRecord } from '../type-guards'
 
 export const SETTINGS_STORAGE_KEY = 'laguuni.quickbook.settings'
@@ -22,6 +26,7 @@ export type BrowserStorage = Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>
 export type UserSettingsStore = {
   clear(): void
   load(): UserSettings
+  loadState(): UserSettingsLoadResult
   save(settings: UserSettings): void
 }
 
@@ -55,10 +60,17 @@ export class LocalSettingsStore implements UserSettingsStore {
   }
 
   load(): UserSettings {
+    return this.loadState().settings
+  }
+
+  loadState(): UserSettingsLoadResult {
     const storedSettings = this.#storage.getItem(this.#storageKey)
 
     if (storedSettings === null) {
-      return DEFAULT_USER_SETTINGS
+      return {
+        recoveryIssue: null,
+        settings: DEFAULT_USER_SETTINGS,
+      }
     }
 
     return decodeStoredSettingsFromString(storedSettings)
@@ -83,24 +95,33 @@ function createStoredSettings(settings: UserSettings): StoredUserSettingsV1 {
   }
 }
 
-function decodeStoredSettingsFromString(value: string): UserSettings {
+function decodeStoredSettingsFromString(value: string): UserSettingsLoadResult {
   try {
     return decodeStoredSettings(JSON.parse(value))
   } catch {
-    return DEFAULT_USER_SETTINGS
+    return {
+      recoveryIssue: 'invalid-format',
+      settings: DEFAULT_USER_SETTINGS,
+    }
   }
 }
 
-function decodeStoredSettings(value: unknown): UserSettings {
+function decodeStoredSettings(value: unknown): UserSettingsLoadResult {
   if (!isRecord(value)) {
-    return DEFAULT_USER_SETTINGS
+    return {
+      recoveryIssue: 'invalid-format',
+      settings: DEFAULT_USER_SETTINGS,
+    }
   }
 
   if ('version' in value && value.version !== USER_SETTINGS_STORAGE_VERSION) {
-    return DEFAULT_USER_SETTINGS
+    return {
+      recoveryIssue: 'unsupported-version',
+      settings: DEFAULT_USER_SETTINGS,
+    }
   }
 
-  return {
+  const settings: UserSettings = {
     defaultCable:
       value.defaultCable === null
         ? null
@@ -122,5 +143,20 @@ function decodeStoredSettings(value: unknown): UserSettings {
       typeof value.seasonPassCode === 'string'
         ? value.seasonPassCode
         : DEFAULT_USER_SETTINGS.seasonPassCode,
+  }
+
+  const hasInvalidFields =
+    ('defaultCable' in value &&
+      value.defaultCable !== null &&
+      (typeof value.defaultCable !== 'string' ||
+        !isCableId(value.defaultCable))) ||
+    ('email' in value && typeof value.email !== 'string') ||
+    ('name' in value && typeof value.name !== 'string') ||
+    ('phone' in value && typeof value.phone !== 'string') ||
+    ('seasonPassCode' in value && typeof value.seasonPassCode !== 'string')
+
+  return {
+    recoveryIssue: hasInvalidFields ? 'invalid-fields' : null,
+    settings,
   }
 }
