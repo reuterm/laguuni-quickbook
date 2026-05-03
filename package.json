@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "fixtures:capture": "node scripts/capture-fixtures/capture.mjs && biome format --write tests/fixtures/laguuni",
     "lint": "biome check .",
     "preview": "vite preview",
     "test": "vitest run",
@@ -26,6 +27,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^29.1.1",
+    "msw": "^2.11.6",
     "typescript": "~6.0.2",
     "vite": "^8.0.10",
     "vitest": "^4.1.5"
