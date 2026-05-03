@@ -1,8 +1,21 @@
-import { isCableId } from '../../domain/cable'
+import { type CableId, isCableId } from '../../domain/cable'
 import { DEFAULT_USER_SETTINGS, type UserSettings } from '../../domain/settings'
 import { isRecord } from '../type-guards'
 
 export const SETTINGS_STORAGE_KEY = 'laguuni.quickbook.settings'
+const USER_SETTINGS_STORAGE_VERSION = 1
+
+type StoredUserSettingsFields = {
+  defaultCable?: CableId | null | undefined
+  email?: string | undefined
+  name?: string | undefined
+  phone?: string | undefined
+  seasonPassCode?: string | undefined
+}
+
+type StoredUserSettingsV1 = StoredUserSettingsFields & {
+  version: typeof USER_SETTINGS_STORAGE_VERSION
+}
 
 export type BrowserStorage = Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>
 
@@ -48,24 +61,53 @@ export class LocalSettingsStore implements UserSettingsStore {
       return DEFAULT_USER_SETTINGS
     }
 
-    return normalizeStoredSettings(JSON.parse(storedSettings))
+    return decodeStoredSettingsFromString(storedSettings)
   }
 
   save(settings: UserSettings): void {
-    this.#storage.setItem(this.#storageKey, JSON.stringify(settings))
+    this.#storage.setItem(
+      this.#storageKey,
+      JSON.stringify(createStoredSettings(settings)),
+    )
   }
 }
 
-function normalizeStoredSettings(value: unknown): UserSettings {
+function createStoredSettings(settings: UserSettings): StoredUserSettingsV1 {
+  return {
+    defaultCable: settings.defaultCable,
+    email: settings.email,
+    name: settings.name,
+    phone: settings.phone,
+    seasonPassCode: settings.seasonPassCode,
+    version: USER_SETTINGS_STORAGE_VERSION,
+  }
+}
+
+function decodeStoredSettingsFromString(value: string): UserSettings {
+  try {
+    return decodeStoredSettings(JSON.parse(value))
+  } catch {
+    return DEFAULT_USER_SETTINGS
+  }
+}
+
+function decodeStoredSettings(value: unknown): UserSettings {
   if (!isRecord(value)) {
+    return DEFAULT_USER_SETTINGS
+  }
+
+  if ('version' in value && value.version !== USER_SETTINGS_STORAGE_VERSION) {
     return DEFAULT_USER_SETTINGS
   }
 
   return {
     defaultCable:
-      typeof value.defaultCable === 'string' && isCableId(value.defaultCable)
-        ? value.defaultCable
-        : DEFAULT_USER_SETTINGS.defaultCable,
+      value.defaultCable === null
+        ? null
+        : typeof value.defaultCable === 'string' &&
+            isCableId(value.defaultCable)
+          ? value.defaultCable
+          : DEFAULT_USER_SETTINGS.defaultCable,
     email:
       typeof value.email === 'string'
         ? value.email
