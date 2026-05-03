@@ -86,11 +86,15 @@ export class FetchHttpClient implements HttpClient {
 }
 
 function createDefaultFetchImplementation(): FetchImplementation {
+  if (typeof globalThis.fetch === 'function') {
+    return globalThis.fetch.bind(globalThis)
+  }
+
   if (typeof window !== 'undefined') {
     return window.fetch.bind(window)
   }
 
-  return globalThis.fetch.bind(globalThis)
+  throw new Error('No fetch implementation is available in this runtime')
 }
 
 function createHeaders(

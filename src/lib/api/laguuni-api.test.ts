@@ -1,32 +1,25 @@
 import { describe, expect, it } from 'vitest'
 
 import hietsuAvailabilityFixture from '../../../tests/fixtures/laguuni/availability/hietsu.json'
+import proAvailabilityFixture from '../../../tests/fixtures/laguuni/availability/pro.json'
 import type { HttpClient, HttpRequest, HttpResponse } from './client'
-import { FetchHttpClient } from './client'
 import { LaguuniApiClient } from './laguuni-api'
 
-const availabilityApi = new LaguuniApiClient({
-  client: new FetchHttpClient({
-    baseUrl: 'https://shop.laguuniin.fi',
-  }),
-})
-
 describe('LaguuniApiClient', () => {
-  it('loads normalized available dates through the shared handlers', async () => {
-    const availableDates = await availabilityApi.getAvailableDates(
-      'pro',
-      '2026-05-03',
-    )
+  it('loads normalized available dates from the HTTP client layer', async () => {
+    const api = new LaguuniApiClient({
+      client: createSequentialHttpClient({
+        data: proAvailabilityFixture.availableDates,
+        status: 200,
+      }),
+    })
+    const availableDates = await api.getAvailableDates('pro', '2026-05-03')
 
-    expect(availableDates).toEqual(
-      expect.arrayContaining([
-        {
-          cableId: 'pro',
-          date: '2026-05-08',
-          hasBookableSlots: true,
-        },
-      ]),
-    )
+    expect(availableDates).toContainEqual({
+      cableId: 'pro',
+      date: '2026-05-08',
+      hasBookableSlots: true,
+    })
   })
 
   it('loads a daily availability window from count and capacity fixtures', async () => {

@@ -21,27 +21,26 @@ describe('normalizeApiBaseUrl', () => {
 })
 
 describe('FetchHttpClient', () => {
-  it('binds the default browser fetch implementation to its receiver', async () => {
-    type Receiver = {
-      fetch(this: Receiver, input: string | URL): Promise<Response>
-    }
-
-    const requiredReceiver: Receiver = {
-      async fetch(this: Receiver, input: string | URL) {
-        if (this !== requiredReceiver) {
-          throw new TypeError(
-            "'fetch' called on an object that does not implement interface Window.",
-          )
-        }
-
-        return new Response(JSON.stringify({ ok: true, url: String(input) }), {
+  it('prefers the global fetch implementation when both global and window fetch exist', async () => {
+    const globalFetch = vi.fn(async (input: string | URL) => {
+      return new Response(
+        JSON.stringify({ source: 'global', url: String(input) }),
+        {
           status: 200,
-        })
-      },
-    }
+        },
+      )
+    })
+    const windowFetch = vi.fn(async (input: string | URL) => {
+      return new Response(
+        JSON.stringify({ source: 'window', url: String(input) }),
+        {
+          status: 200,
+        },
+      )
+    })
 
-    vi.stubGlobal('window', requiredReceiver)
-    vi.stubGlobal('fetch', requiredReceiver.fetch)
+    vi.stubGlobal('window', { fetch: windowFetch })
+    vi.stubGlobal('fetch', globalFetch)
 
     const client = new FetchHttpClient({
       baseUrl: 'https://shop.example.test',
@@ -50,16 +49,19 @@ describe('FetchHttpClient', () => {
     await expect(
       client.request({
         decoder(value) {
-          return value as { ok: boolean; url: string }
+          return value as { source: string; url: string }
         },
         path: '/api/test.json',
       }),
     ).resolves.toEqual({
       data: {
-        ok: true,
+        source: 'global',
         url: 'https://shop.example.test/api/test.json',
       },
       status: 200,
     })
+
+    expect(globalFetch).toHaveBeenCalledOnce()
+    expect(windowFetch).not.toHaveBeenCalled()
   })
 })
