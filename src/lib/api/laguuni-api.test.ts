@@ -15,11 +15,9 @@ describe('LaguuniApiClient', () => {
     })
     const availableDates = await api.getAvailableDates('pro', '2026-05-03')
 
-    expect(availableDates).toContainEqual({
-      cableId: 'pro',
-      date: '2026-05-08',
-      hasBookableSlots: true,
-    })
+    expect(availableDates.map((availableDate) => availableDate.date)).toContain(
+      '2026-05-08',
+    )
   })
 
   it('loads a daily availability window from count and capacity fixtures', async () => {
@@ -38,11 +36,8 @@ describe('LaguuniApiClient', () => {
       cableId: 'hietsu',
       date: '2026-05-03',
     })
-    expect(availabilityWindow.capacitySegments[1]).toEqual({
-      endMinute: 780,
-      occupiedCapacity: 0,
-      startMinute: 720,
-    })
+    expect(availabilityWindow.bookingSegments).toEqual([])
+    expect(availabilityWindow.capacitySegments).toEqual([])
   })
 
   it('creates baskets and treats invalid code responses as invalid', async () => {

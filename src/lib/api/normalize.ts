@@ -33,7 +33,7 @@ export function decodeAvailableDatesResponse(
   value: unknown,
 ): RawAvailableDatesResponse {
   if (!Array.isArray(value) || !value.every(isRawAvailableDateTuple)) {
-    throw new Error('Available date fixtures must contain [day, 0|1] tuples')
+    throw new Error('Available date responses must contain [day, 0|1] tuples')
   }
 
   return value
@@ -43,7 +43,7 @@ export function decodeAvailableTimesResponse(
   value: unknown,
 ): RawAvailableTimesResponse {
   if (!isRecord(value)) {
-    throw new Error('Availability time fixtures must be objects')
+    throw new Error('Availability time responses must be objects')
   }
 
   const { endtimes, starttimes, tomorrowtuples, tuples } = value
@@ -55,7 +55,7 @@ export function decodeAvailableTimesResponse(
     !isRawAvailabilityTupleList(tuples)
   ) {
     throw new Error(
-      'Availability time fixtures must contain starttimes, endtimes, tuples, and tomorrowtuples',
+      'Availability time responses must contain starttimes, endtimes, tuples, and tomorrowtuples',
     )
   }
 
@@ -92,7 +92,7 @@ export function normalizeDailyAvailabilityWindow(
   capacityResponse: RawAvailableTimesResponse,
 ): DailyAvailabilityWindow {
   return {
-    bookingSegments: normalizeBookingSegments(countResponse.tuples),
+    bookingSegments: normalizeBookingSegments(countResponse),
     cableId,
     capacitySegments: normalizeCapacitySegments(capacityResponse.tuples),
     date,
@@ -100,23 +100,63 @@ export function normalizeDailyAvailabilityWindow(
 }
 
 function normalizeBookingSegments(
-  tuples: readonly RawAvailabilityTuple[],
+  response: RawAvailableTimesResponse,
 ): readonly BookingSegment[] {
-  return tuples.map(([startMinute, endMinute, availabilityFlag]) => ({
-    endMinute,
-    isBookable: availabilityFlag === 0,
-    startMinute,
-  }))
+  return normalizeHourLongStartTimes(response)
+}
+
+function normalizeHourLongStartTimes(
+  response: RawAvailableTimesResponse,
+): readonly BookingSegment[] {
+  if (!isRawEndTimesByStartTime(response.endtimes)) {
+    return []
+  }
+
+  return response.starttimes.flatMap((startTime) => {
+    const startMinute = parseStorefrontTime(startTime)
+    const oneHourEndMinute = startMinute + 60
+    const availableEndTimes = response.endtimes[startTime] ?? []
+    const hasOneHourSlot = availableEndTimes.some(
+      (endTime) => parseStorefrontTime(endTime) === oneHourEndMinute,
+    )
+
+    if (!hasOneHourSlot) {
+      return []
+    }
+
+    return {
+      endMinute: oneHourEndMinute,
+      isBookable: true,
+      startMinute,
+    }
+  })
 }
 
 function normalizeCapacitySegments(
   tuples: readonly RawAvailabilityTuple[],
 ): readonly CapacitySegment[] {
-  return tuples.map(([startMinute, endMinute, occupiedCapacity]) => ({
+  return tuples.map(([startMinute, endMinute, freeCapacity]) => ({
     endMinute,
-    occupiedCapacity,
+    freeCapacity,
     startMinute,
   }))
+}
+
+function parseStorefrontTime(value: string): number {
+  const [hour, minute] = value.split('.')
+
+  if (hour === undefined || minute === undefined) {
+    throw new Error(`Storefront time must be HH.mm, received "${value}"`)
+  }
+
+  const parsedHour = Number(hour)
+  const parsedMinute = Number(minute)
+
+  if (Number.isNaN(parsedHour) || Number.isNaN(parsedMinute)) {
+    throw new Error(`Storefront time must be numeric, received "${value}"`)
+  }
+
+  return parsedHour * 60 + parsedMinute
 }
 
 function isRawAvailableDateTuple(

@@ -15,7 +15,7 @@ export type BookingSegment = {
 export type CapacitySegment = {
   startMinute: number
   endMinute: number
-  occupiedCapacity: number
+  freeCapacity: number
 }
 
 export type DailyAvailabilityWindow = {

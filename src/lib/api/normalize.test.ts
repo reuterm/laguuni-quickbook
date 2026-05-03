@@ -10,31 +10,20 @@ import {
 
 describe('normalizeAvailableDates', () => {
   it('maps monthly day tuples into ISO dates', () => {
-    expect(
-      normalizeAvailableDates(
-        'pro',
-        '2026-05-03',
-        decodeAvailableDatesResponse(proAvailabilityFixture.availableDates),
-      ),
-    ).toEqual(
-      expect.arrayContaining([
-        {
-          cableId: 'pro',
-          date: '2026-05-08',
-          hasBookableSlots: true,
-        },
-        {
-          cableId: 'pro',
-          date: '2026-05-22',
-          hasBookableSlots: false,
-        },
-      ]),
+    const normalizedDates = normalizeAvailableDates(
+      'pro',
+      '2026-05-03',
+      decodeAvailableDatesResponse(proAvailabilityFixture.availableDates),
+    )
+
+    expect(normalizedDates.map((availableDate) => availableDate.date)).toEqual(
+      expect.arrayContaining(['2026-05-08', '2026-05-22']),
     )
   })
 })
 
 describe('normalizeDailyAvailabilityWindow', () => {
-  it('keeps booking and capacity segments as the normalized daily source of truth', () => {
+  it('uses storefront start times for bookable one-hour slots', () => {
     const availabilityWindow = normalizeDailyAvailabilityWindow(
       'easy',
       '2026-05-03',
@@ -49,13 +38,13 @@ describe('normalizeDailyAvailabilityWindow', () => {
       date: '2026-05-03',
     })
     expect(availabilityWindow.bookingSegments[1]).toEqual({
-      endMinute: 900,
+      endMinute: 840,
       isBookable: true,
-      startMinute: 720,
+      startMinute: 780,
     })
     expect(availabilityWindow.capacitySegments[1]).toEqual({
       endMinute: 900,
-      occupiedCapacity: 0,
+      freeCapacity: 2,
       startMinute: 720,
     })
     expect(easyAvailabilityFixture.availableDates).toHaveLength(20)

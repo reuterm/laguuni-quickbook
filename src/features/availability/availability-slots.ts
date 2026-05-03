@@ -31,7 +31,7 @@ export function createAvailabilitySlots(
     return {
       availabilityLabel: formatAvailabilityLabel(
         totalCapacity,
-        capacitySegment.occupiedCapacity,
+        capacitySegment.freeCapacity,
       ),
       endTime: formatMinuteOfDay(startMinute + SLOT_DURATION_MINUTES),
       id: `${dailyWindow.date}-${startMinute}`,
@@ -83,19 +83,17 @@ function inferTotalCapacity(
   capacitySegments: readonly CapacitySegment[],
 ): number {
   return capacitySegments.reduce(
-    (highestOccupiedCapacity, segment) =>
-      Math.max(highestOccupiedCapacity, segment.occupiedCapacity),
+    (highestFreeCapacity, segment) =>
+      Math.max(highestFreeCapacity, segment.freeCapacity),
     FALLBACK_TOTAL_CAPACITY,
   )
 }
 
 function formatAvailabilityLabel(
   totalCapacity: number,
-  occupiedCapacity: number,
+  freeCapacity: number,
 ): string {
-  const freeCapacity = Math.max(totalCapacity - occupiedCapacity, 0)
-
-  return `${freeCapacity}/${totalCapacity} free`
+  return `${Math.max(freeCapacity, 0)}/${totalCapacity} free`
 }
 
 function roundUpToHour(minuteOfDay: number): number {

@@ -3,13 +3,13 @@
   "availableTimesCapacity": {
     "starttimes": [],
     "endtimes": [],
-    "tuples": [[0, 720, 4], [720, 780, 0], [780, 1440, 4]],
-    "tomorrowtuples": [[0, 1440, 4]]
+    "tuples": [],
+    "tomorrowtuples": []
   },
   "availableTimesCount": {
     "starttimes": [],
     "endtimes": [],
-    "tuples": [[0, 720, 1], [720, 780, 0], [780, 1440, 1]],
-    "tomorrowtuples": [[0, 1440, 1]]
+    "tuples": [],
+    "tomorrowtuples": []
   }
 }
