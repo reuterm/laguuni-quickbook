@@ -1,6 +1,6 @@
-import { SUPPORTED_CABLES } from '../../../domain/cable'
+import { DEFAULT_CABLE_ID, SUPPORTED_CABLES } from '../../../domain/cable'
 
-const DEFAULT_CABLE = SUPPORTED_CABLES[0].id
+const DEFAULT_CABLE = DEFAULT_CABLE_ID
 
 export function SettingsScreen() {
   return (

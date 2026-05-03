@@ -1,4 +1,8 @@
-import { type CableId, SUPPORTED_CABLES } from '../../../domain/cable'
+import {
+  type CableId,
+  getCableById,
+  SUPPORTED_CABLES,
+} from '../../../domain/cable'
 
 type AvailabilityScreenProps = {
   selectedCable: CableId
@@ -25,9 +29,7 @@ export function AvailabilityScreen({
   selectedCable,
   onSelectCable,
 }: AvailabilityScreenProps) {
-  const activeCable =
-    SUPPORTED_CABLES.find((cable) => cable.id === selectedCable) ??
-    SUPPORTED_CABLES[0]
+  const activeCable = getCableById(selectedCable)
 
   return (
     <section className="screen-card" aria-labelledby="availability-title">
