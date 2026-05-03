@@ -10,7 +10,7 @@ describe('AvailabilityOverviewContent', () => {
       status: 'loading',
     })
 
-    expect(screen.getByText('Loading mocked availability…')).toBeInTheDocument()
+    expect(screen.getByText('Loading availability…')).toBeInTheDocument()
   })
 
   it('renders API errors as alerts', () => {

@@ -20,6 +20,7 @@ import {
 
 type AppDependencies = {
   api: LaguuniApi
+  availabilityReferenceDate?: Date | undefined
   bookingService: BookingService
   settingsStore: UserSettingsStore
   traceId: string
@@ -30,11 +31,13 @@ const AppDependenciesContext = createContext<AppDependencies | null>(null)
 type AppProvidersProps = PropsWithChildren<{
   apiBaseUrl: string
   appVersion: string
+  availabilityReferenceDate?: Date | undefined
 }>
 
 export function AppProviders({
   apiBaseUrl,
   appVersion,
+  availabilityReferenceDate,
   children,
 }: AppProvidersProps) {
   const dependencies = useMemo<AppDependencies>(() => {
@@ -55,6 +58,7 @@ export function AppProviders({
 
     return {
       api,
+      availabilityReferenceDate,
       bookingService: new DefaultBookingService({
         api,
         diagnostics,
@@ -62,7 +66,7 @@ export function AppProviders({
       settingsStore,
       traceId: diagnostics.traceId,
     }
-  }, [apiBaseUrl, appVersion])
+  }, [apiBaseUrl, appVersion, availabilityReferenceDate])
 
   return (
     <AppDependenciesContext.Provider value={dependencies}>
@@ -83,6 +87,10 @@ function useAppDependencies(): AppDependencies {
 
 export function useLaguuniApi(): LaguuniApi {
   return useAppDependencies().api
+}
+
+export function useAvailabilityReferenceDate(): Date | undefined {
+  return useAppDependencies().availabilityReferenceDate
 }
 
 export function useBookingService(): BookingService {

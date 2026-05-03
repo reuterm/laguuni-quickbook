@@ -95,5 +95,5 @@ function getErrorMessage(error: unknown): string {
     return error.message
   }
 
-  return 'The mocked booking flow failed unexpectedly.'
+  return 'The booking flow failed unexpectedly.'
 }

@@ -14,7 +14,7 @@ export function AvailabilityOverviewContent({
   onBookSelection,
 }: AvailabilityOverviewContentProps) {
   if (availabilityState.status === 'loading') {
-    return <p className="availability-status">Loading mocked availability…</p>
+    return <p className="availability-status">Loading availability…</p>
   }
 
   if (availabilityState.status === 'error') {

@@ -2,7 +2,10 @@ import { useCallback } from 'react'
 
 import '../availability.css'
 
-import { useLaguuniApi } from '../../../app/providers'
+import {
+  useAvailabilityReferenceDate,
+  useLaguuniApi,
+} from '../../../app/providers'
 import type { BookingSlotSelection } from '../../../domain/booking'
 import { getCableById } from '../../../domain/cable'
 import { useBookingFlow } from '../../booking/use-booking-flow'
@@ -18,9 +21,14 @@ type AvailabilityScreenProps = {
 
 export function AvailabilityScreen({ isActive }: AvailabilityScreenProps) {
   const api = useLaguuniApi()
+  const availabilityReferenceDate = useAvailabilityReferenceDate()
   const { selectedCable, selectCable } = useAvailabilityScope()
   const activeCable = getCableById(selectedCable)
-  const availabilityState = useAvailabilityOverview(api, selectedCable)
+  const availabilityState = useAvailabilityOverview(
+    api,
+    selectedCable,
+    availabilityReferenceDate,
+  )
   const { bookSelection, bookingState, isBookingInProgress, traceId } =
     useBookingFlow()
   const handleBookSelection = useCallback(
@@ -42,8 +50,8 @@ export function AvailabilityScreen({ isActive }: AvailabilityScreenProps) {
           Book a one-hour cable slot
         </h2>
         <p className="screen-copy">
-          Browse mocked storefront availability grouped by date and book the
-          selected one-hour slot with your locally saved checkout details.
+          Browse live storefront availability from the next seven days and book
+          the selected one-hour slot with your locally saved checkout details.
         </p>
       </header>
 

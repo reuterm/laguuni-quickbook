@@ -14,10 +14,12 @@ describe('App', () => {
     clearPersistedAppState()
   })
 
-  it('loads mocked availability and lets users switch cables', async () => {
+  it('loads availability and lets users switch cables', async () => {
     const user = userEvent.setup()
 
-    renderApp()
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+    })
 
     expect(
       screen.getByRole('heading', { name: 'Book a one-hour cable slot' }),
@@ -44,7 +46,7 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 
-  it('books a mocked slot and surfaces success with a trace id', async () => {
+  it('books an available slot and surfaces success with a trace id', async () => {
     const user = userEvent.setup()
 
     saveUserSettings({
@@ -54,7 +56,9 @@ describe('App', () => {
       seasonPassCode: 'FIXTURE-VOUCHER-ZERO',
     })
 
-    renderApp()
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+    })
     await clickFirstBookButton(user)
 
     expect(

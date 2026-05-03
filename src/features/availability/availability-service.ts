@@ -1,9 +1,10 @@
 import type { CableId } from '../../domain/cable'
-import type { AvailableDate } from '../../domain/slot'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
 import { createAnchorDate, formatDisplayDate } from './availability-format'
 import type { AvailabilityDayGroup } from './availability-model'
 import { createAvailabilitySlots } from './availability-slots'
+
+const INITIAL_AVAILABILITY_RANGE_DAYS = 7
 
 export type {
   AvailabilityDayGroup,
@@ -16,46 +17,39 @@ export async function loadAvailabilityOverview(
   cableId: CableId,
   referenceDate: Date = new Date(),
 ): Promise<readonly AvailabilityDayGroup[]> {
-  const anchorDate = createAnchorDate(referenceDate)
-  const availableDates = await api.getAvailableDates(cableId, anchorDate)
-
-  return loadAvailabilityDayGroups(api, cableId, availableDates)
-}
-
-async function loadAvailabilityDayGroups(
-  api: LaguuniApi,
-  cableId: CableId,
-  availableDates: readonly AvailableDate[],
-): Promise<readonly AvailabilityDayGroup[]> {
-  const bookableDates = availableDates.filter(
-    (availableDate) => availableDate.hasBookableSlots,
+  const datesInRange = listDatesInRange(
+    referenceDate,
+    INITIAL_AVAILABILITY_RANGE_DAYS,
   )
-
-  if (bookableDates.length === 0) {
-    return []
-  }
-
   const dailyWindows = await Promise.all(
-    bookableDates.map((availableDate) =>
-      api.getDailyAvailabilityWindow(cableId, availableDate.date),
-    ),
+    datesInRange.map((date) => api.getDailyAvailabilityWindow(cableId, date)),
   )
 
-  return bookableDates
-    .map((availableDate, index) => {
-      const dailyWindow = dailyWindows[index]
-
-      if (!dailyWindow) {
-        throw new Error(
-          `Missing mocked daily availability for ${availableDate.date}`,
-        )
-      }
-
-      return {
-        date: availableDate.date,
-        displayDate: formatDisplayDate(availableDate.date),
+  return dailyWindows
+    .map((dailyWindow) => {
+      const dayGroup = {
+        date: dailyWindow.date,
+        displayDate: formatDisplayDate(dailyWindow.date),
         slots: createAvailabilitySlots(dailyWindow),
-      }
+      } satisfies AvailabilityDayGroup
+
+      return dayGroup
     })
     .filter((dayGroup) => dayGroup.slots.length > 0)
+}
+
+function listDatesInRange(
+  rangeStartDate: Date,
+  dayCount: number,
+): readonly string[] {
+  return Array.from({ length: dayCount }, (_, index) =>
+    createAnchorDate(addDays(rangeStartDate, index)),
+  )
+}
+
+function addDays(date: Date, days: number): Date {
+  const nextDate = new Date(date)
+  nextDate.setDate(nextDate.getDate() + days)
+
+  return nextDate
 }

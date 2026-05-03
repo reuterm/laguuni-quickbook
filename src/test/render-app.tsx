@@ -6,6 +6,7 @@ import { AppProviders } from '../app/providers'
 type RenderAppOptions = {
   apiBaseUrl?: string
   appVersion?: string
+  availabilityReferenceDate?: Date
 }
 
 const DEFAULT_API_BASE_URL = 'https://shop.laguuniin.fi'
@@ -14,9 +15,14 @@ const DEFAULT_APP_VERSION = 'test-version'
 export function renderApp({
   apiBaseUrl = DEFAULT_API_BASE_URL,
   appVersion = DEFAULT_APP_VERSION,
+  availabilityReferenceDate,
 }: RenderAppOptions = {}) {
   return render(
-    <AppProviders apiBaseUrl={apiBaseUrl} appVersion={appVersion}>
+    <AppProviders
+      apiBaseUrl={apiBaseUrl}
+      appVersion={appVersion}
+      availabilityReferenceDate={availabilityReferenceDate}
+    >
       <App />
     </AppProviders>,
   )

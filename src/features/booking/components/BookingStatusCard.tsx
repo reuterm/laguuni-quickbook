@@ -32,7 +32,7 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
         <p className="screen-kicker">Booking status</p>
         <h3 className="booking-state__title">Booking in progress</h3>
         <p className="screen-copy">
-          Submitting {selectionLabel} through the mocked storefront flow.
+          Submitting {selectionLabel} through the storefront flow.
         </p>
         <p className="booking-state__trace">
           Trace ID: <strong>{props.traceId}</strong>

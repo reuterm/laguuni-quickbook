@@ -23,6 +23,7 @@ export type AvailabilityState =
 export function useAvailabilityOverview(
   api: LaguuniApi,
   selectedCable: CableId,
+  referenceDate?: Date,
 ): AvailabilityState {
   const [availabilityState, setAvailabilityState] = useState<AvailabilityState>(
     {
@@ -39,7 +40,11 @@ export function useAvailabilityOverview(
       })
 
       try {
-        const dayGroups = await loadAvailabilityOverview(api, selectedCable)
+        const dayGroups = await loadAvailabilityOverview(
+          api,
+          selectedCable,
+          referenceDate,
+        )
 
         if (!isCancelled) {
           setAvailabilityState({
@@ -62,7 +67,7 @@ export function useAvailabilityOverview(
     return () => {
       isCancelled = true
     }
-  }, [api, selectedCable])
+  }, [api, referenceDate, selectedCable])
 
   return availabilityState
 }
@@ -72,5 +77,5 @@ function getErrorMessage(error: unknown): string {
     return error.message
   }
 
-  return 'The mocked availability feed could not be loaded.'
+  return 'The availability feed could not be loaded.'
 }
