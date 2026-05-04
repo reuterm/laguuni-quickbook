@@ -4,6 +4,7 @@ import {
   CreditCard,
   LoaderCircle,
   type LucideIcon,
+  X,
 } from 'lucide-react'
 import type * as React from 'react'
 
@@ -23,11 +24,13 @@ import { getCableById } from '../../../domain/cable'
 
 type BookingStatusCardProps =
   | {
+      onDismiss?: never
       selection: BookingSlotSelection
       status: 'submitting'
       traceId: string
     }
   | {
+      onDismiss?: (() => void) | undefined
       result: BookingFlowResult
       selection: BookingSlotSelection
       status: 'completed'
@@ -53,7 +56,6 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
   }
 
   const presentation = getResultPresentation(props.result, selectionLabel)
-
   return (
     <BookingStatusPanel
       action={
@@ -67,6 +69,7 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
       body={presentation.body}
       icon={presentation.icon}
       iconClassName={presentation.tone.accent}
+      onDismiss={props.onDismiss}
       role={presentation.role}
       title={presentation.title}
       traceId={props.traceId}
@@ -82,6 +85,7 @@ type BookingStatusPanelProps = {
   iconClassName?: string
   label?: React.ReactNode
   labelClassName?: string
+  onDismiss?: (() => void) | undefined
   role: 'alert' | 'status'
   title: string
   traceId: string
@@ -95,6 +99,7 @@ function BookingStatusPanel({
   iconClassName,
   label = 'Booking',
   labelClassName,
+  onDismiss,
   role,
   title,
   traceId,
@@ -104,12 +109,26 @@ function BookingStatusPanel({
     <section aria-live="polite" role={role}>
       <Card className={toneClassName}>
         <CardHeader className="gap-3 pb-4">
-          <div className="flex items-start gap-3">
-            <Icon className={cn('mt-0.5 size-4', iconClassName)} />
-            <div className="space-y-1">
-              <p className={cn(eyebrowClassName, labelClassName)}>{label}</p>
-              <h3 className="text-base font-semibold">{title}</h3>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <Icon className={cn('mt-0.5 size-4', iconClassName)} />
+              <div className="space-y-1">
+                <p className={cn(eyebrowClassName, labelClassName)}>{label}</p>
+                <h3 className="text-base font-semibold">{title}</h3>
+              </div>
             </div>
+            {onDismiss ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="-mr-2 -mt-2 size-8 shrink-0 rounded-full"
+                aria-label="Dismiss booking status"
+                onClick={onDismiss}
+              >
+                <X className="size-4" />
+              </Button>
+            ) : null}
           </div>
           <p className="text-sm leading-6 text-muted-foreground">{body}</p>
         </CardHeader>

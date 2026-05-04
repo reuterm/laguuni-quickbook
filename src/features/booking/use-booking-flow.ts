@@ -72,9 +72,14 @@ export function useBookingFlow() {
     [bookingProfile, bookingService, settings.seasonPassCode],
   )
 
+  const dismissBookingStatus = useCallback(() => {
+    setBookingState({ status: 'idle' })
+  }, [])
+
   return {
     bookSelection,
     bookingState,
+    dismissBookingStatus,
     isBookingInProgress: bookingState.status === 'submitting',
     isBookingReady,
     traceId,

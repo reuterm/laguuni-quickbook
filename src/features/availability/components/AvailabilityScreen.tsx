@@ -48,6 +48,7 @@ export function AvailabilityScreen({
   const {
     bookSelection,
     bookingState,
+    dismissBookingStatus,
     isBookingInProgress,
     isBookingReady,
     traceId,
@@ -73,6 +74,7 @@ export function AvailabilityScreen({
     <section aria-labelledby="availability-title" className="space-y-6">
       <div className="space-y-5">
         <AvailabilityBookingStatus
+          onDismiss={dismissBookingStatus}
           bookingState={bookingState}
           traceId={traceId}
         />

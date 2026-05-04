@@ -104,6 +104,45 @@ describe('booking flow integration', () => {
       'could not be completed during checkout',
     )
   })
+
+  it('allows dismissing a failed booking status', async () => {
+    const user = userEvent.setup()
+
+    saveUserSettings({
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+    })
+    server.use(
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
+        () =>
+          HttpResponse.json(
+            {
+              errorCode: 'GENERAL_ERROR',
+              errorMessage: 'Fixture checkout failed.',
+              status: 'error',
+            },
+            { status: 200 },
+          ),
+      ),
+    )
+
+    renderApp()
+    await clickFirstBookButton(user)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Booking failed' }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Dismiss booking status' }),
+    )
+
+    expect(
+      screen.queryByRole('heading', { name: 'Booking failed' }),
+    ).not.toBeInTheDocument()
+  })
 })
 
 async function clickFirstBookButton(user: ReturnType<typeof userEvent.setup>) {
