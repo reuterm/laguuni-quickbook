@@ -4,7 +4,11 @@ import type {
   BookingCodeValidationResult,
 } from '../../domain/booking'
 import { isRecord } from '../type-guards'
-import type { AddReservationResponse } from './booking-contracts'
+import type {
+  AddReservationResponse,
+  CheckoutResponseFieldKind,
+  CheckoutResponseObservation,
+} from './booking-contracts'
 import type { HttpResponse } from './client'
 import { expectResponse } from './response'
 import type {
@@ -18,10 +22,12 @@ type CheckoutResponse =
   | {
       errorCode?: string | undefined
       errorMessage?: string | undefined
+      observation: CheckoutResponseObservation
       status: 'error'
     }
   | {
       order?: string | undefined
+      observation: CheckoutResponseObservation
       paymentRequired?: boolean | undefined
       redirectUrl?: string | null | undefined
       status: 'ok'
@@ -61,22 +67,20 @@ export function decodeBasketToken(value: unknown): BasketToken {
 export function decodeAddReservationResponse(
   value: unknown,
 ): AddReservationResponse {
-  if (!isRecord(value)) {
-    throw new Error('Add-to-basket response must be an object')
+  if (typeof value === 'string' || typeof value === 'number') {
+    return {
+      itemId: normalizeRequiredIdentifier(value, 'add-to-basket item id'),
+    }
   }
 
-  const basket = readRequiredString(value, 'basket')
-  const itemId = readRequiredString(value, 'itemId')
-  const status = readRequiredString(value, 'status')
-
-  if (status !== 'ok') {
-    throw new Error('Add-to-basket response must have status "ok"')
+  if (!isRecord(value)) {
+    throw new Error(
+      'Add-to-basket response must be an item identifier or an object with itemId',
+    )
   }
 
   return {
-    basket,
-    itemId,
-    status,
+    itemId: readRequiredIdentifier(value, 'itemId'),
   }
 }
 
@@ -117,26 +121,30 @@ export function decodeCheckoutResponse(value: unknown): CheckoutResponse {
     throw new Error('Checkout response must be an object')
   }
 
-  const status = readRequiredString(value, 'status')
+  // Temporary: keep checkout decoding permissive until we capture the exact
+  // live submit response shape for both zero-total and payment-required flows.
+  const observation = createCheckoutResponseObservation(value)
+  const isErrorResponse =
+    observation.rawStatus === 'error' ||
+    hasStringLikeValue(value.errorCode) ||
+    hasStringLikeValue(value.errorMessage)
 
-  if (status === 'error') {
+  if (isErrorResponse) {
     return {
-      errorCode: readOptionalString(value, 'errorCode'),
-      errorMessage: readOptionalString(value, 'errorMessage'),
-      status,
+      errorCode: readOptionalStringLike(value, 'errorCode'),
+      errorMessage: readOptionalStringLike(value, 'errorMessage'),
+      observation,
+      status: 'error',
     }
   }
 
-  if (status === 'ok') {
-    return {
-      order: readOptionalString(value, 'order'),
-      paymentRequired: readOptionalBoolean(value, 'paymentRequired'),
-      redirectUrl: readOptionalNullableString(value, 'redirectUrl'),
-      status,
-    }
+  return {
+    observation,
+    order: readOptionalIdentifier(value, ['order', 'orderId']),
+    paymentRequired: readOptionalBooleanLike(value, 'paymentRequired'),
+    redirectUrl: readOptionalNullableStringLike(value, 'redirectUrl'),
+    status: 'ok',
   }
-
-  throw new Error('Checkout response must have status "ok" or "error"')
 }
 
 export function expectAcceptedCodePayload(
@@ -181,7 +189,12 @@ export function mapCheckoutResponseToResult(
     }
   }
 
-  if (checkout.paymentRequired) {
+  if (
+    checkout.paymentRequired ||
+    (checkout.redirectUrl !== null && checkout.redirectUrl !== undefined)
+  ) {
+    // Temporary: treat any redirect URL as a payment handoff until the exact
+    // storefront success contract is captured from a real checkout response.
     return {
       orderId: checkout.order ?? null,
       redirectUrl: checkout.redirectUrl ?? null,
@@ -225,7 +238,28 @@ function readOptionalString(
   return field
 }
 
-function readOptionalNullableString(
+function readOptionalStringLike(
+  value: Record<string, unknown>,
+  key: string,
+): string | undefined {
+  const field = value[key]
+
+  if (field === undefined || field === null) {
+    return undefined
+  }
+
+  if (typeof field === 'string') {
+    return field
+  }
+
+  if (typeof field === 'number' && Number.isFinite(field)) {
+    return String(field)
+  }
+
+  return undefined
+}
+
+function readOptionalNullableStringLike(
   value: Record<string, unknown>,
   key: string,
 ): string | null | undefined {
@@ -235,14 +269,18 @@ function readOptionalNullableString(
     return field
   }
 
-  if (typeof field !== 'string') {
-    throw new Error(`Expected "${key}" to be a string or null when present`)
+  if (typeof field === 'string') {
+    return field
   }
 
-  return field
+  if (typeof field === 'number' && Number.isFinite(field)) {
+    return String(field)
+  }
+
+  return undefined
 }
 
-function readOptionalBoolean(
+function readOptionalBooleanLike(
   value: Record<string, unknown>,
   key: string,
 ): boolean | undefined {
@@ -252,11 +290,31 @@ function readOptionalBoolean(
     return undefined
   }
 
-  if (typeof field !== 'boolean') {
-    throw new Error(`Expected "${key}" to be a boolean when present`)
+  if (typeof field === 'boolean') {
+    return field
   }
 
-  return field
+  if (typeof field === 'number') {
+    if (field === 1) {
+      return true
+    }
+
+    if (field === 0) {
+      return false
+    }
+  }
+
+  if (typeof field === 'string') {
+    if (field === 'true' || field === '1') {
+      return true
+    }
+
+    if (field === 'false' || field === '0') {
+      return false
+    }
+  }
+
+  return undefined
 }
 
 function readOptionalNumberOrString(
@@ -274,6 +332,113 @@ function readOptionalNumberOrString(
   }
 
   return field
+}
+
+function readRequiredIdentifier(
+  value: Record<string, unknown>,
+  key: string,
+): string {
+  return normalizeRequiredIdentifier(value[key], key)
+}
+
+function readOptionalIdentifier(
+  value: Record<string, unknown>,
+  keys: readonly string[],
+): string | undefined {
+  for (const key of keys) {
+    const field = value[key]
+
+    if (field === undefined || field === null) {
+      continue
+    }
+
+    if (
+      (typeof field === 'number' && Number.isFinite(field)) ||
+      (typeof field === 'string' && field.length > 0)
+    ) {
+      return normalizeRequiredIdentifier(field, key)
+    }
+  }
+
+  return undefined
+}
+
+function normalizeRequiredIdentifier(value: unknown, key: string): string {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value)
+  }
+
+  if (typeof value === 'string' && value.length > 0) {
+    return value
+  }
+
+  throw new Error(`Expected "${key}" to be a non-empty string or number`)
+}
+
+function createCheckoutResponseObservation(
+  value: Record<string, unknown>,
+): CheckoutResponseObservation {
+  return {
+    hasErrorCode: hasStringLikeValue(value.errorCode),
+    hasErrorMessage: hasStringLikeValue(value.errorMessage),
+    normalizedStatus:
+      readOptionalStringLike(value, 'status') === 'error' ||
+      hasStringLikeValue(value.errorCode) ||
+      hasStringLikeValue(value.errorMessage)
+        ? 'error'
+        : 'ok',
+    orderFieldKind: describeFieldKind(
+      firstDefinedValue(value, ['order', 'orderId']),
+    ),
+    paymentRequiredFieldKind: describeFieldKind(value.paymentRequired),
+    rawStatus: readOptionalStringLike(value, 'status') ?? null,
+    redirectUrlFieldKind: describeFieldKind(value.redirectUrl),
+    responseKeys: Object.keys(value).sort().join(','),
+  }
+}
+
+function firstDefinedValue(
+  value: Record<string, unknown>,
+  keys: readonly string[],
+): unknown {
+  for (const key of keys) {
+    if (value[key] !== undefined) {
+      return value[key]
+    }
+  }
+
+  return undefined
+}
+
+function describeFieldKind(value: unknown): CheckoutResponseFieldKind {
+  if (value === undefined) {
+    return 'missing'
+  }
+
+  if (value === null) {
+    return 'null'
+  }
+
+  if (typeof value === 'string') {
+    return 'string'
+  }
+
+  if (typeof value === 'number') {
+    return 'number'
+  }
+
+  if (typeof value === 'boolean') {
+    return 'boolean'
+  }
+
+  return 'other'
+}
+
+function hasStringLikeValue(value: unknown): boolean {
+  return (
+    (typeof value === 'string' && value.length > 0) ||
+    (typeof value === 'number' && Number.isFinite(value))
+  )
 }
 
 function readRemainingBalanceCents(

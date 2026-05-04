@@ -2,9 +2,26 @@ import type { BookingProfile, BookingSlotSelection } from '../../domain/booking'
 import type { BasketToken } from './storefront-booking'
 
 export type AddReservationResponse = {
-  basket: string
   itemId: string
-  status: 'ok'
+}
+
+export type CheckoutResponseFieldKind =
+  | 'boolean'
+  | 'missing'
+  | 'null'
+  | 'number'
+  | 'other'
+  | 'string'
+
+export type CheckoutResponseObservation = {
+  hasErrorCode: boolean
+  hasErrorMessage: boolean
+  normalizedStatus: 'error' | 'ok'
+  orderFieldKind: CheckoutResponseFieldKind
+  paymentRequiredFieldKind: CheckoutResponseFieldKind
+  rawStatus: string | null
+  redirectUrlFieldKind: CheckoutResponseFieldKind
+  responseKeys: string
 }
 
 export type LookupCodeArgs = {
@@ -19,5 +36,6 @@ export type AddReservationArgs = {
 
 export type SubmitCheckoutArgs = {
   basketToken: BasketToken
+  observeResponse?: (observation: CheckoutResponseObservation) => void
   profile: BookingProfile
 }

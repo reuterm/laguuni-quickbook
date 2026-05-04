@@ -55,17 +55,15 @@ export class DefaultBookingService implements BookingService {
       const basketToken = await this.#api.createBasket()
       diagnosticsReporter.recordBasketCreated()
 
-      const addReservationResult = await this.#api.addReservationToBasket({
+      await this.#api.addReservationToBasket({
         basketToken,
         selection,
       })
       diagnosticsReporter.recordReservationAdded(selection)
 
-      const checkoutBasketToken = addReservationResult.basket
-
       if (normalizedCode) {
         const lookupResult = await loadCodeLookupResult(this.#api, {
-          basketToken: checkoutBasketToken,
+          basketToken,
           code: normalizedCode,
         })
 
@@ -79,7 +77,10 @@ export class DefaultBookingService implements BookingService {
       }
 
       const checkoutResult = await this.#api.submitCheckout({
-        basketToken: checkoutBasketToken,
+        basketToken,
+        observeResponse: (observation) => {
+          diagnosticsReporter.recordCheckoutResponseObserved(observation)
+        },
         profile: profileValidation.profile,
       })
       const bookingResult =

@@ -20,11 +20,9 @@ const profile = {
 function createApiStub(): LaguuniApi {
   return {
     addReservationToBasket: vi.fn(async () => ({
-      basket: 'fixture-basket-token',
       itemId: 'fixture-item-id',
-      status: 'ok' as const,
     })),
-    createBasket: vi.fn(async () => 'fixture-basket-token'),
+    createBasket: vi.fn(async () => 'created-basket-token'),
     getAvailableDates: vi.fn(),
     getDailyAvailabilityWindow: vi.fn(),
     lookupCode: vi.fn(async () => ({
@@ -62,14 +60,19 @@ describe('DefaultBookingService', () => {
 
     expect(api.createBasket).toHaveBeenCalledOnce()
     expect(api.addReservationToBasket).toHaveBeenCalledWith({
-      basketToken: 'fixture-basket-token',
+      basketToken: 'created-basket-token',
       selection,
     })
     expect(api.lookupCode).toHaveBeenCalledWith({
-      basketToken: 'fixture-basket-token',
+      basketToken: 'created-basket-token',
       code: 'FIXTURE-VOUCHER-ZERO',
     })
-    expect(api.submitCheckout).toHaveBeenCalledOnce()
+    expect(api.submitCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        basketToken: 'created-basket-token',
+        profile,
+      }),
+    )
   })
 
   it('stops before checkout when the code is invalid', async () => {
@@ -190,6 +193,57 @@ describe('DefaultBookingService', () => {
 
     expect(exportedLogs).toContain('GENERAL_ERROR')
     expect(exportedLogs).not.toContain('Fixture checkout failed.')
+  })
+
+  it('records a safe summary of the observed checkout response shape', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      platform: 'Vitest Browser',
+      storage: createMemoryStorage(),
+      traceId: 'lqk-fixedtrace',
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockImplementationOnce(async (request) => {
+      request.observeResponse?.({
+        hasErrorCode: false,
+        hasErrorMessage: false,
+        normalizedStatus: 'ok',
+        orderFieldKind: 'number',
+        paymentRequiredFieldKind: 'missing',
+        rawStatus: 'pending',
+        redirectUrlFieldKind: 'string',
+        responseKeys: 'order,provider,redirectUrl,status',
+      })
+
+      return {
+        orderId: '12345',
+        redirectUrl: 'https://shop.laguuniin.fi/pay/fixture-payment-token',
+        status: 'payment_required',
+      }
+    })
+
+    const service = new DefaultBookingService({
+      api,
+      diagnostics,
+    })
+
+    await expect(
+      service.book({
+        profile,
+        selection,
+      }),
+    ).resolves.toEqual({
+      orderId: '12345',
+      redirectUrl: 'https://shop.laguuniin.fi/pay/fixture-payment-token',
+      status: 'payment_required',
+    })
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(exportedLogs).toContain('booking.checkout_response_observed')
+    expect(exportedLogs).toContain('order,provider,redirectUrl,status')
+    expect(exportedLogs).not.toContain('fixture-payment-token')
   })
 })
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import proAvailabilityFixture from './availability/pro.json'
+import addToBasketFixture from './booking/add-to-basket-success.json'
 import basketFixture from './booking/basket.json'
 import discountInvalidFixture from './booking/discount-invalid.json'
 
@@ -7,6 +8,11 @@ describe('Laguuni fixture contracts', () => {
   it('keeps the basket bootstrap fixture as a plain token string', () => {
     expect(typeof basketFixture).toBe('string')
     expect(basketFixture.length).toBeGreaterThan(0)
+  })
+
+  it('keeps the add-to-basket fixture as a bare item identifier', () => {
+    expect(typeof addToBasketFixture).toBe('number')
+    expect(addToBasketFixture).toBeGreaterThan(0)
   })
 
   it('stores monthly availability fixtures as day tuples', () => {

@@ -121,7 +121,7 @@ export async function lookupCode(
 
 export async function submitCheckout(
   client: HttpClient,
-  { basketToken, profile }: SubmitCheckoutArgs,
+  { basketToken, observeResponse, profile }: SubmitCheckoutArgs,
 ): Promise<BookingCheckoutResult> {
   const response = await client.request({
     body: createCheckoutRequestBody(profile),
@@ -130,7 +130,11 @@ export async function submitCheckout(
     path: `/api/laguuni/fi_FI/orders/${basketToken}.json`,
   })
 
-  return mapCheckoutResponseToResult(
-    expectResponse(response, [200], 'submit checkout'),
-  )
+  const checkoutResponse = expectResponse(response, [200], 'submit checkout')
+
+  // Temporary: record only a safe response-shape summary during live tests
+  // while the exact checkout response contract is still being discovered.
+  observeResponse?.(checkoutResponse.observation)
+
+  return mapCheckoutResponseToResult(checkoutResponse)
 }

@@ -4,6 +4,7 @@ import type {
   BookingFlowResult,
   BookingSlotSelection,
 } from '../../domain/booking'
+import type { CheckoutResponseObservation } from '../../lib/api/booking-contracts'
 import type { Diagnostics } from '../diagnostics/logs'
 
 type DiagnosticAppender = Pick<Diagnostics, 'append'>
@@ -11,6 +12,7 @@ type DiagnosticAppender = Pick<Diagnostics, 'append'>
 export type BookingDiagnosticsReporter = {
   recordBasketCreated(): void
   recordCheckoutCompleted(result: BookingFlowResult): void
+  recordCheckoutResponseObserved(observation: CheckoutResponseObservation): void
   recordCodeAccepted(
     result: Extract<BookingCodeValidationResult, { status: 'accepted' }>,
   ): void
@@ -45,6 +47,23 @@ export function createBookingDiagnosticsReporter(
             result.status === 'payment_required' && result.redirectUrl !== null,
           outcome: result.status,
           step: result.status === 'failed' ? result.step : null,
+        },
+      })
+    },
+    recordCheckoutResponseObserved(observation: CheckoutResponseObservation) {
+      diagnostics.append({
+        event: 'booking.checkout_response_observed',
+        fields: {
+          // Temporary: keep this to shape-only fields until the live checkout
+          // response is captured and we know which artifacts are worth persisting.
+          hasErrorCode: observation.hasErrorCode,
+          hasErrorMessage: observation.hasErrorMessage,
+          normalizedStatus: observation.normalizedStatus,
+          orderFieldKind: observation.orderFieldKind,
+          paymentRequiredFieldKind: observation.paymentRequiredFieldKind,
+          rawStatus: observation.rawStatus,
+          redirectUrlFieldKind: observation.redirectUrlFieldKind,
+          responseKeys: observation.responseKeys,
         },
       })
     },

@@ -2,16 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import type { BookingProfile, BookingSlotSelection } from '../../domain/booking'
 import { addReservationToBasket, submitCheckout } from './booking-api'
+import type { CheckoutResponseObservation } from './booking-contracts'
 import type { HttpClient, HttpRequest, HttpResponse } from './client'
 
 describe('booking-api transport mapping', () => {
   it('maps domain slot selections to storefront basket payloads', async () => {
     const requests: HttpRequest<unknown>[] = []
-    const client = createCapturingClient(requests, {
-      basket: 'fixture-basket-token',
-      itemId: 'fixture-item-id',
-      status: 'ok',
-    })
+    const client = createCapturingClient(requests, 249179)
 
     await expect(
       addReservationToBasket(client, {
@@ -24,9 +21,7 @@ describe('booking-api transport mapping', () => {
         } satisfies BookingSlotSelection,
       }),
     ).resolves.toEqual({
-      basket: 'fixture-basket-token',
-      itemId: 'fixture-item-id',
-      status: 'ok',
+      itemId: '249179',
     })
 
     expect(requests[0]).toMatchObject({
@@ -84,6 +79,48 @@ describe('booking-api transport mapping', () => {
       method: 'POST',
       path: '/api/laguuni/fi_FI/orders/fixture-basket-token.json',
     })
+  })
+
+  it('accepts unknown checkout success shapes and records a safe summary', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const observations: CheckoutResponseObservation[] = []
+    const client = createCapturingClient(requests, {
+      order: 12345,
+      provider: 'bambora',
+      redirectUrl: 'https://shop.laguuniin.fi/pay/fixture-payment-token',
+      status: 'pending',
+    })
+
+    await expect(
+      submitCheckout(client, {
+        basketToken: 'fixture-basket-token',
+        observeResponse: (observation) => {
+          observations.push(observation)
+        },
+        profile: {
+          email: 'test@example.com',
+          name: 'Test User',
+          phone: '+358401234567',
+        } satisfies BookingProfile,
+      }),
+    ).resolves.toEqual({
+      orderId: '12345',
+      redirectUrl: 'https://shop.laguuniin.fi/pay/fixture-payment-token',
+      status: 'payment_required',
+    })
+
+    expect(observations).toEqual([
+      {
+        hasErrorCode: false,
+        hasErrorMessage: false,
+        normalizedStatus: 'ok',
+        orderFieldKind: 'number',
+        paymentRequiredFieldKind: 'missing',
+        rawStatus: 'pending',
+        redirectUrlFieldKind: 'string',
+        responseKeys: 'order,provider,redirectUrl,status',
+      },
+    ])
   })
 })
 

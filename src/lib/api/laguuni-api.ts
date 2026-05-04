@@ -1,7 +1,6 @@
 import type {
   BookingCheckoutResult,
   BookingCodeValidationResult,
-  BookingProfile,
   BookingSlotSelection,
 } from '../../domain/booking'
 import type { CableId } from '../../domain/cable'
@@ -38,10 +37,7 @@ export type LaguuniApi = {
     date: string,
   ): Promise<DailyAvailabilityWindow>
   lookupCode(args: LookupCodeArgs): Promise<BookingCodeValidationResult>
-  submitCheckout(args: {
-    basketToken: BasketToken
-    profile: BookingProfile
-  }): Promise<BookingCheckoutResult>
+  submitCheckout(args: SubmitCheckoutArgs): Promise<BookingCheckoutResult>
 }
 
 export type LaguuniApiClientOptions = {
@@ -95,11 +91,13 @@ export class LaguuniApiClient implements LaguuniApi {
 
   async submitCheckout({
     basketToken,
+    observeResponse,
     profile,
   }: SubmitCheckoutArgs): Promise<BookingCheckoutResult> {
     return submitCheckoutRequest(this.#client, {
       basketToken,
       profile,
+      ...(observeResponse ? { observeResponse } : {}),
     })
   }
 }
