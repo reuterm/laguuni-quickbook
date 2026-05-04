@@ -1,4 +1,10 @@
-import { type CableId, SUPPORTED_CABLES } from '../../../domain/cable'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+import {
+  type CableId,
+  isCableId,
+  SUPPORTED_CABLES,
+} from '../../../domain/cable'
 
 type AvailabilityCableSelectorProps = {
   onSelectCable: (cableId: CableId) => void
@@ -9,23 +15,32 @@ export function AvailabilityCableSelector({
   onSelectCable,
   selectedCable,
 }: AvailabilityCableSelectorProps) {
-  return (
-    <fieldset className="cable-switch">
-      <legend className="screen-kicker">Supported cables</legend>
+  function handleValueChange(nextCableId: string) {
+    if (isCableId(nextCableId)) {
+      onSelectCable(nextCableId)
+    }
+  }
 
-      {SUPPORTED_CABLES.map((cable) => (
-        <button
-          key={cable.id}
-          type="button"
-          className={`cable-button${
-            selectedCable === cable.id ? ' cable-button--active' : ''
-          }`}
-          onClick={() => onSelectCable(cable.id)}
-          aria-pressed={selectedCable === cable.id}
-        >
-          {cable.label}
-        </button>
-      ))}
-    </fieldset>
+  return (
+    <Tabs
+      value={selectedCable}
+      onValueChange={handleValueChange}
+      className="w-full"
+    >
+      <TabsList
+        aria-label="Supported cables"
+        className="grid h-auto w-full grid-cols-3"
+      >
+        {SUPPORTED_CABLES.map((cable) => (
+          <TabsTrigger
+            key={cable.id}
+            value={cable.id}
+            className="min-h-10 px-4 py-2 text-center"
+          >
+            <span className="font-medium">{cable.label}</span>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   )
 }

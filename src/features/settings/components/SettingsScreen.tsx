@@ -1,7 +1,16 @@
-import '../settings.css'
-
 import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react'
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { isCableId, SUPPORTED_CABLES } from '../../../domain/cable'
 import type {
   SettingsRecoveryIssue,
@@ -10,12 +19,14 @@ import type {
 import { useUserSettings } from '../use-user-settings'
 
 type SettingsScreenProps = {
-  isActive: boolean
+  onOpenChange: (isOpen: boolean) => void
+  open: boolean
 }
 
 type EditableField = Exclude<keyof UserSettings, 'defaultCable'>
+const NO_DEFAULT_CABLE_VALUE = '__none__'
 
-export function SettingsScreen({ isActive }: SettingsScreenProps) {
+export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
   const { recoveryIssue, saveSettings, settings } = useUserSettings()
   const [draftSettings, setDraftSettings] = useState<UserSettings>(settings)
   const [isSaved, setIsSaved] = useState(false)
@@ -23,6 +34,12 @@ export function SettingsScreen({ isActive }: SettingsScreenProps) {
   useEffect(() => {
     setDraftSettings(settings)
   }, [settings])
+
+  useEffect(() => {
+    if (!open) {
+      setIsSaved(false)
+    }
+  }, [open])
 
   function handleFieldChange(field: EditableField) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -34,13 +51,15 @@ export function SettingsScreen({ isActive }: SettingsScreenProps) {
     }
   }
 
-  function handleDefaultCableChange(event: ChangeEvent<HTMLSelectElement>) {
-    const nextCableId = event.target.value
-
+  function handleDefaultCableChange(nextCableId: string) {
     setDraftSettings((currentSettings) => ({
       ...currentSettings,
       defaultCable:
-        nextCableId === '' ? null : isCableId(nextCableId) ? nextCableId : null,
+        nextCableId === NO_DEFAULT_CABLE_VALUE
+          ? null
+          : isCableId(nextCableId)
+            ? nextCableId
+            : null,
     }))
     setIsSaved(false)
   }
@@ -52,109 +71,124 @@ export function SettingsScreen({ isActive }: SettingsScreenProps) {
   }
 
   return (
-    <section
-      className="screen-card"
-      aria-labelledby="settings-title"
-      hidden={!isActive}
-    >
-      <header className="screen-header">
-        <p className="screen-kicker">Local settings</p>
-        <h2 id="settings-title" className="screen-title">
-          Booking details
-        </h2>
-        <p className="screen-copy">
-          Save your booking details locally on this device so later booking
-          steps can reuse them without a backend account.
-        </p>
-      </header>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full overflow-y-auto border-border/80 sm:max-w-lg"
+      >
+        <SheetHeader className="space-y-2 pr-8 text-left">
+          <SheetTitle>Booking details</SheetTitle>
+          <SheetDescription>
+            Saved only in this browser for faster checkout.
+          </SheetDescription>
+        </SheetHeader>
 
-      {recoveryIssue !== null ? (
-        <p className="status-note" role="alert">
-          {getRecoveryMessage(recoveryIssue)}
-        </p>
-      ) : null}
+        <div className="mt-6 space-y-5">
+          {recoveryIssue !== null ? (
+            <Alert role="alert" className="rounded-xl">
+              <AlertTitle>Saved settings were reset</AlertTitle>
+              <AlertDescription>
+                {getRecoveryMessage(recoveryIssue)}
+              </AlertDescription>
+            </Alert>
+          ) : null}
 
-      <form className="settings-form" onSubmit={handleSubmit}>
-        <div className="field-grid">
-          <div className="field">
-            <label htmlFor="name">Name</label>
-            <input
-              id="name"
-              name="name"
-              autoComplete="name"
-              placeholder="Test User"
-              value={draftSettings.name}
-              onChange={handleFieldChange('name')}
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="phone">Phone</label>
-            <input
-              id="phone"
-              name="phone"
-              autoComplete="tel"
-              placeholder="+358 40 123 4567"
-              value={draftSettings.phone}
-              onChange={handleFieldChange('phone')}
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              name="email"
-              autoComplete="email"
-              placeholder="test@example.com"
-              type="email"
-              value={draftSettings.email}
-              onChange={handleFieldChange('email')}
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="season-pass-code">Season pass code</label>
-            <input
-              id="season-pass-code"
-              name="seasonPassCode"
-              placeholder="Optional"
-              value={draftSettings.seasonPassCode}
-              onChange={handleFieldChange('seasonPassCode')}
-            />
-          </div>
-        </div>
-
-        <div className="field">
-          <label htmlFor="default-cable">Default cable</label>
-          <select
-            id="default-cable"
-            name="defaultCable"
-            value={draftSettings.defaultCable ?? ''}
-            onChange={handleDefaultCableChange}
-          >
-            <option value="">No default cable</option>
-            {SUPPORTED_CABLES.map((cable) => (
-              <option key={cable.id} value={cable.id}>
-                {cable.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-actions">
-          <button type="submit" className="primary-action">
-            Save settings
-          </button>
-
-          <p className="status-note" role="status">
-            {isSaved
-              ? 'Saved locally on this device.'
-              : 'Settings stay in this browser only.'}
+          <p className="text-sm leading-6 text-muted-foreground">
+            Your name, phone, email, season pass code, and default cable stay in
+            this browser only.
           </p>
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  autoComplete="name"
+                  placeholder="Test User"
+                  value={draftSettings.name}
+                  onChange={handleFieldChange('name')}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  autoComplete="tel"
+                  placeholder="+358 40 123 4567"
+                  type="tel"
+                  value={draftSettings.phone}
+                  onChange={handleFieldChange('phone')}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  autoComplete="email"
+                  placeholder="test@example.com"
+                  type="email"
+                  value={draftSettings.email}
+                  onChange={handleFieldChange('email')}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="season-pass-code">Season pass code</Label>
+                <Input
+                  id="season-pass-code"
+                  name="seasonPassCode"
+                  placeholder="Optional"
+                  value={draftSettings.seasonPassCode}
+                  onChange={handleFieldChange('seasonPassCode')}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="default-cable">Default cable</Label>
+              <select
+                id="default-cable"
+                name="defaultCable"
+                aria-label="Default cable"
+                className="flex h-11 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none transition-[color,box-shadow,border-color,background-color] focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
+                value={draftSettings.defaultCable ?? NO_DEFAULT_CABLE_VALUE}
+                onChange={(event) =>
+                  handleDefaultCableChange(event.target.value)
+                }
+              >
+                <option value={NO_DEFAULT_CABLE_VALUE}>No default cable</option>
+                {SUPPORTED_CABLES.map((cable) => (
+                  <option key={cable.id} value={cable.id}>
+                    {cable.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-muted-foreground">
+                Used only for the initial cable shown when the app opens.
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <Button type="submit" size="sm" className="w-full sm:w-auto">
+                Save settings
+              </Button>
+
+              <p className="text-xs text-muted-foreground" role="status">
+                {isSaved
+                  ? 'Saved locally on this device.'
+                  : 'Settings stay in this browser only.'}
+              </p>
+            </div>
+          </form>
         </div>
-      </form>
-    </section>
+      </SheetContent>
+    </Sheet>
   )
 }
 

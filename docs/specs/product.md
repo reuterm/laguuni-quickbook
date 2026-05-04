@@ -146,9 +146,9 @@ Required elements:
 - way to access and switch between supported cables
 - upcoming availability grouped by date
 - slot rows with time, fullness, and Book action
-- entry point to settings
+- entry point to settings from the main availability surface
 
-### 9.2 Settings screen
+### 9.2 Settings flow
 
 Required fields:
 
@@ -158,7 +158,7 @@ Required fields:
 - season pass code
 - optional default cable
 
-Settings are saved locally on the device.
+Settings are saved locally on the device and should be reachable through a secondary flow such as a sheet or dialog rather than requiring equal top-level screen navigation.
 
 ### 9.3 Booking result states
 

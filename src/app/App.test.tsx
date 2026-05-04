@@ -24,8 +24,8 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Book a one-hour cable slot' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Pro' })).toHaveAttribute(
-      'aria-pressed',
+    expect(screen.getByRole('tab', { name: 'Pro' })).toHaveAttribute(
+      'aria-selected',
       'true',
     )
     expect(await screen.findAllByText('4/4 free')).not.toHaveLength(0)
@@ -33,10 +33,10 @@ describe('App', () => {
       await screen.findAllByRole('button', { name: 'Book' }),
     ).not.toHaveLength(0)
 
-    await user.click(screen.getByRole('button', { name: 'Hietsu' }))
+    await user.click(screen.getByRole('tab', { name: 'Hietsu' }))
 
-    expect(screen.getByRole('button', { name: 'Hietsu' })).toHaveAttribute(
-      'aria-pressed',
+    expect(screen.getByRole('tab', { name: 'Hietsu' })).toHaveAttribute(
+      'aria-selected',
       'true',
     )
     expect(

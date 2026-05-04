@@ -1,7 +1,6 @@
 import { useCallback } from 'react'
 
-import '../availability.css'
-
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
   useAvailabilityReferenceDate,
   useLaguuniApi,
@@ -15,11 +14,7 @@ import { AvailabilityBookingStatus } from './AvailabilityBookingStatus'
 import { AvailabilityCableSelector } from './AvailabilityCableSelector'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 
-type AvailabilityScreenProps = {
-  isActive: boolean
-}
-
-export function AvailabilityScreen({ isActive }: AvailabilityScreenProps) {
+export function AvailabilityScreen() {
   const api = useLaguuniApi()
   const availabilityReferenceDate = useAvailabilityReferenceDate()
   const { selectedCable, selectCable } = useAvailabilityScope()
@@ -39,42 +34,50 @@ export function AvailabilityScreen({ isActive }: AvailabilityScreenProps) {
   )
 
   return (
-    <section
-      className="screen-card"
-      aria-labelledby="availability-title"
-      hidden={!isActive}
-    >
-      <header className="screen-header">
-        <p className="screen-kicker">Availability overview</p>
-        <h2 id="availability-title" className="screen-title">
-          Book a one-hour cable slot
-        </h2>
-        <p className="screen-copy">
-          Browse live storefront availability from the next seven days and book
-          the selected one-hour slot with your locally saved checkout details.
-        </p>
-      </header>
+    <section aria-labelledby="availability-title">
+      <Card className="overflow-hidden">
+        <CardHeader className="space-y-4 border-b border-border/70">
+          <div className="space-y-2">
+            <h2
+              id="availability-title"
+              className="text-balance text-2xl font-semibold tracking-tight"
+            >
+              Book a one-hour cable slot
+            </h2>
+            <p className="max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
+              Choose a cable, scan the next seven days, and book the slot you
+              want.
+            </p>
+          </div>
 
-      <AvailabilityBookingStatus
-        bookingState={bookingState}
-        traceId={traceId}
-      />
+          <p className="text-sm text-muted-foreground">One rider · One hour</p>
+        </CardHeader>
 
-      <AvailabilityCableSelector
-        onSelectCable={selectCable}
-        selectedCable={selectedCable}
-      />
+        <CardContent className="space-y-6 pt-5">
+          <AvailabilityBookingStatus
+            bookingState={bookingState}
+            traceId={traceId}
+          />
 
-      <AvailabilityOverviewContent
-        activeCableLabel={activeCable.label}
-        availabilityState={availabilityState}
-        onBookSelection={isBookingInProgress ? undefined : handleBookSelection}
-      />
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              Cable
+            </p>
+            <AvailabilityCableSelector
+              onSelectCable={selectCable}
+              selectedCable={selectedCable}
+            />
+          </div>
 
-      <p className="screen-note">
-        Current cable: <strong>{activeCable.label}</strong> (product{' '}
-        <strong>{activeCable.productId}</strong>)
-      </p>
+          <AvailabilityOverviewContent
+            activeCableLabel={activeCable.label}
+            availabilityState={availabilityState}
+            onBookSelection={
+              isBookingInProgress ? undefined : handleBookSelection
+            }
+          />
+        </CardContent>
+      </Card>
     </section>
   )
 }

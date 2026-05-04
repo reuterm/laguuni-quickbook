@@ -35,8 +35,8 @@ describe('Settings screen integration', () => {
 
     renderApp()
 
-    expect(screen.getByRole('button', { name: 'Easy' })).toHaveAttribute(
-      'aria-pressed',
+    expect(screen.getByRole('tab', { name: 'Easy' })).toHaveAttribute(
+      'aria-selected',
       'true',
     )
 
@@ -53,18 +53,18 @@ describe('Settings screen integration', () => {
     const user = userEvent.setup()
 
     renderApp()
-    await user.click(screen.getByRole('button', { name: 'Hietsu' }))
+    await user.click(screen.getByRole('tab', { name: 'Hietsu' }))
     await user.click(screen.getByRole('button', { name: 'Settings' }))
     await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
-    await user.click(screen.getByRole('button', { name: 'Availability' }))
+    await user.click(screen.getByRole('button', { name: 'Close' }))
 
-    expect(screen.getByRole('button', { name: 'Hietsu' })).toHaveAttribute(
-      'aria-pressed',
+    expect(screen.getByRole('tab', { name: 'Hietsu' })).toHaveAttribute(
+      'aria-selected',
       'true',
     )
-    expect(screen.getByRole('button', { name: 'Easy' })).toHaveAttribute(
-      'aria-pressed',
+    expect(screen.getByRole('tab', { name: 'Easy' })).toHaveAttribute(
+      'aria-selected',
       'false',
     )
   })
@@ -80,6 +80,6 @@ describe('Settings screen integration', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Previously saved settings could not be read and were reset to safe defaults on this device.',
     )
-    expect(screen.getByLabelText('Default cable')).toHaveValue('')
+    expect(screen.getByLabelText('Default cable')).toHaveValue('__none__')
   })
 })

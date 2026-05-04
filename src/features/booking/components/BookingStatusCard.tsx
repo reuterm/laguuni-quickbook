@@ -1,5 +1,13 @@
-import '../booking.css'
+import {
+  CircleAlert,
+  CircleCheckBig,
+  CreditCard,
+  LoaderCircle,
+} from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import type {
   BookingFlowResult,
   BookingSlotSelection,
@@ -23,20 +31,33 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
   const selectionLabel = formatSelectionLabel(props.selection)
 
   if (props.status === 'submitting') {
+    const Icon = LoaderCircle
+
     return (
-      <section
-        className="booking-state booking-state--progress"
-        aria-live="polite"
-        role="status"
-      >
-        <p className="screen-kicker">Booking status</p>
-        <h3 className="booking-state__title">Booking in progress</h3>
-        <p className="screen-copy">
-          Submitting {selectionLabel} through the storefront flow.
-        </p>
-        <p className="booking-state__trace">
-          Trace ID: <strong>{props.traceId}</strong>
-        </p>
+      <section aria-live="polite" role="status">
+        <Card className="border-border/70 bg-muted/20 shadow-none">
+          <CardHeader className="gap-3 pb-4">
+            <div className="flex items-start gap-3">
+              <Icon className="mt-0.5 size-4 animate-spin text-muted-foreground" />
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  Booking
+                </p>
+                <h3 className="text-base font-semibold">Booking in progress</h3>
+              </div>
+            </div>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Submitting {selectionLabel} through the storefront flow.
+            </p>
+          </CardHeader>
+
+          <CardContent>
+            <p className="text-xs text-muted-foreground">
+              Trace ID:{' '}
+              <span className="font-mono text-foreground">{props.traceId}</span>
+            </p>
+          </CardContent>
+        </Card>
       </section>
     )
   }
@@ -44,28 +65,44 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
   const presentation = getResultPresentation(props.result, selectionLabel)
 
   return (
-    <section
-      className={`booking-state booking-state--${presentation.variant}`}
-      aria-live="polite"
-      role={presentation.role}
-    >
-      <p className="screen-kicker">Booking status</p>
-      <h3 className="booking-state__title">{presentation.title}</h3>
-      <p className="screen-copy">{presentation.body}</p>
+    <section aria-live="polite" role={presentation.role}>
+      <Card className={cn('shadow-none', presentation.cardClassName)}>
+        <CardHeader className="gap-3 pb-4">
+          <div className="flex items-start gap-3">
+            <presentation.icon
+              className={cn('mt-0.5 size-4', presentation.accentClassName)}
+            />
+            <div className="space-y-1">
+              <p
+                className={cn(
+                  'text-xs uppercase tracking-[0.2em]',
+                  presentation.accentClassName,
+                )}
+              >
+                Booking
+              </p>
+              <h3 className="text-base font-semibold">{presentation.title}</h3>
+            </div>
+          </div>
+          <p className="text-sm leading-6 text-muted-foreground">
+            {presentation.body}
+          </p>
+        </CardHeader>
 
-      {props.result.status === 'payment_required' &&
-      props.result.redirectUrl !== null ? (
-        <a
-          className="primary-action booking-state__link"
-          href={props.result.redirectUrl}
-        >
-          Continue to payment
-        </a>
-      ) : null}
+        <CardContent className="space-y-4">
+          {props.result.status === 'payment_required' &&
+          props.result.redirectUrl !== null ? (
+            <Button asChild className="w-full sm:w-auto">
+              <a href={props.result.redirectUrl}>Continue to payment</a>
+            </Button>
+          ) : null}
 
-      <p className="booking-state__trace">
-        Trace ID: <strong>{props.traceId}</strong>
-      </p>
+          <p className="text-xs text-muted-foreground">
+            Trace ID:{' '}
+            <span className="font-mono text-foreground">{props.traceId}</span>
+          </p>
+        </CardContent>
+      </Card>
     </section>
   )
 }
@@ -74,32 +111,40 @@ function getResultPresentation(
   result: BookingFlowResult,
   selectionLabel: string,
 ): {
+  accentClassName: string
   body: string
+  cardClassName: string
+  icon: typeof CircleAlert
   role: 'alert' | 'status'
   title: string
-  variant: 'failure' | 'payment' | 'success'
 } {
   switch (result.status) {
     case 'success':
       return {
+        accentClassName: 'text-emerald-300',
         body: `${selectionLabel} was booked without any remaining payment.`,
+        cardClassName: 'border-emerald-500/20 bg-card',
+        icon: CircleCheckBig,
         role: 'status',
         title: 'Booking confirmed',
-        variant: 'success',
       }
     case 'payment_required':
       return {
+        accentClassName: 'text-amber-300',
         body: `${selectionLabel} was added successfully. Continue to payment to finish checkout.`,
+        cardClassName: 'border-amber-500/20 bg-card',
+        icon: CreditCard,
         role: 'status',
         title: 'Payment required',
-        variant: 'payment',
       }
     case 'failed':
       return {
+        accentClassName: 'text-rose-300',
         body: getFailureMessage(result, selectionLabel),
+        cardClassName: 'border-rose-500/20 bg-card',
+        icon: CircleAlert,
         role: 'alert',
         title: 'Booking failed',
-        variant: 'failure',
       }
   }
 }

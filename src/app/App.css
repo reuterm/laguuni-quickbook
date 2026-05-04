@@ -1,128 +1,106 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
 :root {
-  color: #102235;
-  background: #f4f7fb;
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  font-synthesis: none;
-  line-height: 1.5;
-  font-weight: 400;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --radius: 1rem;
+  --background: hsl(0 0% 6%);
+  --foreground: hsl(0 0% 96%);
+  --card: hsl(0 0% 9%);
+  --card-foreground: hsl(0 0% 96%);
+  --popover: hsl(0 0% 9%);
+  --popover-foreground: hsl(0 0% 96%);
+  --primary: hsl(0 0% 92%);
+  --primary-foreground: hsl(0 0% 7%);
+  --secondary: hsl(0 0% 13%);
+  --secondary-foreground: hsl(0 0% 96%);
+  --muted: hsl(0 0% 12%);
+  --muted-foreground: hsl(0 0% 64%);
+  --accent: hsl(0 0% 15%);
+  --accent-foreground: hsl(0 0% 96%);
+  --destructive: hsl(0 72% 58%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(0 0% 18%);
+  --input: hsl(0 0% 18%);
+  --ring: hsl(0 0% 78%);
 }
 
-* {
-  box-sizing: border-box;
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-body {
-  margin: 0;
-  background:
-    radial-gradient(circle at top, rgba(31, 122, 224, 0.12), transparent 40%),
-    #f4f7fb;
-}
+@layer base {
+  * {
+    @apply border-border;
+  }
 
-button,
-input,
-select {
-  font: inherit;
-}
+  html {
+    @apply scroll-smooth;
+  }
 
-button {
-  cursor: pointer;
-}
+  body {
+    margin: 0;
+    color-scheme: dark;
+    font-family:
+      Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", sans-serif;
+    font-synthesis: none;
+    font-weight: 400;
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    @apply min-h-svh bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 32%),
+      linear-gradient(to bottom, rgba(18, 18, 20, 1), rgba(7, 7, 8, 1));
+    background-attachment: fixed;
+    background-position:
+      top center,
+      center;
+    background-size: auto;
+  }
 
-button:focus-visible,
-input:focus-visible,
-select:focus-visible {
-  outline: 3px solid rgba(31, 122, 224, 0.35);
-  outline-offset: 2px;
-}
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 
-#root {
-  min-height: 100svh;
-}
+  button {
+    @apply cursor-pointer;
+  }
 
-.app-shell {
-  width: min(100%, 72rem);
-  margin: 0 auto;
-  padding: 1rem;
-}
+  #root {
+    @apply min-h-svh;
+  }
 
-.screen-nav {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin: 1rem 0;
-}
-
-.screen-nav__button {
-  border: 0;
-  border-radius: 999px;
-  padding: 0.85rem 1rem;
-  background: #dce6f2;
-  color: #21415f;
-  font-weight: 700;
-}
-
-.screen-nav__button--active {
-  background: #102235;
-  color: #f8fbff;
-}
-
-.app-main {
-  display: flex;
-}
-
-.screen-card {
-  width: 100%;
-  padding: 1.25rem;
-  border-radius: 1.5rem;
-  background: #ffffff;
-  box-shadow: 0 0.75rem 2rem rgba(16, 34, 53, 0.08);
-}
-
-.screen-header {
-  margin-bottom: 1.5rem;
-}
-
-.screen-kicker {
-  margin: 0 0 0.5rem;
-  color: #1f7ae0;
-  font-size: 0.875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.screen-title {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.screen-copy {
-  margin: 0.75rem 0 0;
-  color: #4a627b;
-}
-
-.primary-action {
-  border: 0;
-  border-radius: 0.9rem;
-  padding: 0.9rem 1rem;
-  background: #102235;
-  color: #f8fbff;
-  font-weight: 700;
-}
-
-.status-note {
-  margin: 0;
-  color: #4a627b;
-  font-size: 0.95rem;
-}
-
-@media (min-width: 48rem) {
-  .app-shell {
-    padding: 1.5rem;
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 35%, transparent);
+    color: var(--foreground);
   }
 }
