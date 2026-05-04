@@ -112,12 +112,14 @@ function normalizeHourLongStartTimes(
     return []
   }
 
+  const endTimesByStartTime = response.endtimes
+
   return response.starttimes.flatMap((startTime) => {
     const startMinute = parseStorefrontTime(startTime)
     const oneHourEndMinute = startMinute + 60
-    const availableEndTimes = response.endtimes[startTime] ?? []
+    const availableEndTimes = endTimesByStartTime[startTime] ?? []
     const hasOneHourSlot = availableEndTimes.some(
-      (endTime) => parseStorefrontTime(endTime) === oneHourEndMinute,
+      (endTime: string) => parseStorefrontTime(endTime) === oneHourEndMinute,
     )
 
     if (!hasOneHourSlot) {
