@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import hietsuAvailabilityFixture from '../../../tests/fixtures/laguuni/availability/hietsu.json'
+import easyAvailabilityFixture from '../../../tests/fixtures/laguuni/availability/easy.json'
 import proAvailabilityFixture from '../../../tests/fixtures/laguuni/availability/pro.json'
 import type { HttpClient, HttpRequest, HttpResponse } from './client'
 import { LaguuniApiClient } from './laguuni-api'
@@ -23,21 +23,21 @@ describe('LaguuniApiClient', () => {
   it('loads a daily availability window from count and capacity fixtures', async () => {
     const api = new LaguuniApiClient({
       client: createSequentialHttpClient(
-        { data: hietsuAvailabilityFixture.availableTimesCount, status: 200 },
-        { data: hietsuAvailabilityFixture.availableTimesCapacity, status: 200 },
+        { data: easyAvailabilityFixture.availableTimesCount, status: 200 },
+        { data: easyAvailabilityFixture.availableTimesCapacity, status: 200 },
       ),
     })
     const availabilityWindow = await api.getDailyAvailabilityWindow(
-      'hietsu',
+      'easy',
       '2026-05-03',
     )
 
     expect(availabilityWindow).toMatchObject({
-      cableId: 'hietsu',
+      cableId: 'easy',
       date: '2026-05-03',
     })
-    expect(availabilityWindow.bookingSegments).toEqual([])
-    expect(availabilityWindow.capacitySegments).toEqual([])
+    expect(availabilityWindow.bookingSegments).not.toEqual([])
+    expect(availabilityWindow.capacitySegments).not.toEqual([])
   })
 
   it('creates baskets and treats invalid code responses as invalid', async () => {

@@ -120,7 +120,7 @@ describe('LocalSettingsStore', () => {
     const store = new LocalSettingsStore({
       storage: createMemoryStorage({
         [SETTINGS_STORAGE_KEY]: JSON.stringify({
-          defaultCable: 'unknown',
+          defaultCable: 'hietsu',
           email: 123,
           name: 'Test User',
           phone: ['invalid'],

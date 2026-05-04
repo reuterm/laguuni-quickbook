@@ -53,17 +53,17 @@ describe('Settings screen integration', () => {
     const user = userEvent.setup()
 
     renderApp()
-    await user.click(screen.getByRole('tab', { name: 'Hietsu' }))
+    await user.click(screen.getByRole('tab', { name: 'Easy' }))
     await user.click(screen.getByRole('button', { name: 'Settings' }))
-    await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
+    await user.selectOptions(screen.getByLabelText('Default cable'), 'pro')
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
     await user.click(screen.getByRole('button', { name: 'Close' }))
 
-    expect(screen.getByRole('tab', { name: 'Hietsu' })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: 'Easy' })).toHaveAttribute(
       'aria-selected',
       'true',
     )
-    expect(screen.getByRole('tab', { name: 'Easy' })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: 'Pro' })).toHaveAttribute(
       'aria-selected',
       'false',
     )

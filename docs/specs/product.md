@@ -82,13 +82,12 @@ V1 supports:
 
 - Pro
 - Easy
-- Hietsu
 
 Known booking product mapping:
 
 - Pro -> `6`
 - Easy -> `7`
-- Hietsu -> `157`
+- Hietsu -> `157` (hidden for now until its booking behavior can be verified)
 
 ## 8. Core product behavior
 

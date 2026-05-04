@@ -29,7 +29,10 @@ export function AvailabilityCableSelector({
     >
       <TabsList
         aria-label="Supported cables"
-        className="grid h-auto w-full grid-cols-3"
+        className="grid h-auto w-full"
+        style={{
+          gridTemplateColumns: `repeat(${SUPPORTED_CABLES.length}, minmax(0, 1fr))`,
+        }}
       >
         {SUPPORTED_CABLES.map((cable) => (
           <TabsTrigger

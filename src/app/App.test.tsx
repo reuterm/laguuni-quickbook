@@ -14,7 +14,7 @@ describe('App', () => {
     clearPersistedAppState()
   })
 
-  it('loads availability and lets users switch cables', async () => {
+  it('loads availability and lets users switch between supported cables', async () => {
     const user = userEvent.setup()
 
     renderApp({
@@ -33,17 +33,20 @@ describe('App', () => {
       await screen.findAllByRole('button', { name: 'Book' }),
     ).not.toHaveLength(0)
 
-    await user.click(screen.getByRole('tab', { name: 'Hietsu' }))
+    expect(
+      screen.queryByRole('tab', { name: 'Hietsu' }),
+    ).not.toBeInTheDocument()
 
-    expect(screen.getByRole('tab', { name: 'Hietsu' })).toHaveAttribute(
+    await user.click(screen.getByRole('tab', { name: 'Easy' }))
+
+    expect(screen.getByRole('tab', { name: 'Easy' })).toHaveAttribute(
       'aria-selected',
       'true',
     )
-    expect(
-      await screen.findByText(
-        'No bookable one-hour slots are available for Hietsu in the loaded range.',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Pro' })).toHaveAttribute(
+      'aria-selected',
+      'false',
+    )
   })
 
   it('books an available slot and surfaces success with a trace id', async () => {
