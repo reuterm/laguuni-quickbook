@@ -69,6 +69,19 @@ describe('Settings screen integration', () => {
     )
   })
 
+  it('discards unsaved edits when the sheet closes', async () => {
+    const user = userEvent.setup()
+
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+    await user.type(screen.getByLabelText('Name'), 'Unsaved draft')
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    expect(screen.getByLabelText('Name')).toHaveValue('')
+  })
+
   it('surfaces when corrupted local settings were reset to safe defaults', async () => {
     const user = userEvent.setup()
 

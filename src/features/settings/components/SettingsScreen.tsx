@@ -37,9 +37,10 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
 
   useEffect(() => {
     if (!open) {
+      setDraftSettings(settings)
       setIsSaved(false)
     }
-  }, [open])
+  }, [open, settings])
 
   function handleFieldChange(field: EditableField) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -155,7 +156,6 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
               <select
                 id="default-cable"
                 name="defaultCable"
-                aria-label="Default cable"
                 className="flex h-11 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none transition-[color,box-shadow,border-color,background-color] focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
                 value={draftSettings.defaultCable ?? NO_DEFAULT_CABLE_VALUE}
                 onChange={(event) =>
