@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/ui/section-header'
-import { eyebrowClassName } from '@/components/ui/styles'
+import { eyebrowClassName, subtleDividerClassName } from '@/components/ui/styles'
 import { SurfaceList, SurfaceListItem } from '@/components/ui/surface-list'
 import { cn } from '@/lib/utils'
 
@@ -61,7 +61,11 @@ export function AvailabilityDayGroups({
                   <Button
                     type="button"
                     size="sm"
-                    className="w-full sm:min-w-[6.5rem] sm:w-auto"
+                    variant="secondary"
+                    className={cn(
+                      'w-full border sm:min-w-[6.5rem] sm:w-auto',
+                      subtleDividerClassName,
+                    )}
                     disabled={bookingActionMode === 'disabled'}
                     onClick={
                       bookingActionMode === 'enabled'
