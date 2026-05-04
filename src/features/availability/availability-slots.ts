@@ -29,11 +29,8 @@ export function createAvailabilitySlots(
     }
 
     return {
-      availabilityLabel: formatAvailabilityLabel(
-        totalCapacity,
-        capacitySegment.freeCapacity,
-      ),
       endTime: formatMinuteOfDay(startMinute + SLOT_DURATION_MINUTES),
+      freeCapacity: Math.max(capacitySegment.freeCapacity, 0),
       id: `${dailyWindow.date}-${startMinute}`,
       selection: {
         cableId,
@@ -42,6 +39,7 @@ export function createAvailabilitySlots(
         startTime: formatMinuteOfDay(startMinute),
       },
       startTime: formatMinuteOfDay(startMinute),
+      totalCapacity,
     }
   })
 }
@@ -87,13 +85,6 @@ function inferTotalCapacity(
       Math.max(highestFreeCapacity, segment.freeCapacity),
     FALLBACK_TOTAL_CAPACITY,
   )
-}
-
-function formatAvailabilityLabel(
-  totalCapacity: number,
-  freeCapacity: number,
-): string {
-  return `${Math.max(freeCapacity, 0)}/${totalCapacity} free`
 }
 
 function roundUpToHour(minuteOfDay: number): number {

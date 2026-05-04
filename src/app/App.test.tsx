@@ -29,7 +29,7 @@ describe('App', () => {
       'aria-selected',
       'true',
     )
-    expect(await screen.findAllByText('4/4 free')).not.toHaveLength(0)
+    expect(await screen.findAllByText('4/4')).not.toHaveLength(0)
     expect(
       screen.getByText(
         /Save your name, phone, and email in Settings to reveal booking actions\./,

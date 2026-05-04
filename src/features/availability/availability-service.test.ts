@@ -97,8 +97,8 @@ describe('createAvailabilitySlots', () => {
 
     expect(createAvailabilitySlots(dailyWindow)).toEqual([
       {
-        availabilityLabel: '1/4 free',
         endTime: '13:00',
+        freeCapacity: 1,
         id: '2026-05-03-720',
         selection: {
           cableId: 'pro',
@@ -107,10 +107,11 @@ describe('createAvailabilitySlots', () => {
           startTime: '12:00',
         },
         startTime: '12:00',
+        totalCapacity: 4,
       },
       {
-        availabilityLabel: '1/4 free',
         endTime: '14:00',
+        freeCapacity: 1,
         id: '2026-05-03-780',
         selection: {
           cableId: 'pro',
@@ -119,6 +120,7 @@ describe('createAvailabilitySlots', () => {
           startTime: '13:00',
         },
         startTime: '13:00',
+        totalCapacity: 4,
       },
     ])
   })
@@ -145,8 +147,8 @@ describe('createAvailabilitySlots', () => {
 
     expect(createAvailabilitySlots(dailyWindow)).toEqual([
       {
-        availabilityLabel: '2/4 free',
         endTime: '14:00',
+        freeCapacity: 2,
         id: '2026-05-03-780',
         selection: {
           cableId: 'easy',
@@ -155,10 +157,11 @@ describe('createAvailabilitySlots', () => {
           startTime: '13:00',
         },
         startTime: '13:00',
+        totalCapacity: 4,
       },
       {
-        availabilityLabel: '2/4 free',
         endTime: '15:00',
+        freeCapacity: 2,
         id: '2026-05-03-840',
         selection: {
           cableId: 'easy',
@@ -167,6 +170,7 @@ describe('createAvailabilitySlots', () => {
           startTime: '14:00',
         },
         startTime: '14:00',
+        totalCapacity: 4,
       },
     ])
   })

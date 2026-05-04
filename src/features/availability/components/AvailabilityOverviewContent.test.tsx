@@ -46,8 +46,8 @@ describe('AvailabilityOverviewContent', () => {
             displayDate: 'Thu 14 May',
             slots: [
               {
-                availabilityLabel: '3/4 free',
                 endTime: '16:00',
+                freeCapacity: 3,
                 id: '2026-05-14-900',
                 selection: {
                   cableId: 'pro',
@@ -56,6 +56,7 @@ describe('AvailabilityOverviewContent', () => {
                   startTime: '15:00',
                 },
                 startTime: '15:00',
+                totalCapacity: 4,
               },
             ],
           },
@@ -81,8 +82,8 @@ describe('AvailabilityOverviewContent', () => {
             displayDate: 'Thu 14 May',
             slots: [
               {
-                availabilityLabel: '3/4 free',
                 endTime: '16:00',
+                freeCapacity: 3,
                 id: '2026-05-14-900',
                 selection: {
                   cableId: 'pro',
@@ -91,6 +92,7 @@ describe('AvailabilityOverviewContent', () => {
                   startTime: '15:00',
                 },
                 startTime: '15:00',
+                totalCapacity: 4,
               },
             ],
           },
@@ -115,8 +117,8 @@ describe('AvailabilityOverviewContent', () => {
             displayDate: 'Thu 14 May',
             slots: [
               {
-                availabilityLabel: '3/4 free',
                 endTime: '16:00',
+                freeCapacity: 3,
                 id: '2026-05-14-900',
                 selection: {
                   cableId: 'pro',
@@ -125,6 +127,7 @@ describe('AvailabilityOverviewContent', () => {
                   startTime: '15:00',
                 },
                 startTime: '15:00',
+                totalCapacity: 4,
               },
             ],
           },
