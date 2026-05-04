@@ -138,7 +138,7 @@ When the user taps **Book** on a slot, the app must:
 
 If the booking can be completed without payment, the app should show a clear success result instead of sending the user into an unnecessary payment flow.
 
-If the required local profile details are missing, the app should not show booking actions.
+If the required local profile details are missing, the app should not show booking actions. Instead it should explain that local settings enable booking while keeping availability browsing usable without saving anything.
 
 ## 9. Screens
 
@@ -149,6 +149,7 @@ Required elements:
 - way to access and switch between supported cables
 - upcoming availability grouped by date
 - slot rows with time, fullness, and Book action when booking is enabled
+- a non-forced explanation that local settings unlock booking while read-only browsing remains available
 - entry point to settings from the main availability surface
 
 ### 9.2 Settings flow

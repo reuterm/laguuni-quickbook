@@ -14,7 +14,9 @@ describe('App', () => {
     clearPersistedAppState()
   })
 
-  it('shows read-only availability before booking is configured', async () => {
+  it('shows read-only availability and an optional settings path before booking is configured', async () => {
+    const user = userEvent.setup()
+
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
@@ -27,6 +29,59 @@ describe('App', () => {
       'true',
     )
     expect(await screen.findAllByText('4/4 free')).not.toHaveLength(0)
+    expect(
+      screen.getByText(
+        /Save your name, phone, and email in Settings to reveal booking actions\./,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Book' }),
+    ).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add booking details' }),
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Booking details' }),
+    ).toBeInTheDocument()
+  })
+
+  it('persists the dismissed read-only notice across remounts without enabling booking', async () => {
+    const user = userEvent.setup()
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+    })
+
+    expect(
+      screen.getByText(
+        /Save your name, phone, and email in Settings to reveal booking actions\./,
+      ),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }))
+
+    expect(
+      screen.queryByText(
+        /Save your name, phone, and email in Settings to reveal booking actions\./,
+      ),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Book' }),
+    ).not.toBeInTheDocument()
+
+    cleanup()
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+    })
+
+    expect(
+      screen.queryByText(
+        /Save your name, phone, and email in Settings to reveal booking actions\./,
+      ),
+    ).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Book' }),
     ).not.toBeInTheDocument()

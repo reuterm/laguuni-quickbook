@@ -40,7 +40,9 @@ function App() {
           </header>
 
           <main className="flex-1">
-            <AvailabilityScreen />
+            <AvailabilityScreen
+              onOpenSettings={() => setIsSettingsOpen(true)}
+            />
           </main>
 
           <SettingsScreen

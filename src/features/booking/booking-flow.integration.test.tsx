@@ -62,6 +62,11 @@ describe('booking flow integration', () => {
     renderApp()
 
     expect(
+      screen.getByText(
+        /If you would rather not store them, you can keep using the app in read-only mode\./,
+      ),
+    ).toBeInTheDocument()
+    expect(
       screen.queryByRole('button', { name: 'Book' }),
     ).not.toBeInTheDocument()
   })

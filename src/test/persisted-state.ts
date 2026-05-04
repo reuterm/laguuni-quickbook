@@ -1,4 +1,5 @@
 import { DEFAULT_USER_SETTINGS, type UserSettings } from '../domain/settings'
+import { READ_ONLY_NOTICE_STORAGE_KEY } from '../features/availability/read-only-notice-storage'
 import {
   DIAGNOSTICS_STORAGE_KEY,
   type DiagnosticsRecoveryIssue,
@@ -13,6 +14,7 @@ export function clearPersistedAppState(
   storage: BrowserStorage = window.localStorage,
 ) {
   storage.removeItem(DIAGNOSTICS_STORAGE_KEY)
+  storage.removeItem(READ_ONLY_NOTICE_STORAGE_KEY)
   storage.removeItem(SETTINGS_STORAGE_KEY)
 }
 
