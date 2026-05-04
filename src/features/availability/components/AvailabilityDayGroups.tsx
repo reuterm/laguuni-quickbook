@@ -1,7 +1,10 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/ui/section-header'
-import { eyebrowClassName, subtleDividerClassName } from '@/components/ui/styles'
+import {
+  eyebrowClassName,
+  subtleDividerClassName,
+} from '@/components/ui/styles'
 import { SurfaceList, SurfaceListItem } from '@/components/ui/surface-list'
 import { cn } from '@/lib/utils'
 
@@ -11,9 +14,9 @@ import type { AvailabilityBookingActionProps } from './availability-booking-acti
 
 const availabilityToneClassNames = {
   high: 'border-transparent bg-[#008d2c]/20 text-[#4bd37a]',
-  low: 'border-transparent bg-[#9b5c49]/20 text-[#d69580]',
   medium: 'border-transparent bg-[#8a7d2e]/20 text-[#d2c56d]',
   neutral: 'border-transparent bg-muted/55 text-muted-foreground',
+  low: 'border-transparent bg-[#9b5c49]/20 text-[#d69580]',
 } as const
 
 type AvailabilityDayGroupsProps = {
@@ -93,7 +96,6 @@ function AvailabilityBadge({ slot }: { slot: AvailabilitySlot }) {
 
   return (
     <Badge
-      variant="outline"
       className={cn(
         'px-2 py-0.5 font-medium tabular-nums transition-colors',
         occupancyClassName,
