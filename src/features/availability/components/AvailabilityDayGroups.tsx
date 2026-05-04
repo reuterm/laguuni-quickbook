@@ -20,7 +20,7 @@ export function AvailabilityDayGroups({
       {dayGroups.map((dayGroup) => (
         <section key={dayGroup.date} className="space-y-3">
           <SectionHeader
-            className="px-1"
+            className="items-center px-1"
             contentClassName="space-y-0"
             title={dayGroup.displayDate}
             titleAs="h3"

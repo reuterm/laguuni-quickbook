@@ -24,9 +24,6 @@ describe('Settings screen integration', () => {
     await user.type(screen.getByLabelText('Phone'), '+358401234567')
     await user.type(screen.getByLabelText('Email'), 'test@example.com')
     await user.type(screen.getByLabelText('Season pass code'), 'FIXTURE-CODE')
-    expect(screen.getByLabelText('Default cable')).toHaveAccessibleDescription(
-      'Used only for the initial cable shown when the app opens.',
-    )
     await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
 

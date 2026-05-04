@@ -72,7 +72,7 @@ type SettingsFieldDefinition = {
 export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
   const { recoveryIssue, saveSettings, settings } = useUserSettings()
   const [draftSettings, setDraftSettings] = useState<UserSettings>(settings)
-  const [isSaved, setIsSaved] = useState(false)
+  const [_isSaved, setIsSaved] = useState(false)
 
   useEffect(() => {
     setDraftSettings(settings)
@@ -121,11 +121,12 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
         <SheetHeader className="space-y-2 pr-10 text-left">
           <SheetTitle>Booking details</SheetTitle>
           <SheetDescription>
-            Saved only in this browser for faster checkout.
+            Your name, phone, email, season pass code, and default cable are
+            saved only in this browser for faster checkout.
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
+        <div className="space-y-6">
           {recoveryIssue !== null ? (
             <Alert role="alert">
               <AlertTitle>Saved settings were reset</AlertTitle>
@@ -134,11 +135,6 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
               </AlertDescription>
             </Alert>
           ) : null}
-
-          <p className="text-sm leading-6 text-muted-foreground">
-            Your name, phone, email, season pass code, and default cable stay in
-            this browser only.
-          </p>
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -152,11 +148,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
               ))}
             </div>
 
-            <FormField
-              htmlFor="default-cable"
-              label="Default cable"
-              description="Used only for the initial cable shown when the app opens."
-            >
+            <FormField htmlFor="default-cable" label="Default cable">
               <NativeSelect
                 id="default-cable"
                 name="defaultCable"
@@ -178,12 +170,6 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
               <Button type="submit" className="w-full sm:w-auto">
                 Save settings
               </Button>
-
-              <p className="text-xs text-muted-foreground" role="status">
-                {isSaved
-                  ? 'Saved locally on this device.'
-                  : 'Settings stay in this browser only.'}
-              </p>
             </div>
           </form>
         </div>

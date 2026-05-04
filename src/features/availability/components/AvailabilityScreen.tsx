@@ -2,9 +2,7 @@ import { X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { SectionHeader } from '@/components/ui/section-header'
 import {
   eyebrowClassName,
   subtleSurfaceBackgroundClassName,
@@ -74,22 +72,6 @@ export function AvailabilityScreen({
   return (
     <section aria-labelledby="availability-title" className="space-y-6">
       <div className="space-y-5">
-        <SectionHeader
-          eyebrow="Availability"
-          badge={
-            <Badge size="eyebrow" variant="subtle">
-              One rider · One hour
-            </Badge>
-          }
-          titleId="availability-title"
-          title="Book a one-hour cable slot"
-          titleAs="h2"
-          titleClassName="text-2xl sm:text-[2rem]"
-          description="Choose a cable, scan the next seven days, and book the slot you want."
-          descriptionClassName="max-w-3xl sm:text-base"
-          contentClassName="space-y-2"
-        />
-
         <AvailabilityBookingStatus
           bookingState={bookingState}
           traceId={traceId}
@@ -153,10 +135,6 @@ export function AvailabilityScreen({
       </div>
 
       <div className="space-y-4">
-        <div className="flex justify-end px-1">
-          <p className={eyebrowClassName}>Next 7 days</p>
-        </div>
-
         <AvailabilityOverviewContent
           activeCableLabel={activeCable.label}
           availabilityState={availabilityState}
