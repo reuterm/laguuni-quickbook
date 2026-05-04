@@ -112,6 +112,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
     event.preventDefault()
     saveSettings(draftSettings)
     setIsSaved(true)
+    onOpenChange(false)
   }
 
   return (

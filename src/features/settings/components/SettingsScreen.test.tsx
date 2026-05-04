@@ -30,9 +30,9 @@ describe('Settings screen integration', () => {
     await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Saved locally on this device.',
-    )
+    expect(
+      screen.queryByRole('button', { name: 'Save settings' }),
+    ).not.toBeInTheDocument()
 
     cleanup()
 
@@ -60,7 +60,6 @@ describe('Settings screen integration', () => {
     await user.click(screen.getByRole('button', { name: 'Settings' }))
     await user.selectOptions(screen.getByLabelText('Default cable'), 'pro')
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
-    await user.click(screen.getByRole('button', { name: 'Close' }))
 
     expect(screen.getByRole('tab', { name: 'Easy' })).toHaveAttribute(
       'aria-selected',
