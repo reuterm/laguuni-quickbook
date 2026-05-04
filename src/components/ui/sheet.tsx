@@ -5,6 +5,18 @@ import type * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
+import {
+  interactiveGhostSurfaceClassName,
+  sheetSurfaceClassName,
+} from './styles'
+
+const sheetEdgeClassNames = {
+  bottom: 'border-t border-white/6',
+  left: 'border-r border-white/6',
+  right: 'border-l border-white/6',
+  top: 'border-b border-white/6',
+} as const
+
 function Sheet(props: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="sheet" {...props} />
 }
@@ -32,7 +44,7 @@ function SheetOverlay({
   return (
     <DialogPrimitive.Overlay
       className={cn(
-        'fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
+        'fixed inset-0 z-50 bg-black/55 backdrop-blur-md data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
         className,
       )}
       data-slot="sheet-overlay"
@@ -42,16 +54,14 @@ function SheetOverlay({
 }
 
 const sheetVariants = cva(
-  'fixed z-50 flex flex-col gap-4 bg-background p-6 shadow-2xl shadow-black/35 transition ease-in-out data-[state=closed]:animate-out data-[state=open]:animate-in',
+  `fixed z-50 flex flex-col gap-4 p-5 transition ease-in-out data-[state=closed]:animate-out data-[state=open]:animate-in sm:p-6 ${sheetSurfaceClassName}`,
   {
     variants: {
       side: {
-        top: 'inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top',
-        bottom:
-          'inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom',
-        left: 'inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm',
-        right:
-          'inset-y-0 right-0 h-full w-full border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-lg',
+        top: `inset-x-0 top-0 data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top ${sheetEdgeClassNames.top}`,
+        bottom: `inset-x-0 bottom-0 rounded-t-3xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom ${sheetEdgeClassNames.bottom}`,
+        left: `inset-y-0 left-0 h-full w-3/4 data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm ${sheetEdgeClassNames.left}`,
+        right: `inset-y-0 right-0 h-full w-full data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-lg ${sheetEdgeClassNames.right}`,
       },
     },
     defaultVariants: {
@@ -76,7 +86,12 @@ function SheetContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute top-5 right-5 rounded-md p-1 text-muted-foreground transition-opacity hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none">
+        <DialogPrimitive.Close
+          className={cn(
+            'absolute top-4 right-4 rounded-full p-2 text-muted-foreground transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none sm:top-5 sm:right-5',
+            interactiveGhostSurfaceClassName,
+          )}
+        >
           <X className="size-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>

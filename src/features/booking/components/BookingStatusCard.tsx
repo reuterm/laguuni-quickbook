@@ -3,10 +3,17 @@ import {
   CircleCheckBig,
   CreditCard,
   LoaderCircle,
+  type LucideIcon,
 } from 'lucide-react'
+import type * as React from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import {
+  eyebrowClassName,
+  statusToneClassNames,
+  subtleSurfaceBackgroundClassName,
+} from '@/components/ui/styles'
 import { cn } from '@/lib/utils'
 import type {
   BookingFlowResult,
@@ -31,75 +38,87 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
   const selectionLabel = formatSelectionLabel(props.selection)
 
   if (props.status === 'submitting') {
-    const Icon = LoaderCircle
-
     return (
-      <section aria-live="polite" role="status">
-        <Card className="border-border/70 bg-muted/20 shadow-none">
-          <CardHeader className="gap-3 pb-4">
-            <div className="flex items-start gap-3">
-              <Icon className="mt-0.5 size-4 animate-spin text-muted-foreground" />
-              <div className="space-y-1">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  Booking
-                </p>
-                <h3 className="text-base font-semibold">Booking in progress</h3>
-              </div>
-            </div>
-            <p className="text-sm leading-6 text-muted-foreground">
-              Submitting {selectionLabel} through the storefront flow.
-            </p>
-          </CardHeader>
-
-          <CardContent>
-            <p className="text-xs text-muted-foreground">
-              Trace ID:{' '}
-              <span className="font-mono text-foreground">{props.traceId}</span>
-            </p>
-          </CardContent>
-        </Card>
-      </section>
+      <BookingStatusPanel
+        body={`Submitting ${selectionLabel} through the storefront flow.`}
+        icon={LoaderCircle}
+        iconClassName="animate-spin text-muted-foreground"
+        labelClassName="text-muted-foreground"
+        role="status"
+        title="Booking in progress"
+        traceId={props.traceId}
+        toneClassName={subtleSurfaceBackgroundClassName}
+      />
     )
   }
 
   const presentation = getResultPresentation(props.result, selectionLabel)
 
   return (
-    <section aria-live="polite" role={presentation.role}>
-      <Card className={cn('shadow-none', presentation.cardClassName)}>
+    <BookingStatusPanel
+      action={
+        props.result.status === 'payment_required' &&
+        props.result.redirectUrl !== null ? (
+          <Button asChild className="w-full sm:w-auto">
+            <a href={props.result.redirectUrl}>Continue to payment</a>
+          </Button>
+        ) : null
+      }
+      body={presentation.body}
+      icon={presentation.icon}
+      iconClassName={presentation.tone.accent}
+      role={presentation.role}
+      title={presentation.title}
+      traceId={props.traceId}
+      toneClassName={presentation.tone.surface}
+    />
+  )
+}
+
+type BookingStatusPanelProps = {
+  action?: React.ReactNode
+  body: string
+  icon: LucideIcon
+  iconClassName?: string
+  label?: React.ReactNode
+  labelClassName?: string
+  role: 'alert' | 'status'
+  title: string
+  traceId: string
+  toneClassName: string
+}
+
+function BookingStatusPanel({
+  action,
+  body,
+  icon: Icon,
+  iconClassName,
+  label = 'Booking',
+  labelClassName,
+  role,
+  title,
+  traceId,
+  toneClassName,
+}: BookingStatusPanelProps) {
+  return (
+    <section aria-live="polite" role={role}>
+      <Card className={toneClassName}>
         <CardHeader className="gap-3 pb-4">
           <div className="flex items-start gap-3">
-            <presentation.icon
-              className={cn('mt-0.5 size-4', presentation.accentClassName)}
-            />
+            <Icon className={cn('mt-0.5 size-4', iconClassName)} />
             <div className="space-y-1">
-              <p
-                className={cn(
-                  'text-xs uppercase tracking-[0.2em]',
-                  presentation.accentClassName,
-                )}
-              >
-                Booking
-              </p>
-              <h3 className="text-base font-semibold">{presentation.title}</h3>
+              <p className={cn(eyebrowClassName, labelClassName)}>{label}</p>
+              <h3 className="text-base font-semibold">{title}</h3>
             </div>
           </div>
-          <p className="text-sm leading-6 text-muted-foreground">
-            {presentation.body}
-          </p>
+          <p className="text-sm leading-6 text-muted-foreground">{body}</p>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          {props.result.status === 'payment_required' &&
-          props.result.redirectUrl !== null ? (
-            <Button asChild className="w-full sm:w-auto">
-              <a href={props.result.redirectUrl}>Continue to payment</a>
-            </Button>
-          ) : null}
-
+        <CardContent className="space-y-4 pt-0">
+          {action}
           <p className="text-xs text-muted-foreground">
             Trace ID:{' '}
-            <span className="font-mono text-foreground">{props.traceId}</span>
+            <span className="font-mono text-foreground">{traceId}</span>
           </p>
         </CardContent>
       </Card>
@@ -111,39 +130,35 @@ function getResultPresentation(
   result: BookingFlowResult,
   selectionLabel: string,
 ): {
-  accentClassName: string
   body: string
-  cardClassName: string
   icon: typeof CircleAlert
   role: 'alert' | 'status'
+  tone: (typeof statusToneClassNames)[keyof typeof statusToneClassNames]
   title: string
 } {
   switch (result.status) {
     case 'success':
       return {
-        accentClassName: 'text-emerald-300',
         body: `${selectionLabel} was booked without any remaining payment.`,
-        cardClassName: 'border-emerald-500/20 bg-card',
         icon: CircleCheckBig,
         role: 'status',
+        tone: statusToneClassNames.success,
         title: 'Booking confirmed',
       }
     case 'payment_required':
       return {
-        accentClassName: 'text-amber-300',
         body: `${selectionLabel} was added successfully. Continue to payment to finish checkout.`,
-        cardClassName: 'border-amber-500/20 bg-card',
         icon: CreditCard,
         role: 'status',
+        tone: statusToneClassNames.warning,
         title: 'Payment required',
       }
     case 'failed':
       return {
-        accentClassName: 'text-rose-300',
         body: getFailureMessage(result, selectionLabel),
-        cardClassName: 'border-rose-500/20 bg-card',
         icon: CircleAlert,
         role: 'alert',
+        tone: statusToneClassNames.destructive,
         title: 'Booking failed',
       }
   }

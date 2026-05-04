@@ -2,6 +2,7 @@ import { Settings2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { SectionHeader } from '@/components/ui/section-header'
 import { AvailabilityScreen } from '../features/availability/components/AvailabilityScreen'
 import { AvailabilityScopeProvider } from '../features/availability/use-availability-scope'
 import { SettingsScreen } from '../features/settings/components/SettingsScreen'
@@ -13,30 +14,29 @@ function App() {
   return (
     <UserSettingsProvider>
       <AvailabilityScopeProvider>
-        <div className="mx-auto flex min-h-svh w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
-          <header className="flex items-start justify-between gap-4 border-b border-border/80 pb-4">
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                Laguuni Quickbook
-              </p>
-              <h1 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">
-                Book your next wake slot
-              </h1>
-              <p className="max-w-xl text-sm text-muted-foreground">
-                Local booking details stay on this device.
-              </p>
-            </div>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="shrink-0"
-              onClick={() => setIsSettingsOpen(true)}
-            >
-              <Settings2 className="size-4" />
-              Settings
-            </Button>
+        <div className="mx-auto flex min-h-svh w-full max-w-4xl flex-col gap-8 px-4 py-5 sm:px-6 sm:py-8">
+          <header>
+            <SectionHeader
+              eyebrow="Laguuni Quickbook"
+              title="Book your next wake slot"
+              titleAs="h1"
+              titleClassName="text-2xl sm:text-3xl"
+              description="Fast mobile-first booking with local-only details that stay on this device."
+              descriptionClassName="max-w-xl"
+              contentClassName="max-w-2xl"
+              actions={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 rounded-full px-3"
+                  onClick={() => setIsSettingsOpen(true)}
+                >
+                  <Settings2 className="size-4" />
+                  Settings
+                </Button>
+              }
+            />
           </header>
 
           <main className="flex-1">

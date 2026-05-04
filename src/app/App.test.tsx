@@ -24,6 +24,7 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Book a one-hour cable slot' }),
     ).toBeInTheDocument()
+    expect(screen.getByRole('tablist', { name: 'Cable' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Pro' })).toHaveAttribute(
       'aria-selected',
       'true',

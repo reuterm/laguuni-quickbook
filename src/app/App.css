@@ -4,25 +4,25 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 1rem;
-  --background: hsl(0 0% 6%);
+  --radius: 0.875rem;
+  --background: hsl(240 12% 7%);
   --foreground: hsl(0 0% 96%);
-  --card: hsl(0 0% 9%);
+  --card: hsl(240 10% 9%);
   --card-foreground: hsl(0 0% 96%);
-  --popover: hsl(0 0% 9%);
+  --popover: hsl(240 10% 9%);
   --popover-foreground: hsl(0 0% 96%);
   --primary: hsl(0 0% 92%);
   --primary-foreground: hsl(0 0% 7%);
-  --secondary: hsl(0 0% 13%);
+  --secondary: hsl(240 8% 12%);
   --secondary-foreground: hsl(0 0% 96%);
-  --muted: hsl(0 0% 12%);
-  --muted-foreground: hsl(0 0% 64%);
-  --accent: hsl(0 0% 15%);
+  --muted: hsl(240 8% 11%);
+  --muted-foreground: hsl(240 5% 65%);
+  --accent: hsl(240 8% 13%);
   --accent-foreground: hsl(0 0% 96%);
   --destructive: hsl(0 72% 58%);
   --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(0 0% 18%);
-  --input: hsl(0 0% 18%);
+  --border: hsl(240 6% 18%);
+  --input: hsl(240 6% 18%);
   --ring: hsl(0 0% 78%);
 }
 
@@ -75,8 +75,8 @@
     -moz-osx-font-smoothing: grayscale;
     @apply min-h-svh bg-background text-foreground antialiased;
     background-image:
-      radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 32%),
-      linear-gradient(to bottom, rgba(18, 18, 20, 1), rgba(7, 7, 8, 1));
+      radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 34%),
+      linear-gradient(to bottom, rgba(18, 19, 24, 1), rgba(8, 8, 10, 1));
     background-attachment: fixed;
     background-position:
       top center,

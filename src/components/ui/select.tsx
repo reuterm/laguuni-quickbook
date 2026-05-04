@@ -4,8 +4,35 @@ import type * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
+import {
+  formControlClassName,
+  nativeSelectControlClassName,
+  popoverSurfaceClassName,
+} from './styles'
+
 function Select(props: React.ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot="select" {...props} />
+}
+
+function NativeSelect({ className, ...props }: React.ComponentProps<'select'>) {
+  return (
+    <div className="relative">
+      <select
+        className={cn(
+          nativeSelectControlClassName,
+          'peer appearance-none pr-10',
+          className,
+        )}
+        {...props}
+      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted-foreground/80 peer-disabled:opacity-50"
+      >
+        <ChevronDown className="size-4" />
+      </span>
+    </div>
+  )
 }
 
 function SelectGroup(
@@ -28,7 +55,8 @@ function SelectTrigger({
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        'flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] data-[placeholder]:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50',
+        formControlClassName,
+        'items-center justify-between gap-2 data-[placeholder]:text-muted-foreground',
         className,
       )}
       data-slot="select-trigger"
@@ -52,7 +80,8 @@ function SelectContent({
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          'relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-2xl border bg-popover text-popover-foreground shadow-md',
+          'relative z-50 max-h-96 min-w-[8rem] overflow-hidden',
+          popoverSurfaceClassName,
           position === 'popper' &&
             'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
           className,
@@ -98,7 +127,7 @@ function SelectItem({
   return (
     <SelectPrimitive.Item
       className={cn(
-        'relative flex w-full cursor-default select-none items-center rounded-xl py-2 pr-8 pl-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground',
+        'relative flex w-full cursor-default select-none items-center rounded-lg py-2 pr-8 pl-2.5 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-accent/90 data-[highlighted]:text-accent-foreground',
         className,
       )}
       data-slot="select-item"
@@ -164,6 +193,7 @@ function SelectScrollDownButton({
 }
 
 export {
+  NativeSelect,
   Select,
   SelectContent,
   SelectGroup,

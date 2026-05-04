@@ -3,13 +3,20 @@ import type * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
+import { mutedSurfaceClassName, statusToneClassNames } from './styles'
+
 const alertVariants = cva(
-  'relative grid w-full gap-1 rounded-[1.25rem] border px-4 py-3 text-sm',
+  'relative grid w-full gap-1.5 rounded-2xl border px-4 py-3.5 text-sm',
   {
     variants: {
       variant: {
-        default: 'border-border/80 bg-muted/20 text-foreground',
-        destructive: 'border-destructive/25 bg-destructive/5 text-foreground',
+        default: `${mutedSurfaceClassName} text-foreground`,
+        destructive: cn(
+          'text-foreground',
+          statusToneClassNames.destructive.surface,
+        ),
+        success: cn('text-foreground', statusToneClassNames.success.surface),
+        warning: cn('text-foreground', statusToneClassNames.warning.surface),
       },
     },
     defaultVariants: {

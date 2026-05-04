@@ -1,49 +1,34 @@
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
 import {
-  type CableId,
-  isCableId,
-  SUPPORTED_CABLES,
-} from '../../../domain/cable'
+  SegmentedControl,
+  type SegmentedControlItem,
+} from '@/components/ui/segmented-control'
+
+import { type CableId, SUPPORTED_CABLES } from '../../../domain/cable'
+
+const cableItems = SUPPORTED_CABLES.map((cable) => ({
+  label: cable.label,
+  value: cable.id,
+})) satisfies readonly SegmentedControlItem<CableId>[]
 
 type AvailabilityCableSelectorProps = {
+  ariaLabelledBy?: string
   onSelectCable: (cableId: CableId) => void
   selectedCable: CableId
 }
 
 export function AvailabilityCableSelector({
+  ariaLabelledBy,
   onSelectCable,
   selectedCable,
 }: AvailabilityCableSelectorProps) {
-  function handleValueChange(nextCableId: string) {
-    if (isCableId(nextCableId)) {
-      onSelectCable(nextCableId)
-    }
-  }
-
   return (
-    <Tabs
+    <SegmentedControl
+      items={cableItems}
       value={selectedCable}
-      onValueChange={handleValueChange}
-      className="w-full"
-    >
-      <TabsList
-        aria-label="Supported cables"
-        className="grid h-auto w-full"
-        style={{
-          gridTemplateColumns: `repeat(${SUPPORTED_CABLES.length}, minmax(0, 1fr))`,
-        }}
-      >
-        {SUPPORTED_CABLES.map((cable) => (
-          <TabsTrigger
-            key={cable.id}
-            value={cable.id}
-            className="min-h-10 px-4 py-2 text-center"
-          >
-            <span className="font-medium">{cable.label}</span>
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </Tabs>
+      onValueChange={onSelectCable}
+      {...(ariaLabelledBy !== undefined
+        ? { ariaLabelledBy }
+        : { ariaLabel: 'Supported cables' })}
+    />
   )
 }

@@ -1,9 +1,11 @@
+import type * as React from 'react'
 import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { FormField } from '@/components/ui/form-field'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { NativeSelect } from '@/components/ui/select'
 import {
   Sheet,
   SheetContent,
@@ -25,6 +27,47 @@ type SettingsScreenProps = {
 
 type EditableField = Exclude<keyof UserSettings, 'defaultCable'>
 const NO_DEFAULT_CABLE_VALUE = '__none__'
+
+const settingsFieldDefinitions = [
+  {
+    autoComplete: 'name',
+    id: 'name',
+    key: 'name',
+    label: 'Name',
+    placeholder: 'Test User',
+  },
+  {
+    autoComplete: 'tel',
+    id: 'phone',
+    key: 'phone',
+    label: 'Phone',
+    placeholder: '+358 40 123 4567',
+    type: 'tel',
+  },
+  {
+    autoComplete: 'email',
+    id: 'email',
+    key: 'email',
+    label: 'Email',
+    placeholder: 'test@example.com',
+    type: 'email',
+  },
+  {
+    id: 'season-pass-code',
+    key: 'seasonPassCode',
+    label: 'Season pass code',
+    placeholder: 'Optional',
+  },
+] satisfies readonly SettingsFieldDefinition[]
+
+type SettingsFieldDefinition = {
+  autoComplete?: string
+  id: string
+  key: EditableField
+  label: string
+  placeholder: string
+  type?: React.ComponentProps<typeof Input>['type']
+}
 
 export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
   const { recoveryIssue, saveSettings, settings } = useUserSettings()
@@ -73,20 +116,17 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full overflow-y-auto border-border/80 sm:max-w-lg"
-      >
-        <SheetHeader className="space-y-2 pr-8 text-left">
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+        <SheetHeader className="space-y-2 pr-10 text-left">
           <SheetTitle>Booking details</SheetTitle>
           <SheetDescription>
             Saved only in this browser for faster checkout.
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-5">
+        <div className="mt-6 space-y-6">
           {recoveryIssue !== null ? (
-            <Alert role="alert" className="rounded-xl">
+            <Alert role="alert">
               <AlertTitle>Saved settings were reset</AlertTitle>
               <AlertDescription>
                 {getRecoveryMessage(recoveryIssue)}
@@ -99,64 +139,26 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
             this browser only.
           </p>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  autoComplete="name"
-                  placeholder="Test User"
-                  value={draftSettings.name}
-                  onChange={handleFieldChange('name')}
+              {settingsFieldDefinitions.map((field) => (
+                <SettingsTextField
+                  key={field.key}
+                  definition={field}
+                  value={draftSettings[field.key]}
+                  onChange={handleFieldChange(field.key)}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  autoComplete="tel"
-                  placeholder="+358 40 123 4567"
-                  type="tel"
-                  value={draftSettings.phone}
-                  onChange={handleFieldChange('phone')}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  autoComplete="email"
-                  placeholder="test@example.com"
-                  type="email"
-                  value={draftSettings.email}
-                  onChange={handleFieldChange('email')}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="season-pass-code">Season pass code</Label>
-                <Input
-                  id="season-pass-code"
-                  name="seasonPassCode"
-                  placeholder="Optional"
-                  value={draftSettings.seasonPassCode}
-                  onChange={handleFieldChange('seasonPassCode')}
-                />
-              </div>
+              ))}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="default-cable">Default cable</Label>
-              <select
+            <FormField
+              htmlFor="default-cable"
+              label="Default cable"
+              description="Used only for the initial cable shown when the app opens."
+            >
+              <NativeSelect
                 id="default-cable"
                 name="defaultCable"
-                className="flex h-11 w-full min-w-0 rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none transition-[color,box-shadow,border-color,background-color] focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
                 value={draftSettings.defaultCable ?? NO_DEFAULT_CABLE_VALUE}
                 onChange={(event) =>
                   handleDefaultCableChange(event.target.value)
@@ -168,14 +170,11 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                     {cable.label}
                   </option>
                 ))}
-              </select>
-              <p className="text-sm text-muted-foreground">
-                Used only for the initial cable shown when the app opens.
-              </p>
-            </div>
+              </NativeSelect>
+            </FormField>
 
-            <div className="space-y-3 pt-2">
-              <Button type="submit" size="sm" className="w-full sm:w-auto">
+            <div className="space-y-3">
+              <Button type="submit" className="w-full sm:w-auto">
                 Save settings
               </Button>
 
@@ -201,4 +200,30 @@ function getRecoveryMessage(recoveryIssue: SettingsRecoveryIssue): string {
     case 'invalid-format':
       return 'Previously saved settings could not be read and were reset to safe defaults on this device.'
   }
+}
+
+type SettingsTextFieldProps = {
+  definition: SettingsFieldDefinition
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void
+  value: string
+}
+
+function SettingsTextField({
+  definition,
+  onChange,
+  value,
+}: SettingsTextFieldProps) {
+  return (
+    <FormField htmlFor={definition.id} label={definition.label}>
+      <Input
+        id={definition.id}
+        name={definition.key}
+        autoComplete={definition.autoComplete}
+        placeholder={definition.placeholder}
+        type={definition.type}
+        value={value}
+        onChange={onChange}
+      />
+    </FormField>
+  )
 }
