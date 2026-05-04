@@ -24,8 +24,13 @@ export function AvailabilityScreen() {
     selectedCable,
     availabilityReferenceDate,
   )
-  const { bookSelection, bookingState, isBookingInProgress, traceId } =
-    useBookingFlow()
+  const {
+    bookSelection,
+    bookingState,
+    isBookingInProgress,
+    isBookingReady,
+    traceId,
+  } = useBookingFlow()
   const handleBookSelection = useCallback(
     (selection: BookingSlotSelection) => {
       void bookSelection(selection)
@@ -72,6 +77,7 @@ export function AvailabilityScreen() {
           <AvailabilityOverviewContent
             activeCableLabel={activeCable.label}
             availabilityState={availabilityState}
+            showBookingActions={isBookingReady}
             onBookSelection={
               isBookingInProgress ? undefined : handleBookSelection
             }

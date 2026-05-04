@@ -14,9 +14,7 @@ describe('App', () => {
     clearPersistedAppState()
   })
 
-  it('loads availability and lets users switch between supported cables', async () => {
-    const user = userEvent.setup()
-
+  it('shows read-only availability before booking is configured', async () => {
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
@@ -29,6 +27,24 @@ describe('App', () => {
       'true',
     )
     expect(await screen.findAllByText('4/4 free')).not.toHaveLength(0)
+    expect(
+      screen.queryByRole('button', { name: 'Book' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows booking actions once the required profile details are saved and lets users switch cables', async () => {
+    const user = userEvent.setup()
+
+    saveUserSettings({
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+    })
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+    })
+
     expect(
       await screen.findAllByRole('button', { name: 'Book' }),
     ).not.toHaveLength(0)

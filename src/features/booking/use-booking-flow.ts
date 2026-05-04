@@ -8,6 +8,7 @@ import type {
 } from '../../domain/booking'
 import type { UserSettings } from '../../domain/settings'
 import { useUserSettings } from '../settings/use-user-settings'
+import { validateBookingProfile } from './booking-validation'
 
 export type BookingFlowState =
   | {
@@ -27,6 +28,9 @@ export function useBookingFlow() {
   const bookingService = useBookingService()
   const traceId = useDiagnosticsTraceId()
   const { settings } = useUserSettings()
+  const bookingProfile = createBookingProfile(settings)
+  const isBookingReady =
+    validateBookingProfile(bookingProfile).status === 'valid'
   const [bookingState, setBookingState] = useState<BookingFlowState>({
     status: 'idle',
   })
@@ -41,7 +45,7 @@ export function useBookingFlow() {
       try {
         const result = await bookingService.book({
           code: normalizeOptionalCode(settings.seasonPassCode),
-          profile: createBookingProfile(settings),
+          profile: bookingProfile,
           selection,
         })
 
@@ -65,13 +69,14 @@ export function useBookingFlow() {
         })
       }
     },
-    [bookingService, settings],
+    [bookingProfile, bookingService, settings.seasonPassCode],
   )
 
   return {
     bookSelection,
     bookingState,
     isBookingInProgress: bookingState.status === 'submitting',
+    isBookingReady,
     traceId,
   }
 }

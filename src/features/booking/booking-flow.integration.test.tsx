@@ -58,18 +58,12 @@ describe('booking flow integration', () => {
     )
   })
 
-  it('shows a failure state when booking details are incomplete', async () => {
-    const user = userEvent.setup()
-
+  it('keeps the availability overview read-only until booking details are saved', async () => {
     renderApp()
-    await clickFirstBookButton(user)
 
     expect(
-      await screen.findByRole('heading', { name: 'Booking failed' }),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Complete your name, phone, and email in Settings before trying to book.',
-    )
+      screen.queryByRole('button', { name: 'Book' }),
+    ).not.toBeInTheDocument()
   })
 
   it('shows a failure state when checkout returns an error', async () => {

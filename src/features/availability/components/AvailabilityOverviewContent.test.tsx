@@ -33,6 +33,40 @@ describe('AvailabilityOverviewContent', () => {
     ).toBeInTheDocument()
   })
 
+  it('hides booking actions in read-only mode', () => {
+    renderContent(
+      {
+        dayGroups: [
+          {
+            date: '2026-05-14',
+            displayDate: 'Thu 14 May',
+            slots: [
+              {
+                availabilityLabel: '3/4 free',
+                endTime: '16:00',
+                id: '2026-05-14-900',
+                selection: {
+                  cableId: 'pro',
+                  date: '2026-05-14',
+                  endTime: '16:00',
+                  startTime: '15:00',
+                },
+                startTime: '15:00',
+              },
+            ],
+          },
+        ],
+        status: 'ready',
+      },
+      undefined,
+      false,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Book' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('renders bookable slot groups and wires the book action', () => {
     const onBookSelection = vi.fn()
 
@@ -63,7 +97,6 @@ describe('AvailabilityOverviewContent', () => {
       onBookSelection,
     )
 
-    expect(screen.getByText('Thu 14 May')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Book' })).toBeEnabled()
   })
 })
@@ -73,12 +106,14 @@ function renderContent(
   onBookSelection?: Parameters<
     typeof AvailabilityOverviewContent
   >[0]['onBookSelection'],
+  showBookingActions?: boolean,
 ) {
   return render(
     <AvailabilityOverviewContent
       activeCableLabel="Pro"
       availabilityState={availabilityState}
       onBookSelection={onBookSelection}
+      {...(showBookingActions === undefined ? {} : { showBookingActions })}
     />,
   )
 }

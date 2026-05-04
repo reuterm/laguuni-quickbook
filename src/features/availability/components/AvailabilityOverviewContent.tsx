@@ -9,12 +9,14 @@ type AvailabilityOverviewContentProps = {
   activeCableLabel: string
   availabilityState: AvailabilityState
   onBookSelection?: ((selection: BookingSlotSelection) => void) | undefined
+  showBookingActions?: boolean
 }
 
 export function AvailabilityOverviewContent({
   activeCableLabel,
   availabilityState,
   onBookSelection,
+  showBookingActions = true,
 }: AvailabilityOverviewContentProps) {
   if (availabilityState.status === 'loading') {
     return (
@@ -61,6 +63,7 @@ export function AvailabilityOverviewContent({
     <AvailabilityDayGroups
       dayGroups={availabilityState.dayGroups}
       onBookSelection={onBookSelection}
+      showBookingActions={showBookingActions}
     />
   )
 }

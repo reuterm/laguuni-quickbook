@@ -7,11 +7,13 @@ import type { AvailabilityDayGroup } from '../availability-service'
 type AvailabilityDayGroupsProps = {
   dayGroups: readonly AvailabilityDayGroup[]
   onBookSelection?: ((selection: BookingSlotSelection) => void) | undefined
+  showBookingActions?: boolean
 }
 
 export function AvailabilityDayGroups({
   dayGroups,
   onBookSelection,
+  showBookingActions = true,
 }: AvailabilityDayGroupsProps) {
   return (
     <div className="grid gap-4">
@@ -43,15 +45,17 @@ export function AvailabilityDayGroups({
                   </span>
                 </div>
 
-                <Button
-                  type="button"
-                  size="sm"
-                  className="w-full sm:w-auto"
-                  disabled={onBookSelection === undefined}
-                  onClick={() => onBookSelection?.(slot.selection)}
-                >
-                  Book
-                </Button>
+                {showBookingActions ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    disabled={onBookSelection === undefined}
+                    onClick={() => onBookSelection?.(slot.selection)}
+                  >
+                    Book
+                  </Button>
+                ) : null}
               </article>
             ))}
           </CardContent>

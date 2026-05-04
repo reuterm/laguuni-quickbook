@@ -106,7 +106,7 @@ The overview means:
 7. Each slot row shows:
    - start time
    - free capacity / fullness for that slot
-   - a **Book** action
+   - a **Book** action when the required local booking details are available
 
 Example slot representation:
 
@@ -117,6 +117,8 @@ Example slot representation:
 | 17:00 | 1/4 free     | Book   |
 
 If no bookable slots are available for the selected cable in the currently loaded range, the UI must show a clear empty state.
+
+Users must still be able to browse availability in a read-only mode without saving any booking details locally.
 
 ### 8.2 Cable access
 
@@ -136,6 +138,8 @@ When the user taps **Book** on a slot, the app must:
 
 If the booking can be completed without payment, the app should show a clear success result instead of sending the user into an unnecessary payment flow.
 
+If the required local profile details are missing, the app should not show booking actions.
+
 ## 9. Screens
 
 ### 9.1 Availability screen
@@ -144,7 +148,7 @@ Required elements:
 
 - way to access and switch between supported cables
 - upcoming availability grouped by date
-- slot rows with time, fullness, and Book action
+- slot rows with time, fullness, and Book action when booking is enabled
 - entry point to settings from the main availability surface
 
 ### 9.2 Settings flow
