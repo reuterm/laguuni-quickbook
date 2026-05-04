@@ -1,5 +1,5 @@
 import type * as React from 'react'
-import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react'
+import { type ChangeEvent, useEffect, useState } from 'react'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -108,7 +108,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
     setIsSaved(false)
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     saveSettings(draftSettings)
     setIsSaved(true)
