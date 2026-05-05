@@ -105,13 +105,26 @@ export function decodeBasketPricingSummary(value: unknown): {
     throw new Error('Basket items response must be an array')
   }
 
+  const hasDiscountedReservationRow = value.some(
+    (item) =>
+      isRecord(item) &&
+      readOptionalMoneyCents((item as BasketItemPayload).discountedprice) !==
+        null,
+  )
+
   return {
     totalDueCents: value.reduce((total, item) => {
       if (!isRecord(item)) {
         throw new Error('Basket items response must contain objects')
       }
 
-      return total + readBasketItemAmountCents(item as BasketItemPayload)
+      return (
+        total +
+        readBasketItemAmountCents(
+          item as BasketItemPayload,
+          hasDiscountedReservationRow,
+        )
+      )
     }, 0),
   }
 }
@@ -648,7 +661,14 @@ function readRemainingBalanceCents(
   return null
 }
 
-function readBasketItemAmountCents(item: BasketItemPayload): number {
+function readBasketItemAmountCents(
+  item: BasketItemPayload,
+  hasDiscountedReservationRow: boolean,
+): number {
+  if (hasDiscountedReservationRow && isStandaloneDiscountRow(item)) {
+    return 0
+  }
+
   const discountedAmount = readOptionalMoneyCents(item.discountedprice)
 
   if (discountedAmount !== null) {
@@ -658,6 +678,10 @@ function readBasketItemAmountCents(item: BasketItemPayload): number {
   const baseAmount = readOptionalMoneyCents(item.price)
 
   return baseAmount ?? 0
+}
+
+function isStandaloneDiscountRow(item: BasketItemPayload): boolean {
+  return item.discount_id !== undefined && item.discount_id !== null
 }
 
 function readOptionalMoneyCents(value: unknown): number | null {

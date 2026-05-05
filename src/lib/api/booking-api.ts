@@ -134,6 +134,7 @@ export async function submitCheckout(
   client: HttpClient,
   {
     basketToken,
+    observeCashCheckoutStep,
     observePaymentRedirect,
     observeResponse,
     paymentMethod,
@@ -155,7 +156,11 @@ export async function submitCheckout(
 
   if (hasCheckoutPaymentToken(checkoutResponse)) {
     if (paymentMethod === 'cash') {
-      return completeCashCheckout(client, checkoutResponse.paymentToken)
+      return completeCashCheckout(
+        client,
+        checkoutResponse.paymentToken,
+        observeCashCheckoutStep,
+      )
     }
 
     const paymentRedirectResponse = await client.request({
@@ -187,6 +192,9 @@ export async function submitCheckout(
 async function completeCashCheckout(
   client: HttpClient,
   orderIdentifier: string,
+  observeCashCheckoutStep?: (
+    step: 'cashreturn_completed' | 'order_details_loaded',
+  ) => void,
 ): Promise<BookingCheckoutResult> {
   const completionResponse = await client.request({
     decoder: decodeCompletedCashCheckoutResponse,
@@ -206,6 +214,8 @@ async function completeCashCheckout(
     )
   }
 
+  observeCashCheckoutStep?.('cashreturn_completed')
+
   const orderDetailsResponse = await client.request({
     decoder: decodeCompletedOrderDetailsResponse,
     path: `/api/laguuni/fi_FI/orders/${orderIdentifier}.json`,
@@ -220,6 +230,8 @@ async function completeCashCheckout(
   if (orderDetails.identifier !== orderIdentifier) {
     throw new Error('Completed order details returned a different identifier')
   }
+
+  observeCashCheckoutStep?.('order_details_loaded')
 
   return {
     orderIdentifier,

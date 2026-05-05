@@ -18,6 +18,7 @@ export type InvalidCodePayload = {
 export type CodeLookupPayload = AcceptedCodePayload | InvalidCodePayload
 
 export type BasketItemPayload = {
+  discount_id?: number | string | null | undefined
   discountedprice?: number | string | null | undefined
   price?: number | string | null | undefined
 }

@@ -181,6 +181,7 @@ describe('booking-api transport mapping', () => {
 
   it('treats string checkout responses as success for zero-total cash checkout', async () => {
     const requests: HttpRequest<unknown>[] = []
+    const cashSteps: Array<'cashreturn_completed' | 'order_details_loaded'> = []
     const client = createSequentialCapturingClient(
       requests,
       'fixture-order-id',
@@ -203,6 +204,9 @@ describe('booking-api transport mapping', () => {
     await expect(
       submitCheckout(client, {
         basketToken: 'fixture-basket-token',
+        observeCashCheckoutStep: (step) => {
+          cashSteps.push(step)
+        },
         paymentMethod: 'cash',
         profile: {
           email: 'test@example.com',
@@ -222,6 +226,7 @@ describe('booking-api transport mapping', () => {
     expect(requests[2]).toMatchObject({
       path: '/api/laguuni/fi_FI/orders/fixture-order-id.json',
     })
+    expect(cashSteps).toEqual(['cashreturn_completed', 'order_details_loaded'])
   })
 
   it('applies accepted codes through the basket items endpoint', async () => {
@@ -255,6 +260,27 @@ describe('booking-api transport mapping', () => {
       loadBasketPricingSummary(client, 'fixture-basket-token'),
     ).resolves.toEqual({
       totalDueCents: 500,
+    })
+
+    expect(requests[0]).toMatchObject({
+      path: '/api/laguuni/fi_FI/baskets/fixture-basket-token/items.json',
+      query: {
+        publicreservations: true,
+      },
+    })
+  })
+
+  it('ignores standalone discount rows when a discounted reservation row already reflects the reduction', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const client = createCapturingClient(requests, [
+      { discountedprice: '0', price: '26' },
+      { discount_id: '2796', price: '-26' },
+    ])
+
+    await expect(
+      loadBasketPricingSummary(client, 'fixture-basket-token'),
+    ).resolves.toEqual({
+      totalDueCents: 0,
     })
 
     expect(requests[0]).toMatchObject({

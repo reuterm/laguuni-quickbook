@@ -83,16 +83,26 @@ export class DefaultBookingService implements BookingService {
 
       const basketPricing =
         await this.#api.loadBasketPricingSummary(basketToken)
+      const paymentMethod =
+        basketPricing.totalDueCents === 0 ? 'cash' : 'mobilepay'
+
+      diagnosticsReporter.recordCheckoutPlan({
+        paymentMethod,
+        totalDueCents: basketPricing.totalDueCents,
+      })
 
       const checkoutResult = await this.#api.submitCheckout({
         basketToken,
+        observeCashCheckoutStep: (step) => {
+          diagnosticsReporter.recordCashCheckoutStep(step)
+        },
         observePaymentRedirect: (redirectUrl) => {
           diagnosticsReporter.recordCheckoutRedirectObserved(redirectUrl)
         },
         observeResponse: (observation) => {
           diagnosticsReporter.recordCheckoutResponseObserved(observation)
         },
-        paymentMethod: basketPricing.totalDueCents === 0 ? 'cash' : 'mobilepay',
+        paymentMethod,
         profile: profileValidation.profile,
       })
       const bookingResult =

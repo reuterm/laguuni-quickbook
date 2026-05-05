@@ -11,6 +11,13 @@ type DiagnosticAppender = Pick<Diagnostics, 'append'>
 
 export type BookingDiagnosticsReporter = {
   recordBasketCreated(): void
+  recordCheckoutPlan(plan: {
+    paymentMethod: 'cash' | 'mobilepay'
+    totalDueCents: number
+  }): void
+  recordCashCheckoutStep(
+    step: 'cashreturn_completed' | 'order_details_loaded',
+  ): void
   recordCheckoutCompleted(result: BookingFlowResult): void
   recordCheckoutRedirectObserved(redirectUrl: string | null): void
   recordCheckoutResponseObserved(observation: CheckoutResponseObservation): void
@@ -43,6 +50,23 @@ export function createBookingDiagnosticsReporter(
     recordBasketCreated() {
       diagnostics.append({
         event: 'booking.basket_created',
+      })
+    },
+    recordCheckoutPlan(plan) {
+      diagnostics.append({
+        event: 'booking.checkout_planned',
+        fields: {
+          paymentMethod: plan.paymentMethod,
+          totalDueCents: plan.totalDueCents,
+        },
+      })
+    },
+    recordCashCheckoutStep(step) {
+      diagnostics.append({
+        event: 'booking.cash_checkout_step',
+        fields: {
+          step,
+        },
       })
     },
     recordCheckoutCompleted(result: BookingFlowResult) {

@@ -195,9 +195,48 @@ describe('DefaultBookingService', () => {
     expect(exportedLogs).toContain('lqk-fixedtrace')
     expect(exportedLogs).toContain('booking.started')
     expect(exportedLogs).toContain('booking.code_applied')
+    expect(exportedLogs).toContain('booking.checkout_planned')
+    expect(exportedLogs).toContain('"paymentMethod": "cash"')
+    expect(exportedLogs).toContain('"totalDueCents": 0')
     expect(exportedLogs).not.toContain('FIXTURE-DISCOUNT')
     expect(exportedLogs).not.toContain('test@example.com')
     expect(exportedLogs).not.toContain('+358401234567')
+  })
+
+  it('records checkout planning for paid bookings', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      platform: 'Vitest Browser',
+      storage: createMemoryStorage(),
+      traceId: 'lqk-fixedtrace',
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.loadBasketPricingSummary).mockResolvedValueOnce({
+      totalDueCents: 1200,
+    })
+
+    const service = new DefaultBookingService({
+      api,
+      diagnostics,
+    })
+
+    await expect(
+      service.book({
+        code: 'FIXTURE-DISCOUNT',
+        profile,
+        selection,
+      }),
+    ).resolves.toEqual({
+      orderIdentifier: 'fixture-order-id',
+      status: 'success',
+    })
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(exportedLogs).toContain('booking.checkout_planned')
+    expect(exportedLogs).toContain('"paymentMethod": "mobilepay"')
+    expect(exportedLogs).toContain('"totalDueCents": 1200')
   })
 
   it('keeps checkout diagnostics on safe codes instead of raw error messages', async () => {
