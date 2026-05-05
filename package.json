@@ -7,7 +7,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "fixtures:capture": "node scripts/capture-fixtures/capture.mjs && biome format --write tests/fixtures/laguuni",
     "lint": "biome check .",
     "preview": "vite preview",
     "test": "vitest run",

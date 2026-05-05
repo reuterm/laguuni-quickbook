@@ -38,15 +38,3 @@ mise exec -- pnpm lint
 mise exec -- pnpm test
 mise exec -- pnpm build
 ```
-
-## Capturing fixtures
-
-```sh
-mise exec -- pnpm fixtures:capture
-```
-
-Optional capture environment variables:
-
-- `LAGUUNI_API_BASE_URL`
-- `LAGUUNI_CAPTURE_ANCHOR_DATE`
-- `LAGUUNI_CAPTURE_SAMPLE_DATE`

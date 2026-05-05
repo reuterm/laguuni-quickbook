@@ -117,9 +117,7 @@ tests/
   msw/
     handlers/
     browser.ts
-    server.ts
-scripts/
-  capture-fixtures/
+  server.ts
 ```
 
 ## Structure rules
@@ -129,7 +127,6 @@ scripts/
 - Put API and storage plumbing in `src/lib`.
 - Keep feature tests close to the feature when they are small and specific.
 - Keep shared fixtures and shared MSW infrastructure under `tests/`.
-- Use `scripts/capture-fixtures/` only for manual maintenance workflows, never during test execution.
 
 ## Testing strategy
 
@@ -270,7 +267,7 @@ For V1, fixture variants should at minimum cover `product_id` values `6`, `7`, a
 
 ### Code checking flow
 
-Observed code validation lookups:
+Observed storefront code validation lookups during discovery:
 
 ```text
 GET /api/laguuni/valuecards/<code>/public.json
@@ -278,7 +275,13 @@ GET /api/laguuni/discounts/<code>/public.json
 GET /api/laguuni/vouchers/<code>.json?action=check&basket=<basket>
 ```
 
-The walking skeleton does not need a real valid code, but fixture coverage should model:
+Current application scope only supports the captured discount path:
+
+```text
+GET /api/laguuni/discounts/<code>/public.json
+```
+
+Fixture coverage should therefore focus on:
 
 - invalid code
 - accepted code with zero-balance outcome
