@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 
+import { resetLaguuniHandlerState } from '../../tests/msw/handlers/laguuni'
 import { server } from '../../tests/msw/server'
 
 beforeAll(() => {
@@ -11,6 +12,7 @@ beforeAll(() => {
 
 afterEach(() => {
   server.resetHandlers()
+  resetLaguuniHandlerState()
 })
 
 afterAll(() => {

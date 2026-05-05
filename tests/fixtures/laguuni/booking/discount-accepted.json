@@ -1,5 +1,11 @@
 {
-  "amount": "10.00",
+  "id": "2796",
   "code": "FIXTURE-DISCOUNT",
-  "status": "ok"
+  "type": "1",
+  "amount": "26",
+  "unit": "1",
+  "usage": "0",
+  "remaining": "0",
+  "deleted": "0",
+  "valid_ts": "1790782795"
 }

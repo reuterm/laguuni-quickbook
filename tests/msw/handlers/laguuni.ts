@@ -11,13 +11,10 @@ import basketFixture from '../../fixtures/laguuni/booking/basket.json'
 import checkoutFailureFixture from '../../fixtures/laguuni/booking/checkout-failure.json'
 import checkoutPaymentRequiredFixture from '../../fixtures/laguuni/booking/checkout-payment-required.json'
 import checkoutSuccessFixture from '../../fixtures/laguuni/booking/checkout-success.json'
+import completeOrderCashreturnFixture from '../../fixtures/laguuni/booking/complete-order-cashreturn.json'
 import discountAcceptedFixture from '../../fixtures/laguuni/booking/discount-accepted.json'
 import discountInvalidFixture from '../../fixtures/laguuni/booking/discount-invalid.json'
-import valueCardAcceptedFixture from '../../fixtures/laguuni/booking/valuecard-accepted.json'
-import valueCardInvalidFixture from '../../fixtures/laguuni/booking/valuecard-invalid.json'
-import voucherAcceptedPaymentFixture from '../../fixtures/laguuni/booking/voucher-accepted-payment-required.json'
-import voucherAcceptedZeroFixture from '../../fixtures/laguuni/booking/voucher-accepted-zero-balance.json'
-import voucherInvalidFixture from '../../fixtures/laguuni/booking/voucher-invalid.json'
+import orderSuccessDetailsFixture from '../../fixtures/laguuni/booking/order-success-details.json'
 
 const availabilityFixtureByProductId = {
   '157': hietsuAvailabilityFixture,
@@ -28,6 +25,12 @@ const availabilityFixtureByProductId = {
 const TEST_API_BASE_URL = normalizeApiBaseUrl(
   process.env.LAGUUNI_API_BASE_URL ?? DEFAULT_LAGUUNI_API_BASE_URL,
 )
+
+const basketStateByToken = new Map<string, BasketState>()
+
+const MOBILEPAY_HANDLER_REDIRECT = {
+  redirectUrl: 'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
+}
 
 export const laguuniHandlers = [
   http.get(`${TEST_API_BASE_URL}/api/laguuni/baskets.json`, () =>
@@ -99,19 +102,6 @@ export const laguuniHandlers = [
   ),
 
   http.get(
-    `${TEST_API_BASE_URL}/api/laguuni/valuecards/:code/public.json`,
-    ({ params }) => {
-      const code = String(params.code)
-
-      if (code === 'FIXTURE-VALUECARD') {
-        return HttpResponse.json(valueCardAcceptedFixture)
-      }
-
-      return HttpResponse.json(valueCardInvalidFixture, { status: 404 })
-    },
-  ),
-
-  http.get(
     `${TEST_API_BASE_URL}/api/laguuni/discounts/:code/public.json`,
     ({ params }) => {
       const code = String(params.code)
@@ -124,65 +114,131 @@ export const laguuniHandlers = [
     },
   ),
 
-  http.get(
-    `${TEST_API_BASE_URL}/api/laguuni/vouchers/:code.json`,
-    ({ params, request }) => {
-      const code = String(params.code)
-      const url = new URL(request.url)
-
-      if (
-        url.searchParams.get('action') !== 'check' ||
-        !url.searchParams.get('basket')
-      ) {
-        return invalidQueryResponse('voucher lookup')
-      }
-
-      if (code === 'FIXTURE-VOUCHER-ZERO') {
-        return HttpResponse.json(voucherAcceptedZeroFixture)
-      }
-
-      if (code === 'FIXTURE-VOUCHER-PAYMENT') {
-        return HttpResponse.json(voucherAcceptedPaymentFixture)
-      }
-
-      return HttpResponse.json(voucherInvalidFixture, { status: 404 })
-    },
-  ),
-
   http.post(
     `${TEST_API_BASE_URL}/api/laguuni/fi_FI/baskets/:basketToken/items/new.json`,
-    async ({ request }) => {
+    async ({ params, request }) => {
+      const basketToken = String(params.basketToken)
       const body = await readRequestBody(request)
+
+      if (isValidApplyCodeBody(body)) {
+        const basketState = getBasketState(basketToken)
+        basketState.hasZeroTotalCode = hasExpectedCode(body, 'FIXTURE-DISCOUNT')
+        return HttpResponse.json(null)
+      }
 
       if (!isValidAddToBasketBody(body)) {
         return invalidRequestBodyResponse('add reservation')
       }
 
+      getBasketState(basketToken).hasReservation = true
+
       return HttpResponse.json(addToBasketFixture)
+    },
+  ),
+
+  http.get(
+    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/baskets/:basketToken/items.json`,
+    ({ params, request }) => {
+      const url = new URL(request.url)
+
+      if (url.searchParams.get('publicreservations') !== 'true') {
+        return invalidQueryResponse('basket items')
+      }
+
+      const basketState = getBasketState(String(params.basketToken))
+
+      if (!basketState.hasReservation) {
+        return HttpResponse.json([])
+      }
+
+      if (basketState.checkoutCompleted) {
+        return HttpResponse.json([])
+      }
+
+      return HttpResponse.json([
+        {
+          discountedprice: basketState.hasZeroTotalCode ? '0' : null,
+          price: '26',
+        },
+      ])
     },
   ),
 
   http.post(
     `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
     async ({ params, request }) => {
+      const basketToken = String(params.basketToken)
       const body = await readRequestBody(request)
 
       if (!isValidCheckoutBody(body)) {
         return invalidRequestBodyResponse('submit checkout')
       }
 
-      if (String(params.basketToken) === 'fixture-basket-payment') {
+      const basketState = getBasketState(basketToken)
+      basketState.checkoutCompleted = true
+
+      if (basketToken === 'fixture-basket-payment') {
         return HttpResponse.json(checkoutPaymentRequiredFixture)
       }
 
-      if (String(params.basketToken) === 'fixture-basket-failure') {
+      if (basketToken === 'fixture-basket-failure') {
         return HttpResponse.json(checkoutFailureFixture)
       }
 
-      return HttpResponse.json(checkoutSuccessFixture)
+      if (isRecord(body) && body.payment === 'cash') {
+        return HttpResponse.json(checkoutSuccessFixture)
+      }
+
+      return HttpResponse.json(checkoutPaymentRequiredFixture)
     },
   ),
+
+  http.get(
+    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/rest/post/mobilepayhandler/:token.json`,
+    ({ request }) => {
+      const url = new URL(request.url)
+
+      if (
+        url.searchParams.get('method') !== 'Create' ||
+        url.searchParams.get('domain') !== 'shop.laguuniin.fi'
+      ) {
+        return invalidQueryResponse('mobilepay handler')
+      }
+
+      return HttpResponse.json(MOBILEPAY_HANDLER_REDIRECT)
+    },
+  ),
+
+  http.post(
+    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/completeorderhandler/:identifier/cashreturn.json`,
+    ({ params }) =>
+      HttpResponse.json({
+        items: {
+          ...completeOrderCashreturnFixture.items,
+          identifier: String(params.identifier),
+        },
+      }),
+  ),
+
+  http.get(
+    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:identifier.json`,
+    ({ params }) =>
+      HttpResponse.json({
+        ...orderSuccessDetailsFixture,
+        identifier: String(params.identifier),
+      }),
+  ),
 ]
+
+type BasketState = {
+  checkoutCompleted: boolean
+  hasZeroTotalCode: boolean
+  hasReservation: boolean
+}
+
+export function resetLaguuniHandlerState() {
+  basketStateByToken.clear()
+}
 
 function matchesSearchParams(
   url: URL,
@@ -191,6 +247,23 @@ function matchesSearchParams(
   return Object.entries(expectedParams).every(
     ([key, value]) => url.searchParams.get(key) === value,
   )
+}
+
+function getBasketState(basketToken: string): BasketState {
+  const existingState = basketStateByToken.get(basketToken)
+
+  if (existingState) {
+    return existingState
+  }
+
+  const nextState: BasketState = {
+    checkoutCompleted: false,
+    hasZeroTotalCode: false,
+    hasReservation: false,
+  }
+  basketStateByToken.set(basketToken, nextState)
+
+  return nextState
 }
 
 function invalidQueryResponse(operation: string) {
@@ -248,11 +321,19 @@ function isValidCheckoutBody(value: unknown): boolean {
     value.master === 1 &&
     value.more === null &&
     typeof value.name === 'string' &&
-    value.payment === 'bambora' &&
+    (value.payment === 'mobilepay' || value.payment === 'cash') &&
     typeof value.phone === 'string' &&
     value.terms_accepted === 1 &&
     value.version === 'fi_FI'
   )
+}
+
+function isValidApplyCodeBody(value: unknown): boolean {
+  return isRecord(value) && typeof value.code === 'string'
+}
+
+function hasExpectedCode(value: unknown, expectedCode: string): boolean {
+  return isRecord(value) && value.code === expectedCode
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
