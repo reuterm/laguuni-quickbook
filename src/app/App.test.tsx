@@ -128,7 +128,7 @@ describe('App', () => {
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
-      seasonPassCode: 'FIXTURE-VOUCHER-ZERO',
+      seasonPassCode: 'FIXTURE-DISCOUNT',
     })
 
     renderApp({

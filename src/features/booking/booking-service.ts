@@ -62,8 +62,7 @@ export class DefaultBookingService implements BookingService {
       diagnosticsReporter.recordReservationAdded(selection)
 
       if (normalizedCode) {
-        const lookupResult = await loadCodeLookupResult(this.#api, {
-          basketToken,
+        const lookupResult = await this.#api.lookupCode({
           code: normalizedCode,
         })
 
@@ -73,14 +72,27 @@ export class DefaultBookingService implements BookingService {
           return mapInvalidCodeLookupToFailure(lookupResult)
         }
 
+        await this.#api.applyCodeToBasket({
+          basketToken,
+          code: normalizedCode,
+        })
+        diagnosticsReporter.recordCodeApplied(lookupResult.source)
+
         diagnosticsReporter.recordCodeAccepted(lookupResult)
       }
 
+      const basketPricing = await this.#api.loadBasketPricingSummary(basketToken)
+
       const checkoutResult = await this.#api.submitCheckout({
         basketToken,
+        observePaymentRedirect: (redirectUrl) => {
+          diagnosticsReporter.recordCheckoutRedirectObserved(redirectUrl)
+        },
         observeResponse: (observation) => {
           diagnosticsReporter.recordCheckoutResponseObserved(observation)
         },
+        paymentMethod:
+          basketPricing.totalDueCents === 0 ? 'cash' : 'mobilepay',
         profile: profileValidation.profile,
       })
       const bookingResult =
@@ -98,19 +110,6 @@ export class DefaultBookingService implements BookingService {
 
 const NOOP_DIAGNOSTICS: Pick<Diagnostics, 'append'> = {
   append() {},
-}
-
-async function loadCodeLookupResult(
-  api: LaguuniApi,
-  request: {
-    basketToken: string
-    code: string
-  },
-): Promise<BookingCodeValidationResult> {
-  return api.lookupCode({
-    basketToken: request.basketToken,
-    code: request.code,
-  })
 }
 
 function mapCheckoutSubmissionToBookingFlowResult(

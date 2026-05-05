@@ -1,4 +1,5 @@
 import type { BookingProfile, BookingSlotSelection } from '../../domain/booking'
+import type { CheckoutPaymentMethod } from './booking-contracts'
 import { getCableById } from '../../domain/cable'
 
 export function createAddReservationRequestBody(
@@ -18,7 +19,10 @@ export function createAddReservationRequestBody(
   }
 }
 
-export function createCheckoutRequestBody(profile: BookingProfile) {
+export function createCheckoutRequestBody(
+  profile: BookingProfile,
+  paymentMethod: CheckoutPaymentMethod,
+) {
   return {
     allowmarketing: 0,
     consolidated: 0,
@@ -28,11 +32,15 @@ export function createCheckoutRequestBody(profile: BookingProfile) {
     master: 1,
     more: null,
     name: profile.name,
-    payment: 'bambora',
+    payment: paymentMethod,
     phone: profile.phone,
     terms_accepted: 1,
     version: 'fi_FI',
   }
+}
+
+export function createApplyCodeRequestBody(code: string) {
+  return { code }
 }
 
 function formatStorefrontDate(date: string): string {

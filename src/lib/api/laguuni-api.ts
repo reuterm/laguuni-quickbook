@@ -13,9 +13,13 @@ import {
   type AddReservationArgs,
   type AddReservationResponse,
   addReservationToBasket as addReservationToBasketRequest,
+  applyCodeToBasket as applyCodeToBasketRequest,
   createBasket as createBasketRequest,
+  loadBasketPricingSummary as loadBasketPricingSummaryRequest,
   type LookupCodeArgs,
   lookupCode as lookupCodeRequest,
+  type ApplyCodeArgs,
+  type BasketPricingSummary,
   type SubmitCheckoutArgs,
   submitCheckout as submitCheckoutRequest,
 } from './booking-api'
@@ -27,6 +31,7 @@ export type LaguuniApi = {
     basketToken: BasketToken
     selection: BookingSlotSelection
   }): Promise<AddReservationResponse>
+  applyCodeToBasket(args: ApplyCodeArgs): Promise<void>
   createBasket(): Promise<BasketToken>
   getAvailableDates(
     cableId: CableId,
@@ -37,6 +42,7 @@ export type LaguuniApi = {
     date: string,
   ): Promise<DailyAvailabilityWindow>
   lookupCode(args: LookupCodeArgs): Promise<BookingCodeValidationResult>
+  loadBasketPricingSummary(basketToken: BasketToken): Promise<BasketPricingSummary>
   submitCheckout(args: SubmitCheckoutArgs): Promise<BookingCheckoutResult>
 }
 
@@ -65,6 +71,13 @@ export class LaguuniApiClient implements LaguuniApi {
     return createBasketRequest(this.#client)
   }
 
+  async applyCodeToBasket({ basketToken, code }: ApplyCodeArgs): Promise<void> {
+    return applyCodeToBasketRequest(this.#client, {
+      basketToken,
+      code,
+    })
+  }
+
   async getAvailableDates(
     cableId: CableId,
     anchorDate: string,
@@ -80,23 +93,31 @@ export class LaguuniApiClient implements LaguuniApi {
   }
 
   async lookupCode({
-    basketToken,
     code,
   }: LookupCodeArgs): Promise<BookingCodeValidationResult> {
     return lookupCodeRequest(this.#client, {
-      basketToken,
       code,
     })
   }
 
+  async loadBasketPricingSummary(
+    basketToken: BasketToken,
+  ): Promise<BasketPricingSummary> {
+    return loadBasketPricingSummaryRequest(this.#client, basketToken)
+  }
+
   async submitCheckout({
     basketToken,
+    observePaymentRedirect,
     observeResponse,
+    paymentMethod,
     profile,
   }: SubmitCheckoutArgs): Promise<BookingCheckoutResult> {
     return submitCheckoutRequest(this.#client, {
       basketToken,
+      ...(observePaymentRedirect ? { observePaymentRedirect } : {}),
       profile,
+      paymentMethod,
       ...(observeResponse ? { observeResponse } : {}),
     })
   }

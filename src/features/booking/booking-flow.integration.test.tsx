@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 
+import checkoutFailureFixture from '../../../tests/fixtures/laguuni/booking/checkout-failure.json'
+import checkoutPaymentRequiredFixture from '../../../tests/fixtures/laguuni/booking/checkout-payment-required.json'
 import { server } from '../../../tests/msw/server'
 import {
   DEFAULT_LAGUUNI_API_BASE_URL,
@@ -15,6 +17,10 @@ import {
 import { renderApp } from '../../test/render-app'
 
 const TEST_API_BASE_URL = normalizeApiBaseUrl(DEFAULT_LAGUUNI_API_BASE_URL)
+
+const MOBILEPAY_HANDLER_REDIRECT = {
+  redirectUrl: 'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
+}
 
 describe('booking flow integration', () => {
   beforeEach(() => {
@@ -29,18 +35,15 @@ describe('booking flow integration', () => {
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
-      seasonPassCode: 'FIXTURE-VOUCHER-PAYMENT',
     })
     server.use(
       http.post(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
-        () =>
-          HttpResponse.json({
-            order: 'fixture-order-id',
-            paymentRequired: true,
-            redirectUrl: 'https://shop.laguuniin.fi/pay/fixture-payment-token',
-            status: 'ok',
-          }),
+        () => HttpResponse.json(checkoutPaymentRequiredFixture),
+      ),
+      http.get(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/rest/post/mobilepayhandler/:token.json`,
+        () => HttpResponse.json(MOBILEPAY_HANDLER_REDIRECT),
       ),
     )
 
@@ -54,7 +57,7 @@ describe('booking flow integration', () => {
       screen.getByRole('link', { name: 'Continue to payment' }),
     ).toHaveAttribute(
       'href',
-      'https://shop.laguuniin.fi/pay/fixture-payment-token',
+      'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
     )
   })
 
@@ -82,15 +85,7 @@ describe('booking flow integration', () => {
     server.use(
       http.post(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
-        () =>
-          HttpResponse.json(
-            {
-              errorCode: 'GENERAL_ERROR',
-              errorMessage: 'Fixture checkout failed.',
-              status: 'error',
-            },
-            { status: 200 },
-          ),
+        () => HttpResponse.json(checkoutFailureFixture, { status: 200 }),
       ),
     )
 
@@ -102,6 +97,39 @@ describe('booking flow integration', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent(
       'could not be completed during checkout',
+    )
+  })
+
+  it('shows payment required when checkout returns a plain token string', async () => {
+    const user = userEvent.setup()
+
+    saveUserSettings({
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+    })
+    server.use(
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
+        () => HttpResponse.json(checkoutPaymentRequiredFixture),
+      ),
+      http.get(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/rest/post/mobilepayhandler/:token.json`,
+        () => HttpResponse.json(MOBILEPAY_HANDLER_REDIRECT),
+      ),
+    )
+
+    renderApp()
+    await clickFirstBookButton(user)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Payment required' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Continue to payment' }),
+    ).toHaveAttribute(
+      'href',
+      'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
     )
   })
 

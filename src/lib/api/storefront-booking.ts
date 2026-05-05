@@ -6,7 +6,7 @@ export type AcceptedCodePayload = {
   code?: string | undefined
   remainingBalanceCents?: number | string | undefined
   remainingValue?: string | undefined
-  status: 'ok'
+  status?: 'ok' | undefined
 }
 
 export type InvalidCodePayload = {
@@ -16,3 +16,8 @@ export type InvalidCodePayload = {
 }
 
 export type CodeLookupPayload = AcceptedCodePayload | InvalidCodePayload
+
+export type BasketItemPayload = {
+  discountedprice?: number | string | null | undefined
+  price?: number | string | null | undefined
+}

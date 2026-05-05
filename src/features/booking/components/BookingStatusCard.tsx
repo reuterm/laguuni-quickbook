@@ -166,7 +166,10 @@ function getResultPresentation(
       }
     case 'payment_required':
       return {
-        body: `${selectionLabel} was added successfully. Continue to payment to finish checkout.`,
+        body:
+          result.redirectUrl !== null
+            ? `${selectionLabel} was added successfully. Continue to payment to finish checkout.`
+            : `${selectionLabel} was added successfully. Finish checkout in the storefront payment flow.`,
         icon: CreditCard,
         role: 'status',
         tone: statusToneClassNames.warning,

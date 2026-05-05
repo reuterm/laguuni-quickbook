@@ -5,6 +5,17 @@ export type AddReservationResponse = {
   itemId: string
 }
 
+export type ApplyCodeArgs = {
+  basketToken: BasketToken
+  code: string
+}
+
+export type BasketPricingSummary = {
+  totalDueCents: number
+}
+
+export type CheckoutPaymentMethod = 'cash' | 'mobilepay'
+
 export type CheckoutResponseFieldKind =
   | 'boolean'
   | 'missing'
@@ -25,7 +36,6 @@ export type CheckoutResponseObservation = {
 }
 
 export type LookupCodeArgs = {
-  basketToken: BasketToken
   code: string
 }
 
@@ -37,5 +47,7 @@ export type AddReservationArgs = {
 export type SubmitCheckoutArgs = {
   basketToken: BasketToken
   observeResponse?: (observation: CheckoutResponseObservation) => void
+  observePaymentRedirect?: (redirectUrl: string | null) => void
+  paymentMethod: CheckoutPaymentMethod
   profile: BookingProfile
 }

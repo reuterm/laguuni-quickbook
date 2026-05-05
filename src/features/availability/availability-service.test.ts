@@ -17,9 +17,11 @@ describe('loadAvailabilityOverview', () => {
     )
     const api = {
       addReservationToBasket: unexpectedApiCall,
+      applyCodeToBasket: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       getAvailableDates: unexpectedApiCall,
       getDailyAvailabilityWindow,
+      loadBasketPricingSummary: unexpectedApiCall,
       lookupCode: unexpectedApiCall,
       submitCheckout: unexpectedApiCall,
     } satisfies LaguuniApi

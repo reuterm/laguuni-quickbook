@@ -17,26 +17,32 @@ const profile = {
   phone: '+358401234567',
 }
 
+const fixtureMobilePayRedirectUrl =
+  'https://pay.mobilepay.fi/?token=fixture-mobilepay-session'
+
 function createApiStub(): LaguuniApi {
   return {
     addReservationToBasket: vi.fn(async () => ({
       itemId: 'fixture-item-id',
     })),
+    applyCodeToBasket: vi.fn(async () => {}),
     createBasket: vi.fn(async () => 'created-basket-token'),
     getAvailableDates: vi.fn(),
     getDailyAvailabilityWindow: vi.fn(),
+    loadBasketPricingSummary: vi.fn(async () => ({
+      totalDueCents: 0,
+    })),
     lookupCode: vi.fn(async () => ({
       payload: {
-        code: 'FIXTURE-VOUCHER-ZERO',
-        remainingValue: '0.00',
-        status: 'ok' as const,
+        code: 'FIXTURE-DISCOUNT',
+        amount: '26',
       },
-      remainingBalanceCents: 0,
-      source: 'voucher' as const,
+      remainingBalanceCents: null,
+      source: 'discount' as const,
       status: 'accepted' as const,
     })),
     submitCheckout: vi.fn(async () => ({
-      orderId: 'fixture-order-id',
+      orderIdentifier: 'fixture-order-id',
       status: 'success' as const,
     })),
   }
@@ -49,12 +55,12 @@ describe('DefaultBookingService', () => {
 
     await expect(
       service.book({
-        code: 'FIXTURE-VOUCHER-ZERO',
+        code: 'FIXTURE-DISCOUNT',
         profile,
         selection,
       }),
     ).resolves.toEqual({
-      orderId: 'fixture-order-id',
+      orderIdentifier: 'fixture-order-id',
       status: 'success',
     })
 
@@ -64,12 +70,19 @@ describe('DefaultBookingService', () => {
       selection,
     })
     expect(api.lookupCode).toHaveBeenCalledWith({
-      basketToken: 'created-basket-token',
-      code: 'FIXTURE-VOUCHER-ZERO',
+      code: 'FIXTURE-DISCOUNT',
     })
+    expect(api.applyCodeToBasket).toHaveBeenCalledWith({
+      basketToken: 'created-basket-token',
+      code: 'FIXTURE-DISCOUNT',
+    })
+    expect(api.loadBasketPricingSummary).toHaveBeenCalledWith(
+      'created-basket-token',
+    )
     expect(api.submitCheckout).toHaveBeenCalledWith(
       expect.objectContaining({
         basketToken: 'created-basket-token',
+        paymentMethod: 'cash',
         profile,
       }),
     )
@@ -100,6 +113,7 @@ describe('DefaultBookingService', () => {
     })
 
     expect(api.submitCheckout).not.toHaveBeenCalled()
+    expect(api.applyCodeToBasket).not.toHaveBeenCalled()
   })
 
   it('fails early when required booking profile details are missing', async () => {
@@ -124,6 +138,34 @@ describe('DefaultBookingService', () => {
     expect(api.createBasket).not.toHaveBeenCalled()
   })
 
+  it('uses paid checkout when accepted code leaves a remaining balance', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.loadBasketPricingSummary).mockResolvedValueOnce({
+      totalDueCents: 1200,
+    })
+
+    const service = new DefaultBookingService({ api })
+
+    await expect(
+      service.book({
+        code: 'FIXTURE-DISCOUNT',
+        profile,
+        selection,
+      }),
+    ).resolves.toEqual({
+      orderIdentifier: 'fixture-order-id',
+      status: 'success',
+    })
+
+    expect(api.submitCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        basketToken: 'created-basket-token',
+        paymentMethod: 'mobilepay',
+      }),
+    )
+  })
+
   it('logs booking flow events without persisting raw code or profile data', async () => {
     const diagnostics = new LocalDiagnosticsStore({
       appVersion: '0.1.0',
@@ -139,12 +181,12 @@ describe('DefaultBookingService', () => {
 
     await expect(
       service.book({
-        code: 'FIXTURE-VOUCHER-ZERO',
+        code: 'FIXTURE-DISCOUNT',
         profile,
         selection,
       }),
     ).resolves.toEqual({
-      orderId: 'fixture-order-id',
+      orderIdentifier: 'fixture-order-id',
       status: 'success',
     })
 
@@ -152,7 +194,8 @@ describe('DefaultBookingService', () => {
 
     expect(exportedLogs).toContain('lqk-fixedtrace')
     expect(exportedLogs).toContain('booking.started')
-    expect(exportedLogs).not.toContain('FIXTURE-VOUCHER-ZERO')
+    expect(exportedLogs).toContain('booking.code_applied')
+    expect(exportedLogs).not.toContain('FIXTURE-DISCOUNT')
     expect(exportedLogs).not.toContain('test@example.com')
     expect(exportedLogs).not.toContain('+358401234567')
   })
@@ -217,8 +260,8 @@ describe('DefaultBookingService', () => {
       })
 
       return {
-        orderId: '12345',
-        redirectUrl: 'https://shop.laguuniin.fi/pay/fixture-payment-token',
+        orderIdentifier: '12345',
+        redirectUrl: fixtureMobilePayRedirectUrl,
         status: 'payment_required',
       }
     })
@@ -234,8 +277,8 @@ describe('DefaultBookingService', () => {
         selection,
       }),
     ).resolves.toEqual({
-      orderId: '12345',
-      redirectUrl: 'https://shop.laguuniin.fi/pay/fixture-payment-token',
+      orderIdentifier: '12345',
+      redirectUrl: fixtureMobilePayRedirectUrl,
       status: 'payment_required',
     })
 
@@ -244,6 +287,49 @@ describe('DefaultBookingService', () => {
     expect(exportedLogs).toContain('booking.checkout_response_observed')
     expect(exportedLogs).toContain('order,provider,redirectUrl,status')
     expect(exportedLogs).not.toContain('fixture-payment-token')
+  })
+
+  it('records sanitized payment redirect diagnostics without storing raw tokens', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      platform: 'Vitest Browser',
+      storage: createMemoryStorage(),
+      traceId: 'lqk-fixedtrace',
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockImplementationOnce(async (request) => {
+      request.observePaymentRedirect?.(fixtureMobilePayRedirectUrl)
+
+      return {
+        orderIdentifier: null,
+        redirectUrl: fixtureMobilePayRedirectUrl,
+        status: 'payment_required',
+      }
+    })
+
+    const service = new DefaultBookingService({
+      api,
+      diagnostics,
+    })
+
+    await expect(
+      service.book({
+        profile,
+        selection,
+      }),
+    ).resolves.toEqual({
+      orderIdentifier: null,
+      redirectUrl: fixtureMobilePayRedirectUrl,
+      status: 'payment_required',
+    })
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(exportedLogs).toContain('booking.checkout_redirect_observed')
+    expect(exportedLogs).toContain('pay.mobilepay.fi')
+    expect(exportedLogs).toContain('/')
+    expect(exportedLogs).not.toContain('test@example.com')
   })
 })
 

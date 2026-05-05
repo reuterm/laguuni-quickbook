@@ -13,7 +13,7 @@ export type BookingProfile = {
   phone: string
 }
 
-export type BookingCodeSource = 'valuecard' | 'discount' | 'voucher'
+export type BookingCodeSource = 'discount'
 
 export type BookingCodeValidationResult =
   | {
@@ -34,12 +34,12 @@ export type BookingCheckoutFailure = {
 }
 
 type BookingCheckoutSuccess = {
-  orderId: string | null
+  orderIdentifier: string | null
   status: 'success'
 }
 
 type BookingCheckoutPaymentRequired = {
-  orderId: string | null
+  orderIdentifier: string | null
   redirectUrl: string | null
   status: 'payment_required'
 }

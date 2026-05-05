@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest'
 
 import type { BookingProfile, BookingSlotSelection } from '../../domain/booking'
-import { addReservationToBasket, submitCheckout } from './booking-api'
+import {
+  addReservationToBasket,
+  applyCodeToBasket,
+  loadBasketPricingSummary,
+  submitCheckout,
+} from './booking-api'
 import type { CheckoutResponseObservation } from './booking-contracts'
 import type { HttpClient, HttpRequest, HttpResponse } from './client'
 
 describe('booking-api transport mapping', () => {
   it('maps domain slot selections to storefront basket payloads', async () => {
     const requests: HttpRequest<unknown>[] = []
-    const client = createCapturingClient(requests, 249179)
+    const client = createCapturingClient(requests, 249253)
 
     await expect(
       addReservationToBasket(client, {
@@ -21,7 +26,7 @@ describe('booking-api transport mapping', () => {
         } satisfies BookingSlotSelection,
       }),
     ).resolves.toEqual({
-      itemId: '249179',
+      itemId: '249253',
     })
 
     expect(requests[0]).toMatchObject({
@@ -50,6 +55,7 @@ describe('booking-api transport mapping', () => {
     await expect(
       submitCheckout(client, {
         basketToken: 'fixture-basket-token',
+        paymentMethod: 'cash',
         profile: {
           email: 'test@example.com',
           name: 'Test User',
@@ -57,7 +63,7 @@ describe('booking-api transport mapping', () => {
         } satisfies BookingProfile,
       }),
     ).resolves.toEqual({
-      orderId: 'fixture-order-id',
+      orderIdentifier: 'fixture-order-id',
       status: 'success',
     })
 
@@ -71,7 +77,7 @@ describe('booking-api transport mapping', () => {
         master: 1,
         more: null,
         name: 'Test User',
-        payment: 'bambora',
+        payment: 'cash',
         phone: '+358401234567',
         terms_accepted: 1,
         version: 'fi_FI',
@@ -86,7 +92,7 @@ describe('booking-api transport mapping', () => {
     const observations: CheckoutResponseObservation[] = []
     const client = createCapturingClient(requests, {
       order: 12345,
-      provider: 'bambora',
+      provider: 'mobilepay',
       redirectUrl: 'https://shop.laguuniin.fi/pay/fixture-payment-token',
       status: 'pending',
     })
@@ -97,6 +103,7 @@ describe('booking-api transport mapping', () => {
         observeResponse: (observation) => {
           observations.push(observation)
         },
+        paymentMethod: 'mobilepay',
         profile: {
           email: 'test@example.com',
           name: 'Test User',
@@ -104,7 +111,7 @@ describe('booking-api transport mapping', () => {
         } satisfies BookingProfile,
       }),
     ).resolves.toEqual({
-      orderId: '12345',
+      orderIdentifier: '12345',
       redirectUrl: 'https://shop.laguuniin.fi/pay/fixture-payment-token',
       status: 'payment_required',
     })
@@ -122,6 +129,141 @@ describe('booking-api transport mapping', () => {
       },
     ])
   })
+
+  it('treats string checkout responses as payment handoff tokens', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const observations: CheckoutResponseObservation[] = []
+    const client = createSequentialCapturingClient(
+      requests,
+      'fixture-payment-token',
+      'https://pay.mobilepay.fi/fixture-session',
+    )
+
+    await expect(
+      submitCheckout(client, {
+        basketToken: 'fixture-basket-token',
+        observeResponse: (observation) => {
+          observations.push(observation)
+        },
+        paymentMethod: 'mobilepay',
+        profile: {
+          email: 'test@example.com',
+          name: 'Test User',
+          phone: '+358401234567',
+        } satisfies BookingProfile,
+      }),
+    ).resolves.toEqual({
+      orderIdentifier: null,
+      redirectUrl: 'https://pay.mobilepay.fi/fixture-session',
+      status: 'payment_required',
+    })
+
+    expect(observations).toEqual([
+      {
+        hasErrorCode: false,
+        hasErrorMessage: false,
+        normalizedStatus: 'ok',
+        orderFieldKind: 'string',
+        paymentRequiredFieldKind: 'missing',
+        rawStatus: null,
+        redirectUrlFieldKind: 'missing',
+        responseKeys: '',
+      },
+    ])
+    expect(requests[1]).toMatchObject({
+      path: '/api/laguuni/fi_FI/rest/post/mobilepayhandler/fixture-payment-token.json',
+      query: {
+        domain: 'shop.laguuniin.fi',
+        method: 'Create',
+      },
+    })
+  })
+
+  it('treats string checkout responses as success for zero-total cash checkout', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const client = createSequentialCapturingClient(
+      requests,
+      'fixture-order-id',
+      {
+        items: {
+          identifier: 'fixture-order-id',
+          payment: 'cash',
+          success: true,
+        },
+      },
+      {
+        id: 'fixture-numeric-order-id',
+        identifier: 'fixture-order-id',
+        payment: 'cash',
+        paid: '1',
+        completed: '1',
+      },
+    )
+
+    await expect(
+      submitCheckout(client, {
+        basketToken: 'fixture-basket-token',
+        paymentMethod: 'cash',
+        profile: {
+          email: 'test@example.com',
+          name: 'Test User',
+          phone: '+358401234567',
+        } satisfies BookingProfile,
+      }),
+    ).resolves.toEqual({
+      orderIdentifier: 'fixture-order-id',
+      status: 'success',
+    })
+
+    expect(requests[1]).toMatchObject({
+      method: 'POST',
+      path: '/api/laguuni/fi_FI/completeorderhandler/fixture-order-id/cashreturn.json',
+    })
+    expect(requests[2]).toMatchObject({
+      path: '/api/laguuni/fi_FI/orders/fixture-order-id.json',
+    })
+  })
+
+  it('applies accepted codes through the basket items endpoint', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const client = createCapturingClient(requests, null)
+
+    await expect(
+      applyCodeToBasket(client, {
+        basketToken: 'fixture-basket-token',
+        code: 'FIXTURE-CODE',
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(requests[0]).toMatchObject({
+      body: {
+        code: 'FIXTURE-CODE',
+      },
+      method: 'POST',
+      path: '/api/laguuni/fi_FI/baskets/fixture-basket-token/items/new.json',
+    })
+  })
+
+  it('sums basket pricing using discounted prices when present', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const client = createCapturingClient(requests, [
+      { discountedprice: '0', price: '26' },
+      { price: '5' },
+    ])
+
+    await expect(
+      loadBasketPricingSummary(client, 'fixture-basket-token'),
+    ).resolves.toEqual({
+      totalDueCents: 500,
+    })
+
+    expect(requests[0]).toMatchObject({
+      path: '/api/laguuni/fi_FI/baskets/fixture-basket-token/items.json',
+      query: {
+        publicreservations: true,
+      },
+    })
+  })
 })
 
 function createCapturingClient(
@@ -134,6 +276,30 @@ function createCapturingClient(
 
       return {
         data: request.decoder(responseData),
+        status: 200,
+      } satisfies HttpResponse<R>
+    },
+  }
+}
+
+function createSequentialCapturingClient(
+  requests: HttpRequest<unknown>[],
+  ...responseQueue: unknown[]
+): HttpClient {
+  const queuedResponses = [...responseQueue]
+
+  return {
+    async request<R>(request: HttpRequest<R>) {
+      requests.push(request as HttpRequest<unknown>)
+
+      const nextResponse = queuedResponses.shift()
+
+      if (nextResponse === undefined) {
+        throw new Error('No queued response was configured for this HTTP request')
+      }
+
+      return {
+        data: request.decoder(nextResponse),
         status: 200,
       } satisfies HttpResponse<R>
     },

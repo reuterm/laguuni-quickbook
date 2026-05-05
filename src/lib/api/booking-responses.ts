@@ -13,6 +13,7 @@ import type { HttpResponse } from './client'
 import { expectResponse } from './response'
 import type {
   AcceptedCodePayload,
+  BasketItemPayload,
   BasketToken,
   CodeLookupPayload,
   InvalidCodePayload,
@@ -28,10 +29,23 @@ type CheckoutResponse =
   | {
       order?: string | undefined
       observation: CheckoutResponseObservation
+      paymentToken?: string | undefined
       paymentRequired?: boolean | undefined
       redirectUrl?: string | null | undefined
       status: 'ok'
     }
+
+type PaymentRedirectResponse = {
+  redirectUrl: string | null
+}
+
+type CompletedCashCheckoutResponse = {
+  identifier: string
+}
+
+type CompletedOrderDetailsResponse = {
+  identifier: string
+}
 
 export function createAcceptedCodeLookupResult(
   payload: AcceptedCodePayload,
@@ -84,12 +98,30 @@ export function decodeAddReservationResponse(
   }
 }
 
+export function decodeBasketPricingSummary(
+  value: unknown,
+): { totalDueCents: number } {
+  if (!Array.isArray(value)) {
+    throw new Error('Basket items response must be an array')
+  }
+
+  return {
+    totalDueCents: value.reduce((total, item) => {
+      if (!isRecord(item)) {
+        throw new Error('Basket items response must contain objects')
+      }
+
+      return total + readBasketItemAmountCents(item as BasketItemPayload)
+    }, 0),
+  }
+}
+
 export function decodeCodeLookupPayload(value: unknown): CodeLookupPayload {
   if (!isRecord(value)) {
     throw new Error('Code lookup response must be an object')
   }
 
-  const status = readRequiredString(value, 'status')
+  const status = readOptionalString(value, 'status')
 
   if (status === 'ok') {
     return {
@@ -105,6 +137,20 @@ export function decodeCodeLookupPayload(value: unknown): CodeLookupPayload {
     }
   }
 
+  if (looksLikeAcceptedCodePayload(value)) {
+    return {
+      amount: readOptionalString(value, 'amount'),
+      balance: readOptionalNumberOrString(value, 'balance'),
+      code: readOptionalString(value, 'code'),
+      remainingBalanceCents: readOptionalNumberOrString(
+        value,
+        'remainingBalanceCents',
+      ),
+      remainingValue: readOptionalString(value, 'remainingValue'),
+      status: 'ok',
+    }
+  }
+
   if (status === 'error') {
     return {
       errorCode: readOptionalString(value, 'errorCode'),
@@ -117,8 +163,18 @@ export function decodeCodeLookupPayload(value: unknown): CodeLookupPayload {
 }
 
 export function decodeCheckoutResponse(value: unknown): CheckoutResponse {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return {
+      observation: createPrimitiveCheckoutResponseObservation(value),
+      paymentToken: normalizeRequiredIdentifier(value, 'checkout payment token'),
+      status: 'ok',
+    }
+  }
+
   if (!isRecord(value)) {
-    throw new Error('Checkout response must be an object')
+    throw new Error(
+      'Checkout response must be an object or an order identifier string/number',
+    )
   }
 
   // Temporary: keep checkout decoding permissive until we capture the exact
@@ -144,6 +200,77 @@ export function decodeCheckoutResponse(value: unknown): CheckoutResponse {
     paymentRequired: readOptionalBooleanLike(value, 'paymentRequired'),
     redirectUrl: readOptionalNullableStringLike(value, 'redirectUrl'),
     status: 'ok',
+  }
+}
+
+export function decodePaymentRedirectResponse(
+  value: unknown,
+): PaymentRedirectResponse {
+  if (typeof value === 'string') {
+    return {
+      redirectUrl: normalizeOptionalRedirectUrl(value) ?? null,
+    }
+  }
+
+  if (!isRecord(value)) {
+    throw new Error('Payment redirect response must be an object or URL string')
+  }
+
+  return {
+    redirectUrl:
+      readOptionalRedirectUrl(value, [
+        'href',
+        'location',
+        'redirectUrl',
+        'url',
+      ]) ?? null,
+  }
+}
+
+export function decodeCompletedCashCheckoutResponse(
+  value: unknown,
+): CompletedCashCheckoutResponse {
+  if (!isRecord(value) || !isRecord(value.items)) {
+    throw new Error('Completed cash checkout response must contain an items object')
+  }
+
+  const items = value.items
+  const success = readOptionalBooleanLike(items, 'success')
+
+  if (success !== true) {
+    throw new Error('Completed cash checkout response must report success')
+  }
+
+  if (readOptionalString(items, 'payment') !== 'cash') {
+    throw new Error('Completed cash checkout response must report cash payment')
+  }
+
+  return {
+    identifier: readRequiredIdentifier(items, 'identifier'),
+  }
+}
+
+export function decodeCompletedOrderDetailsResponse(
+  value: unknown,
+): CompletedOrderDetailsResponse {
+  if (!isRecord(value)) {
+    throw new Error('Completed order details response must be an object')
+  }
+
+  if (readOptionalString(value, 'payment') !== 'cash') {
+    throw new Error('Completed order details response must report cash payment')
+  }
+
+  if (readOptionalString(value, 'paid') !== '1') {
+    throw new Error('Completed order details response must report paid status')
+  }
+
+  if (readOptionalString(value, 'completed') !== '1') {
+    throw new Error('Completed order details response must report completed status')
+  }
+
+  return {
+    identifier: readRequiredIdentifier(value, 'identifier'),
   }
 }
 
@@ -195,30 +322,25 @@ export function mapCheckoutResponseToResult(
   ) {
     // Temporary: treat any redirect URL as a payment handoff until the exact
     // storefront success contract is captured from a real checkout response.
-    return {
-      orderId: checkout.order ?? null,
-      redirectUrl: checkout.redirectUrl ?? null,
-      status: 'payment_required',
-    }
+      return {
+        orderIdentifier: checkout.order ?? null,
+        redirectUrl: checkout.redirectUrl ?? null,
+        status: 'payment_required',
+      }
   }
 
   return {
-    orderId: checkout.order ?? null,
+    orderIdentifier: checkout.order ?? null,
     status: 'success',
   }
 }
 
-function readRequiredString(
-  value: Record<string, unknown>,
-  key: string,
-): string {
-  const field = value[key]
-
-  if (typeof field !== 'string') {
-    throw new Error(`Expected "${key}" to be a string`)
-  }
-
-  return field
+export function hasCheckoutPaymentToken(
+  checkout: CheckoutResponse,
+): checkout is Extract<CheckoutResponse, { status: 'ok' }> & {
+  paymentToken: string
+} {
+  return checkout.status === 'ok' && typeof checkout.paymentToken === 'string'
 }
 
 function readOptionalString(
@@ -236,6 +358,16 @@ function readOptionalString(
   }
 
   return field
+}
+
+function looksLikeAcceptedCodePayload(value: Record<string, unknown>): boolean {
+  return (
+    readOptionalString(value, 'code') !== undefined ||
+    readOptionalString(value, 'amount') !== undefined ||
+    readOptionalString(value, 'remainingValue') !== undefined ||
+    readOptionalNumberOrString(value, 'remainingBalanceCents') !== undefined ||
+    readOptionalNumberOrString(value, 'balance') !== undefined
+  )
 }
 
 function readOptionalStringLike(
@@ -275,6 +407,21 @@ function readOptionalNullableStringLike(
 
   if (typeof field === 'number' && Number.isFinite(field)) {
     return String(field)
+  }
+
+  return undefined
+}
+
+function readOptionalRedirectUrl(
+  value: Record<string, unknown>,
+  keys: readonly string[],
+): string | undefined {
+  for (const key of keys) {
+    const normalizedField = normalizeOptionalRedirectUrl(value[key])
+
+    if (normalizedField !== undefined) {
+      return normalizedField
+    }
   }
 
   return undefined
@@ -397,6 +544,21 @@ function createCheckoutResponseObservation(
   }
 }
 
+function createPrimitiveCheckoutResponseObservation(
+  value: string | number,
+): CheckoutResponseObservation {
+  return {
+    hasErrorCode: false,
+    hasErrorMessage: false,
+    normalizedStatus: 'ok',
+    orderFieldKind: describeFieldKind(value),
+    paymentRequiredFieldKind: 'missing',
+    rawStatus: null,
+    redirectUrlFieldKind: 'missing',
+    responseKeys: '',
+  }
+}
+
 function firstDefinedValue(
   value: Record<string, unknown>,
   keys: readonly string[],
@@ -441,6 +603,20 @@ function hasStringLikeValue(value: unknown): boolean {
   )
 }
 
+function normalizeOptionalRedirectUrl(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+
+  const normalizedValue = value.trim()
+
+  if (normalizedValue.length === 0) {
+    return undefined
+  }
+
+  return normalizedValue
+}
+
 function readRemainingBalanceCents(
   payload: AcceptedCodePayload,
 ): number | null {
@@ -459,6 +635,44 @@ function readRemainingBalanceCents(
       if (!Number.isNaN(parsedValue)) {
         return Math.round(parsedValue * 100)
       }
+    }
+  }
+
+  return null
+}
+
+function readBasketItemAmountCents(item: BasketItemPayload): number {
+  const discountedAmount = readOptionalMoneyCents(item.discountedprice)
+
+  if (discountedAmount !== null) {
+    return discountedAmount
+  }
+
+  const baseAmount = readOptionalMoneyCents(item.price)
+
+  return baseAmount ?? 0
+}
+
+function readOptionalMoneyCents(value: unknown): number | null {
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      return null
+    }
+
+    return Math.round(value * 100)
+  }
+
+  if (typeof value === 'string') {
+    const normalizedValue = value.trim()
+
+    if (normalizedValue.length === 0) {
+      return null
+    }
+
+    const parsedValue = Number.parseFloat(normalizedValue)
+
+    if (!Number.isNaN(parsedValue)) {
+      return Math.round(parsedValue * 100)
     }
   }
 

@@ -12,7 +12,9 @@ type DiagnosticAppender = Pick<Diagnostics, 'append'>
 export type BookingDiagnosticsReporter = {
   recordBasketCreated(): void
   recordCheckoutCompleted(result: BookingFlowResult): void
+  recordCheckoutRedirectObserved(redirectUrl: string | null): void
   recordCheckoutResponseObserved(observation: CheckoutResponseObservation): void
+  recordCodeApplied(source: Extract<BookingCodeValidationResult, { status: 'accepted' }>['source']): void
   recordCodeAccepted(
     result: Extract<BookingCodeValidationResult, { status: 'accepted' }>,
   ): void
@@ -50,6 +52,18 @@ export function createBookingDiagnosticsReporter(
         },
       })
     },
+    recordCheckoutRedirectObserved(redirectUrl) {
+      const redirectParts = readRedirectParts(redirectUrl)
+
+      diagnostics.append({
+        event: 'booking.checkout_redirect_observed',
+        fields: {
+          hasRedirect: redirectParts !== null,
+          redirectHost: redirectParts?.host ?? null,
+          redirectPath: redirectParts?.path ?? null,
+        },
+      })
+    },
     recordCheckoutResponseObserved(observation: CheckoutResponseObservation) {
       diagnostics.append({
         event: 'booking.checkout_response_observed',
@@ -64,6 +78,14 @@ export function createBookingDiagnosticsReporter(
           rawStatus: observation.rawStatus,
           redirectUrlFieldKind: observation.redirectUrlFieldKind,
           responseKeys: observation.responseKeys,
+        },
+      })
+    },
+    recordCodeApplied(source) {
+      diagnostics.append({
+        event: 'booking.code_applied',
+        fields: {
+          source,
         },
       })
     },
@@ -132,5 +154,27 @@ export function createBookingDiagnosticsReporter(
         },
       })
     },
+  }
+}
+
+function readRedirectParts(
+  redirectUrl: string | null,
+): { host: string; path: string } | null {
+  if (redirectUrl === null) {
+    return null
+  }
+
+  try {
+    const parsedUrl = new URL(redirectUrl)
+
+    return {
+      host: parsedUrl.host,
+      path: parsedUrl.pathname,
+    }
+  } catch {
+    return {
+      host: 'invalid-url',
+      path: 'invalid-url',
+    }
   }
 }
