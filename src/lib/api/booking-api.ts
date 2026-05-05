@@ -20,11 +20,11 @@ import {
   createInvalidCodeLookupResult,
   decodeAddReservationResponse,
   decodeBasketPricingSummary,
-  decodeCompletedCashCheckoutResponse,
-  decodeCompletedOrderDetailsResponse,
   decodeBasketToken,
   decodeCheckoutResponse,
   decodeCodeLookupPayload,
+  decodeCompletedCashCheckoutResponse,
+  decodeCompletedOrderDetailsResponse,
   decodePaymentRedirectResponse,
   expectAcceptedCodePayload,
   expectInvalidCodePayload,
@@ -79,7 +79,9 @@ export async function applyCodeToBasket(
   })
 
   if (![200, 201].includes(response.status)) {
-    throw new Error(`Unexpected status ${response.status} while trying to apply code`)
+    throw new Error(
+      `Unexpected status ${response.status} while trying to apply code`,
+    )
   }
 }
 
@@ -116,7 +118,10 @@ export async function lookupCode(
 
   if (discountResponse.status === 404) {
     return createInvalidCodeLookupResult(
-      expectInvalidCodePayload(discountResponse, 'read invalid discount response'),
+      expectInvalidCodePayload(
+        discountResponse,
+        'read invalid discount response',
+      ),
     )
   }
 
@@ -196,7 +201,9 @@ async function completeCashCheckout(
   )
 
   if (completion.identifier !== orderIdentifier) {
-    throw new Error('Completed cash checkout response returned a different identifier')
+    throw new Error(
+      'Completed cash checkout response returned a different identifier',
+    )
   }
 
   const orderDetailsResponse = await client.request({

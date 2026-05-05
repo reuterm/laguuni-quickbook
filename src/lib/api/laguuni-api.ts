@@ -12,14 +12,14 @@ import {
 import {
   type AddReservationArgs,
   type AddReservationResponse,
+  type ApplyCodeArgs,
   addReservationToBasket as addReservationToBasketRequest,
   applyCodeToBasket as applyCodeToBasketRequest,
-  createBasket as createBasketRequest,
-  loadBasketPricingSummary as loadBasketPricingSummaryRequest,
-  type LookupCodeArgs,
-  lookupCode as lookupCodeRequest,
-  type ApplyCodeArgs,
   type BasketPricingSummary,
+  createBasket as createBasketRequest,
+  type LookupCodeArgs,
+  loadBasketPricingSummary as loadBasketPricingSummaryRequest,
+  lookupCode as lookupCodeRequest,
   type SubmitCheckoutArgs,
   submitCheckout as submitCheckoutRequest,
 } from './booking-api'
@@ -42,7 +42,9 @@ export type LaguuniApi = {
     date: string,
   ): Promise<DailyAvailabilityWindow>
   lookupCode(args: LookupCodeArgs): Promise<BookingCodeValidationResult>
-  loadBasketPricingSummary(basketToken: BasketToken): Promise<BasketPricingSummary>
+  loadBasketPricingSummary(
+    basketToken: BasketToken,
+  ): Promise<BasketPricingSummary>
   submitCheckout(args: SubmitCheckoutArgs): Promise<BookingCheckoutResult>
 }
 

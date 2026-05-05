@@ -29,7 +29,8 @@ const TEST_API_BASE_URL = normalizeApiBaseUrl(
 const basketStateByToken = new Map<string, BasketState>()
 
 const MOBILEPAY_HANDLER_REDIRECT = {
-  redirectUrl: 'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
+  redirectUrl:
+    'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
 }
 
 export const laguuniHandlers = [

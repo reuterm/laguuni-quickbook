@@ -98,9 +98,9 @@ export function decodeAddReservationResponse(
   }
 }
 
-export function decodeBasketPricingSummary(
-  value: unknown,
-): { totalDueCents: number } {
+export function decodeBasketPricingSummary(value: unknown): {
+  totalDueCents: number
+} {
   if (!Array.isArray(value)) {
     throw new Error('Basket items response must be an array')
   }
@@ -166,7 +166,10 @@ export function decodeCheckoutResponse(value: unknown): CheckoutResponse {
   if (typeof value === 'string' || typeof value === 'number') {
     return {
       observation: createPrimitiveCheckoutResponseObservation(value),
-      paymentToken: normalizeRequiredIdentifier(value, 'checkout payment token'),
+      paymentToken: normalizeRequiredIdentifier(
+        value,
+        'checkout payment token',
+      ),
       status: 'ok',
     }
   }
@@ -231,7 +234,9 @@ export function decodeCompletedCashCheckoutResponse(
   value: unknown,
 ): CompletedCashCheckoutResponse {
   if (!isRecord(value) || !isRecord(value.items)) {
-    throw new Error('Completed cash checkout response must contain an items object')
+    throw new Error(
+      'Completed cash checkout response must contain an items object',
+    )
   }
 
   const items = value.items
@@ -266,7 +271,9 @@ export function decodeCompletedOrderDetailsResponse(
   }
 
   if (readOptionalString(value, 'completed') !== '1') {
-    throw new Error('Completed order details response must report completed status')
+    throw new Error(
+      'Completed order details response must report completed status',
+    )
   }
 
   return {
@@ -322,11 +329,11 @@ export function mapCheckoutResponseToResult(
   ) {
     // Temporary: treat any redirect URL as a payment handoff until the exact
     // storefront success contract is captured from a real checkout response.
-      return {
-        orderIdentifier: checkout.order ?? null,
-        redirectUrl: checkout.redirectUrl ?? null,
-        status: 'payment_required',
-      }
+    return {
+      orderIdentifier: checkout.order ?? null,
+      redirectUrl: checkout.redirectUrl ?? null,
+      status: 'payment_required',
+    }
   }
 
   return {

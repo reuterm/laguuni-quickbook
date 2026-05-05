@@ -81,7 +81,8 @@ export class DefaultBookingService implements BookingService {
         diagnosticsReporter.recordCodeAccepted(lookupResult)
       }
 
-      const basketPricing = await this.#api.loadBasketPricingSummary(basketToken)
+      const basketPricing =
+        await this.#api.loadBasketPricingSummary(basketToken)
 
       const checkoutResult = await this.#api.submitCheckout({
         basketToken,
@@ -91,8 +92,7 @@ export class DefaultBookingService implements BookingService {
         observeResponse: (observation) => {
           diagnosticsReporter.recordCheckoutResponseObserved(observation)
         },
-        paymentMethod:
-          basketPricing.totalDueCents === 0 ? 'cash' : 'mobilepay',
+        paymentMethod: basketPricing.totalDueCents === 0 ? 'cash' : 'mobilepay',
         profile: profileValidation.profile,
       })
       const bookingResult =

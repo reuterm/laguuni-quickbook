@@ -295,7 +295,9 @@ function createSequentialCapturingClient(
       const nextResponse = queuedResponses.shift()
 
       if (nextResponse === undefined) {
-        throw new Error('No queued response was configured for this HTTP request')
+        throw new Error(
+          'No queued response was configured for this HTTP request',
+        )
       }
 
       return {

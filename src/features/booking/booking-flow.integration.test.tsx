@@ -19,7 +19,8 @@ import { renderApp } from '../../test/render-app'
 const TEST_API_BASE_URL = normalizeApiBaseUrl(DEFAULT_LAGUUNI_API_BASE_URL)
 
 const MOBILEPAY_HANDLER_REDIRECT = {
-  redirectUrl: 'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
+  redirectUrl:
+    'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
 }
 
 describe('booking flow integration', () => {

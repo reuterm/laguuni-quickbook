@@ -14,7 +14,12 @@ export type BookingDiagnosticsReporter = {
   recordCheckoutCompleted(result: BookingFlowResult): void
   recordCheckoutRedirectObserved(redirectUrl: string | null): void
   recordCheckoutResponseObserved(observation: CheckoutResponseObservation): void
-  recordCodeApplied(source: Extract<BookingCodeValidationResult, { status: 'accepted' }>['source']): void
+  recordCodeApplied(
+    source: Extract<
+      BookingCodeValidationResult,
+      { status: 'accepted' }
+    >['source'],
+  ): void
   recordCodeAccepted(
     result: Extract<BookingCodeValidationResult, { status: 'accepted' }>,
   ): void

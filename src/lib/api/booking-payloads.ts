@@ -1,6 +1,6 @@
 import type { BookingProfile, BookingSlotSelection } from '../../domain/booking'
-import type { CheckoutPaymentMethod } from './booking-contracts'
 import { getCableById } from '../../domain/cable'
+import type { CheckoutPaymentMethod } from './booking-contracts'
 
 export function createAddReservationRequestBody(
   selection: BookingSlotSelection,

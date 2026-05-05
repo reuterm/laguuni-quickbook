@@ -72,12 +72,10 @@ describe('LaguuniApiClient', () => {
 
   it('recognizes accepted fixture discount responses with captured shape', async () => {
     const api = new LaguuniApiClient({
-      client: createSequentialHttpClient(
-        {
-          data: discountAcceptedFixture,
-          status: 200,
-        },
-      ),
+      client: createSequentialHttpClient({
+        data: discountAcceptedFixture,
+        status: 200,
+      }),
     })
 
     await expect(
@@ -155,7 +153,6 @@ describe('LaguuniApiClient', () => {
       status: 'failed',
     })
   })
-
 })
 
 function createSequentialHttpClient(
