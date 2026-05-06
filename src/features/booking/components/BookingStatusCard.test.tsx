@@ -2,10 +2,9 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  BookingStatusCard,
-  exportBookingDiagnosticsForTrace,
-} from './BookingStatusCard'
+import { exportDiagnosticsForTrace } from '../../diagnostics/export'
+
+import { BookingStatusCard } from './BookingStatusCard'
 
 afterEach(() => {
   cleanup()
@@ -153,7 +152,7 @@ describe('BookingStatusCard', () => {
       },
     })
 
-    await exportBookingDiagnosticsForTrace(
+    await exportDiagnosticsForTrace(
       ({ traceId }) => JSON.stringify({ traceId }),
       'test-trace-id',
     )

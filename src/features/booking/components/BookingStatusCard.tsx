@@ -8,7 +8,6 @@ import {
   X,
 } from 'lucide-react'
 import type * as React from 'react'
-import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -23,7 +22,7 @@ import type {
   BookingSlotSelection,
 } from '../../../domain/booking'
 import { getCableById } from '../../../domain/cable'
-import { exportDiagnosticsForTrace } from '../../diagnostics/export'
+import { DiagnosticsCopyAction } from '../../diagnostics/DiagnosticsCopyAction'
 
 type BookingStatusCardProps =
   | {
@@ -95,23 +94,6 @@ function BookingStatusAction({
   onCopyDiagnostics,
   redirectUrl,
 }: BookingStatusActionProps) {
-  const [copyState, setCopyState] = useState<'idle' | 'failed' | 'succeeded'>(
-    'idle',
-  )
-
-  async function handleCopyDiagnostics() {
-    if (onCopyDiagnostics === undefined) {
-      return
-    }
-
-    try {
-      await onCopyDiagnostics()
-      setCopyState('succeeded')
-    } catch {
-      setCopyState('failed')
-    }
-  }
-
   if (redirectUrl !== null) {
     return (
       <Button asChild className="w-full sm:w-auto">
@@ -125,28 +107,15 @@ function BookingStatusAction({
   }
 
   return (
-    <div className="space-y-2">
-      <Button
-        type="button"
-        className="w-full sm:w-auto"
-        onClick={() => {
-          void handleCopyDiagnostics()
-        }}
-      >
-        <Copy className="size-4" />
-        Copy diagnostics
-      </Button>
-      {copyState === 'succeeded' ? (
-        <p className="text-xs text-muted-foreground">
-          Diagnostics copied to the clipboard.
-        </p>
-      ) : null}
-      {copyState === 'failed' ? (
-        <p className="text-xs text-muted-foreground">
-          Diagnostics could not be copied on this device.
-        </p>
-      ) : null}
-    </div>
+    <DiagnosticsCopyAction
+      buttonContent={
+        <>
+          <Copy className="size-4" />
+          Copy diagnostics
+        </>
+      }
+      onCopy={onCopyDiagnostics}
+    />
   )
 }
 
@@ -277,11 +246,4 @@ function formatSelectionLabel(selection: BookingSlotSelection): string {
   }).format(new Date(`${selection.date}T00:00:00`))
 
   return `${cable.label} on ${displayDate} at ${selection.startTime}-${selection.endTime}`
-}
-
-export async function exportBookingDiagnosticsForTrace(
-  exportLogs: (options: { traceId?: string }) => string,
-  traceId: string,
-): Promise<void> {
-  await exportDiagnosticsForTrace(exportLogs, traceId)
 }

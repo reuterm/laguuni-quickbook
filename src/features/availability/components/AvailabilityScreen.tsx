@@ -15,8 +15,8 @@ import {
 } from '../../../app/providers'
 import type { BookingSlotSelection } from '../../../domain/booking'
 import { getCableById } from '../../../domain/cable'
-import { exportBookingDiagnosticsForTrace } from '../../booking/components/BookingStatusCard'
 import { useBookingFlow } from '../../booking/use-booking-flow'
+import { exportDiagnosticsForTrace } from '../../diagnostics/export'
 import {
   loadReadOnlyNoticeDismissed,
   saveReadOnlyNoticeDismissed,
@@ -67,7 +67,7 @@ export function AvailabilityScreen({
   }, [])
   const handleExportTrace = useCallback(
     async (traceId: string) => {
-      await exportBookingDiagnosticsForTrace(
+      await exportDiagnosticsForTrace(
         (options) => diagnostics.exportLogs(options),
         traceId,
       )

@@ -1,10 +1,11 @@
 import type { ErrorInfo, PropsWithChildren, ReactNode } from 'react'
-import { Component, useCallback, useEffect, useState } from 'react'
+import { Component, useCallback, useEffect } from 'react'
 
 import { useDiagnostics } from '@/app/providers'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 
+import { DiagnosticsCopyAction } from './DiagnosticsCopyAction'
 import { exportDiagnosticsForTrace } from './export'
 import type { Diagnostics } from './logs'
 
@@ -135,19 +136,6 @@ function AppCrashFallback({
   onExportTrace: (traceId: string) => Promise<void>
   traceId: string
 }) {
-  const [copyState, setCopyState] = useState<'idle' | 'failed' | 'succeeded'>(
-    'idle',
-  )
-
-  async function handleCopyDiagnostics() {
-    try {
-      await onExportTrace(traceId)
-      setCopyState('succeeded')
-    } catch {
-      setCopyState('failed')
-    }
-  }
-
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-4xl flex-col justify-center px-4 py-5 sm:px-6 sm:py-8">
       <Alert variant="destructive">
@@ -157,25 +145,19 @@ function AppCrashFallback({
           happening, copy diagnostics and send them for debugging.
         </AlertDescription>
         <div className="mt-3 space-y-3">
-          <Button
-            type="button"
-            className="w-full sm:w-auto"
-            onClick={() => {
-              void handleCopyDiagnostics()
-            }}
-          >
-            Copy diagnostics
-          </Button>
-          {copyState === 'succeeded' ? (
-            <p className="text-xs text-muted-foreground">
-              Diagnostics copied to the clipboard.
-            </p>
-          ) : null}
-          {copyState === 'failed' ? (
-            <p className="text-xs text-muted-foreground">
-              Diagnostics could not be copied on this device.
-            </p>
-          ) : null}
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start">
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full sm:w-auto"
+              onClick={() => {
+                window.location.reload()
+              }}
+            >
+              Reload page
+            </Button>
+            <DiagnosticsCopyAction onCopy={() => onExportTrace(traceId)} />
+          </div>
         </div>
       </Alert>
     </div>

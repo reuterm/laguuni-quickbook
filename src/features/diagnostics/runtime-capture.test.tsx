@@ -26,6 +26,11 @@ describe('diagnostics runtime capture', () => {
 
   it('renders a fallback and records diagnostics when a component crashes', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
+    const reload = vi.fn()
+    vi.stubGlobal('location', {
+      ...window.location,
+      reload,
+    })
 
     render(
       <TestDiagnosticsProvider>
@@ -47,6 +52,8 @@ describe('diagnostics runtime capture', () => {
       await screen.findByText('Diagnostics copied to the clipboard.'),
     ).toBeVisible()
 
+    await user.click(screen.getByRole('button', { name: 'Reload page' }))
+
     const storedDiagnostics = window.localStorage.getItem(
       DIAGNOSTICS_STORAGE_KEY,
     )
@@ -54,6 +61,7 @@ describe('diagnostics runtime capture', () => {
     expect(storedDiagnostics).toContain('app.render_error')
     expect(storedDiagnostics).toContain('Crash during render')
     expect(storedDiagnostics).toContain('traceId')
+    expect(reload).toHaveBeenCalledOnce()
   })
 
   it('records window errors without surfacing a crash fallback', async () => {
