@@ -1,6 +1,6 @@
 import { cleanup, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   clearPersistedAppState,
@@ -12,6 +12,10 @@ describe('Settings screen integration', () => {
   beforeEach(() => {
     cleanup()
     clearPersistedAppState()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('persists settings locally and restores the saved default cable', async () => {
@@ -93,5 +97,152 @@ describe('Settings screen integration', () => {
       'Previously saved settings could not be read and were reset to safe defaults on this device.',
     )
     expect(screen.getByLabelText('Default cable')).toHaveValue('__none__')
+  })
+
+  it('exports all retained diagnostics logs from settings', async () => {
+    const user = userEvent.setup()
+    const writeText = vi.fn(async () => {})
+
+    vi.stubGlobal('navigator', {
+      clipboard: {
+        writeText,
+      },
+    })
+
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+    const versionButton = screen.getByRole('button', {
+      name: 'App version test-version',
+    })
+
+    for (let index = 0; index < 7; index += 1) {
+      await user.click(versionButton)
+    }
+
+    expect(screen.getByText('Developer tools')).toBeVisible()
+    await user.click(
+      screen.getByRole('button', { name: 'Export all diagnostics logs' }),
+    )
+
+    expect(
+      await screen.findByText('Diagnostics copied to the clipboard.'),
+    ).toBeVisible()
+    expect(writeText).toHaveBeenCalledOnce()
+    const firstClipboardCall = writeText.mock.calls.at(0)
+
+    expect(firstClipboardCall).toBeDefined()
+
+    const copiedDiagnostics = firstClipboardCall?.at(0)
+
+    expect(typeof copiedDiagnostics).toBe('string')
+
+    if (typeof copiedDiagnostics !== 'string') {
+      throw new Error('Expected diagnostics to be copied as text')
+    }
+
+    expect(JSON.parse(copiedDiagnostics)).toEqual({
+      entries: [],
+      recoveryIssue: null,
+    })
+  })
+
+  it('keeps developer tools hidden until developer mode is enabled', async () => {
+    const user = userEvent.setup()
+
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    expect(screen.queryByText('Developer tools')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Export all diagnostics logs' }),
+    ).not.toBeInTheDocument()
+
+    const versionButton = screen.getByRole('button', {
+      name: 'App version test-version',
+    })
+
+    for (let index = 0; index < 6; index += 1) {
+      await user.click(versionButton)
+    }
+
+    expect(screen.queryByText('Developer tools')).not.toBeInTheDocument()
+
+    await user.click(versionButton)
+
+    expect(screen.getByText('Developer tools')).toBeVisible()
+  })
+
+  it('persists developer mode until it is disabled', async () => {
+    const user = userEvent.setup()
+
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    const versionButton = screen.getByRole('button', {
+      name: 'App version test-version',
+    })
+
+    for (let index = 0; index < 7; index += 1) {
+      await user.click(versionButton)
+    }
+
+    expect(screen.getByText('Developer tools')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    expect(screen.getByText('Developer tools')).toBeVisible()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Disable developer mode' }),
+    )
+
+    expect(screen.queryByText('Developer tools')).not.toBeInTheDocument()
+  })
+
+  it('clears retained diagnostics logs from developer tools', async () => {
+    const user = userEvent.setup()
+    const writeText = vi.fn(async () => {})
+
+    vi.stubGlobal('navigator', {
+      clipboard: {
+        writeText,
+      },
+    })
+
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    const versionButton = screen.getByRole('button', {
+      name: 'App version test-version',
+    })
+
+    for (let index = 0; index < 7; index += 1) {
+      await user.click(versionButton)
+    }
+
+    await user.click(
+      screen.getByRole('button', { name: 'Clear diagnostics log' }),
+    )
+    await user.click(
+      screen.getByRole('button', { name: 'Export all diagnostics logs' }),
+    )
+
+    const firstClipboardCall = writeText.mock.calls.at(0)
+
+    expect(firstClipboardCall).toBeDefined()
+
+    const copiedDiagnostics = firstClipboardCall?.at(0)
+
+    expect(typeof copiedDiagnostics).toBe('string')
+
+    if (typeof copiedDiagnostics !== 'string') {
+      throw new Error('Expected diagnostics to be copied as text')
+    }
+
+    expect(JSON.parse(copiedDiagnostics)).toEqual({
+      entries: [],
+      recoveryIssue: null,
+    })
   })
 })

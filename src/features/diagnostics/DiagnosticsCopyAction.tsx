@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button'
 type DiagnosticsCopyActionProps = {
   buttonContent?: ReactNode
   buttonClassName?: string
+  buttonVariant?: React.ComponentProps<typeof Button>['variant']
   onCopy: () => Promise<void>
 }
 
 export function DiagnosticsCopyAction({
   buttonContent = 'Copy diagnostics',
   buttonClassName = 'w-full sm:w-auto',
+  buttonVariant,
   onCopy,
 }: DiagnosticsCopyActionProps) {
   const [copyState, setCopyState] = useState<'idle' | 'failed' | 'succeeded'>(
@@ -32,6 +34,7 @@ export function DiagnosticsCopyAction({
       <Button
         type="button"
         className={buttonClassName}
+        variant={buttonVariant}
         onClick={() => {
           void handleCopyDiagnostics()
         }}

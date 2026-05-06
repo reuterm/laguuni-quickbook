@@ -1,6 +1,7 @@
 import type * as React from 'react'
 import { type ChangeEvent, useEffect, useState } from 'react'
 
+import { useAppVersion, useDiagnostics } from '@/app/providers'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
@@ -18,6 +19,9 @@ import type {
   SettingsRecoveryIssue,
   UserSettings,
 } from '../../../domain/settings'
+import { DiagnosticsCopyAction } from '../../diagnostics/DiagnosticsCopyAction'
+import { exportDiagnostics } from '../../diagnostics/export'
+import { useDeveloperMode } from '../use-developer-mode'
 import { useUserSettings } from '../use-user-settings'
 
 type SettingsScreenProps = {
@@ -70,7 +74,15 @@ type SettingsFieldDefinition = {
 }
 
 export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
+  const appVersion = useAppVersion()
+  const diagnostics = useDiagnostics()
   const { recoveryIssue, saveSettings, settings } = useUserSettings()
+  const {
+    developerModeEnabled,
+    disableDeveloperMode,
+    registerVersionTap,
+    resetDeveloperModeUnlockProgress,
+  } = useDeveloperMode()
   const [draftSettings, setDraftSettings] = useState<UserSettings>(settings)
   const [_isSaved, setIsSaved] = useState(false)
 
@@ -82,8 +94,9 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
     if (!open) {
       setDraftSettings(settings)
       setIsSaved(false)
+      resetDeveloperModeUnlockProgress()
     }
-  }, [open, settings])
+  }, [open, resetDeveloperModeUnlockProgress, settings])
 
   function handleFieldChange(field: EditableField) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -117,61 +130,120 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
-        <SheetHeader className="space-y-2 pr-10 text-left">
-          <SheetTitle>Booking details</SheetTitle>
-          <SheetDescription>
-            Your name, phone, email, season pass code, and default cable are
-            saved only in this browser for faster checkout.
-          </SheetDescription>
-        </SheetHeader>
+      <SheetContent side="right" className="flex w-full flex-col sm:max-w-lg">
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <SheetHeader className="space-y-2 pr-10 text-left">
+            <SheetTitle>Booking details</SheetTitle>
+            <SheetDescription>
+              Your name, phone, email, season pass code, and default cable are
+              saved only in this browser for faster checkout.
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="space-y-6">
-          {recoveryIssue !== null ? (
-            <Alert role="alert">
-              <AlertTitle>Saved settings were reset</AlertTitle>
-              <AlertDescription>
-                {getRecoveryMessage(recoveryIssue)}
-              </AlertDescription>
-            </Alert>
-          ) : null}
+          <div className="space-y-6">
+            {recoveryIssue !== null ? (
+              <Alert role="alert">
+                <AlertTitle>Saved settings were reset</AlertTitle>
+                <AlertDescription>
+                  {getRecoveryMessage(recoveryIssue)}
+                </AlertDescription>
+              </Alert>
+            ) : null}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {settingsFieldDefinitions.map((field) => (
-                <SettingsTextField
-                  key={field.key}
-                  definition={field}
-                  value={draftSettings[field.key]}
-                  onChange={handleFieldChange(field.key)}
-                />
-              ))}
-            </div>
-
-            <FormField htmlFor="default-cable" label="Default cable">
-              <NativeSelect
-                id="default-cable"
-                name="defaultCable"
-                value={draftSettings.defaultCable ?? NO_DEFAULT_CABLE_VALUE}
-                onChange={(event) =>
-                  handleDefaultCableChange(event.target.value)
-                }
-              >
-                <option value={NO_DEFAULT_CABLE_VALUE}>No default cable</option>
-                {SUPPORTED_CABLES.map((cable) => (
-                  <option key={cable.id} value={cable.id}>
-                    {cable.label}
-                  </option>
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {settingsFieldDefinitions.map((field) => (
+                  <SettingsTextField
+                    key={field.key}
+                    definition={field}
+                    value={draftSettings[field.key]}
+                    onChange={handleFieldChange(field.key)}
+                  />
                 ))}
-              </NativeSelect>
-            </FormField>
+              </div>
 
+              <FormField htmlFor="default-cable" label="Default cable">
+                <NativeSelect
+                  id="default-cable"
+                  name="defaultCable"
+                  value={draftSettings.defaultCable ?? NO_DEFAULT_CABLE_VALUE}
+                  onChange={(event) =>
+                    handleDefaultCableChange(event.target.value)
+                  }
+                >
+                  <option value={NO_DEFAULT_CABLE_VALUE}>
+                    No default cable
+                  </option>
+                  {SUPPORTED_CABLES.map((cable) => (
+                    <option key={cable.id} value={cable.id}>
+                      {cable.label}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </FormField>
+
+              <div className="space-y-3">
+                <Button type="submit" className="w-full sm:w-auto">
+                  Save settings
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {developerModeEnabled ? (
+          <div className="flex flex-1 flex-col border-t pt-6">
             <div className="space-y-3">
-              <Button type="submit" className="w-full sm:w-auto">
-                Save settings
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium">Developer tools</h3>
+                <p className="text-sm text-muted-foreground">
+                  Diagnostics and debugging actions for this device.
+                </p>
+              </div>
+              <DiagnosticsCopyAction
+                buttonContent="Export all diagnostics logs"
+                buttonClassName="w-full justify-start sm:w-auto"
+                buttonVariant="outline"
+                onCopy={() =>
+                  exportDiagnostics((options) =>
+                    diagnostics.exportLogs(options),
+                  )
+                }
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  diagnostics.clear()
+                }}
+              >
+                Clear diagnostics log
               </Button>
             </div>
-          </form>
+
+            <div className="mt-auto pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={disableDeveloperMode}
+              >
+                Disable developer mode
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="border-t pt-6">
+          <button
+            type="button"
+            className="cursor-default text-xs text-muted-foreground"
+            aria-label={`App version ${appVersion}`}
+            onClick={registerVersionTap}
+          >
+            Version {appVersion}
+          </button>
         </div>
       </SheetContent>
     </Sheet>

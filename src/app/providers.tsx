@@ -23,6 +23,7 @@ import {
 
 type AppDependencies = {
   api: LaguuniApi
+  appVersion: string
   availabilityReferenceDate?: Date | undefined
   bookingService: BookingService
   diagnostics: Diagnostics
@@ -61,6 +62,7 @@ export function AppProviders({
 
     return {
       api,
+      appVersion,
       availabilityReferenceDate,
       bookingService: new DefaultBookingService({
         api,
@@ -89,6 +91,10 @@ function useAppDependencies(): AppDependencies {
 
 export function useLaguuniApi(): LaguuniApi {
   return useAppDependencies().api
+}
+
+export function useAppVersion(): string {
+  return useAppDependencies().appVersion
 }
 
 export function useAvailabilityReferenceDate(): Date | undefined {

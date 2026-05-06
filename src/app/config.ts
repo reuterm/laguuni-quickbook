@@ -1,4 +1,3 @@
-import packageJson from '../../package.json'
 import {
   DEFAULT_LAGUUNI_API_BASE_URL,
   normalizeApiBaseUrl,
@@ -19,9 +18,7 @@ export function createAppConfig(env: AppConfigEnv): AppConfig {
     apiBaseUrl: normalizeApiBaseUrl(
       env.VITE_LAGUUNI_API_BASE_URL ?? DEFAULT_LAGUUNI_API_BASE_URL,
     ),
-    appVersion: normalizeAppVersion(
-      env.VITE_APP_VERSION ?? packageJson.version,
-    ),
+    appVersion: normalizeAppVersion(env.VITE_APP_VERSION ?? 'unknown'),
   }
 }
 
