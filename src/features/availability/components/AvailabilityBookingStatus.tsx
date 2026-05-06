@@ -19,15 +19,16 @@ export function AvailabilityBookingStatus({
   if (bookingState.status === 'submitting') {
     return (
       <BookingStatusCard
+        attemptKey={bookingState.traceId}
         selection={bookingState.selection}
         status="submitting"
-        traceId={bookingState.traceId}
       />
     )
   }
 
   return (
     <BookingStatusCard
+      attemptKey={bookingState.traceId}
       onDismiss={
         bookingState.result.status === 'failed' ? onDismiss : undefined
       }
@@ -39,7 +40,6 @@ export function AvailabilityBookingStatus({
           ? () => onExportTrace(bookingState.traceId)
           : undefined
       }
-      traceId={bookingState.traceId}
     />
   )
 }

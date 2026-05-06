@@ -17,28 +17,28 @@ import {
   statusToneClassNames,
   subtleSurfaceBackgroundClassName,
 } from '@/components/ui/styles'
-import { copyTextToClipboard } from '@/lib/clipboard'
 import { cn } from '@/lib/utils'
 import type {
   BookingFlowResult,
   BookingSlotSelection,
 } from '../../../domain/booking'
 import { getCableById } from '../../../domain/cable'
+import { exportDiagnosticsForTrace } from '../../diagnostics/export'
 
 type BookingStatusCardProps =
   | {
       onDismiss?: never
+      attemptKey: string
       selection: BookingSlotSelection
       status: 'submitting'
-      traceId: string
     }
   | {
+      attemptKey: string
       onDismiss?: (() => void) | undefined
       result: BookingFlowResult
       selection: BookingSlotSelection
       status: 'completed'
       traceExport?: (() => Promise<void>) | undefined
-      traceId: string
     }
 
 export function BookingStatusCard(props: BookingStatusCardProps) {
@@ -53,7 +53,6 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
         labelClassName="text-muted-foreground"
         role="status"
         title="Booking in progress"
-        traceId={props.traceId}
         toneClassName={subtleSurfaceBackgroundClassName}
       />
     )
@@ -65,7 +64,7 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
     <BookingStatusPanel
       action={
         <BookingStatusAction
-          key={props.traceId}
+          key={props.attemptKey}
           onCopyDiagnostics={
             props.result.status === 'failed' ? props.traceExport : undefined
           }
@@ -82,7 +81,6 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
       onDismiss={props.onDismiss}
       role={presentation.role}
       title={presentation.title}
-      traceId={props.traceId}
       toneClassName={presentation.tone.surface}
     />
   )
@@ -162,7 +160,6 @@ type BookingStatusPanelProps = {
   onDismiss?: (() => void) | undefined
   role: 'alert' | 'status'
   title: string
-  traceId: string
   toneClassName: string
 }
 
@@ -176,7 +173,6 @@ function BookingStatusPanel({
   onDismiss,
   role,
   title,
-  traceId,
   toneClassName,
 }: BookingStatusPanelProps) {
   return (
@@ -207,13 +203,7 @@ function BookingStatusPanel({
           <p className="text-sm leading-6 text-muted-foreground">{body}</p>
         </CardHeader>
 
-        <CardContent className="space-y-4 pt-0">
-          {action}
-          <p className="text-xs text-muted-foreground">
-            Trace ID:{' '}
-            <span className="font-mono text-foreground">{traceId}</span>
-          </p>
-        </CardContent>
+        <CardContent className="space-y-4 pt-0">{action}</CardContent>
       </Card>
     </section>
   )
@@ -293,5 +283,5 @@ export async function exportBookingDiagnosticsForTrace(
   exportLogs: (options: { traceId?: string }) => string,
   traceId: string,
 ): Promise<void> {
-  await copyTextToClipboard(exportLogs({ traceId }))
+  await exportDiagnosticsForTrace(exportLogs, traceId)
 }

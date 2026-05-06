@@ -121,7 +121,7 @@ describe('App', () => {
     )
   })
 
-  it('books an available slot and surfaces success with a trace id', async () => {
+  it('books an available slot and surfaces success', async () => {
     const user = userEvent.setup()
 
     saveUserSettings({
@@ -139,9 +139,7 @@ describe('App', () => {
     expect(
       await screen.findByRole('heading', { name: 'Booking confirmed' }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Trace ID:/)).toHaveTextContent(
-      /^Trace ID: [0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-    )
+    expect(screen.queryByText(/Trace ID:/)).not.toBeInTheDocument()
   })
 })
 

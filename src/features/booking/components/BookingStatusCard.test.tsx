@@ -16,6 +16,7 @@ describe('BookingStatusCard', () => {
   it('does not apply spinner styling to the booking label while submitting', () => {
     render(
       <BookingStatusCard
+        attemptKey="test-trace-id"
         selection={{
           cableId: 'pro',
           date: '2026-05-20',
@@ -23,7 +24,6 @@ describe('BookingStatusCard', () => {
           startTime: '15:00',
         }}
         status="submitting"
-        traceId="test-trace-id"
       />,
     )
 
@@ -36,6 +36,7 @@ describe('BookingStatusCard', () => {
 
     render(
       <BookingStatusCard
+        attemptKey="test-trace-id"
         onDismiss={() => {}}
         result={{
           errorCode: 'GENERAL_ERROR',
@@ -51,7 +52,6 @@ describe('BookingStatusCard', () => {
         }}
         status="completed"
         traceExport={traceExport}
-        traceId="test-trace-id"
       />,
     )
 
@@ -68,6 +68,7 @@ describe('BookingStatusCard', () => {
     const traceExport = vi.fn(async () => {})
     const { rerender } = render(
       <BookingStatusCard
+        attemptKey="trace-a"
         onDismiss={() => {}}
         result={{
           errorCode: 'GENERAL_ERROR',
@@ -83,7 +84,6 @@ describe('BookingStatusCard', () => {
         }}
         status="completed"
         traceExport={traceExport}
-        traceId="trace-a"
       />,
     )
 
@@ -95,6 +95,7 @@ describe('BookingStatusCard', () => {
 
     rerender(
       <BookingStatusCard
+        attemptKey="trace-b"
         onDismiss={() => {}}
         result={{
           errorCode: 'GENERAL_ERROR',
@@ -110,7 +111,6 @@ describe('BookingStatusCard', () => {
         }}
         status="completed"
         traceExport={traceExport}
-        traceId="trace-b"
       />,
     )
 
@@ -122,6 +122,7 @@ describe('BookingStatusCard', () => {
   it('does not show copy diagnostics without an export callback', () => {
     render(
       <BookingStatusCard
+        attemptKey="test-trace-id"
         onDismiss={() => {}}
         result={{
           errorCode: 'GENERAL_ERROR',
@@ -136,7 +137,6 @@ describe('BookingStatusCard', () => {
           startTime: '15:00',
         }}
         status="completed"
-        traceId="test-trace-id"
       />,
     )
 
