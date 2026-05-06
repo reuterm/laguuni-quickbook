@@ -16,8 +16,11 @@ This repository uses `mise` to manage tool versions and `pnpm` for package manag
 
 - `VITE_LAGUUNI_API_BASE_URL`: storefront API base used by the browser app
 - `LAGUUNI_API_BASE_URL`: storefront API base used by Node-side tooling and fixture capture
+- `BASE_PATH`: optional build-time base path for static hosting under a subpath such as GitHub Pages
 
 Both default to `https://shop.laguuniin.fi` when unset.
+
+`BASE_PATH` defaults to `/` when unset.
 
 Fixture capture uses the native Node.js `fetch` runtime and does not rely on browser automation.
 
