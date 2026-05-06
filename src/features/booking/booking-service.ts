@@ -6,37 +6,34 @@ import type {
   BookingRequest,
 } from '../../domain/booking'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
-import type { Diagnostics } from '../diagnostics/logs'
+import type { DiagnosticsTrace } from '../diagnostics/logs'
 import { createBookingDiagnosticsReporter } from './booking-diagnostics'
 import { validateBookingProfile } from './booking-validation'
 
 export type BookingService = {
-  book(request: BookingRequest): Promise<BookingFlowResult>
+  book(
+    request: BookingRequest,
+    diagnostics: DiagnosticsTrace,
+  ): Promise<BookingFlowResult>
 }
 
 type BookingServiceOptions = {
   api: LaguuniApi
-  diagnostics?: Pick<Diagnostics, 'append'>
 }
 
 export class DefaultBookingService implements BookingService {
   readonly #api: LaguuniApi
-  readonly #diagnostics: Pick<Diagnostics, 'append'>
 
-  constructor({ api, diagnostics = NOOP_DIAGNOSTICS }: BookingServiceOptions) {
+  constructor({ api }: BookingServiceOptions) {
     this.#api = api
-    this.#diagnostics = diagnostics
   }
 
-  async book({
-    code,
-    profile,
-    selection,
-  }: BookingRequest): Promise<BookingFlowResult> {
+  async book(
+    { code, profile, selection }: BookingRequest,
+    diagnostics: DiagnosticsTrace,
+  ): Promise<BookingFlowResult> {
     const normalizedCode = code?.trim()
-    const diagnosticsReporter = createBookingDiagnosticsReporter(
-      this.#diagnostics,
-    )
+    const diagnosticsReporter = createBookingDiagnosticsReporter(diagnostics)
     const profileValidation = validateBookingProfile(profile)
 
     if (profileValidation.status === 'invalid') {
@@ -116,10 +113,6 @@ export class DefaultBookingService implements BookingService {
       throw error
     }
   }
-}
-
-const NOOP_DIAGNOSTICS: Pick<Diagnostics, 'append'> = {
-  append() {},
 }
 
 function mapCheckoutSubmissionToBookingFlowResult(

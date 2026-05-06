@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { useBookingService, useDiagnosticsTraceId } from '../../app/providers'
+import { useBookingService, useDiagnostics } from '../../app/providers'
 import type {
   BookingFlowResult,
   BookingProfile,
@@ -17,16 +17,18 @@ export type BookingFlowState =
   | {
       selection: BookingSlotSelection
       status: 'submitting'
+      traceId: string
     }
   | {
       result: BookingFlowResult
       selection: BookingSlotSelection
       status: 'completed'
+      traceId: string
     }
 
 export function useBookingFlow() {
   const bookingService = useBookingService()
-  const traceId = useDiagnosticsTraceId()
+  const diagnostics = useDiagnostics()
   const { settings } = useUserSettings()
   const bookingProfile = createBookingProfile(settings)
   const isBookingReady =
@@ -37,22 +39,29 @@ export function useBookingFlow() {
 
   const bookSelection = useCallback(
     async (selection: BookingSlotSelection) => {
+      const trace = diagnostics.beginTrace({ name: 'booking' })
+
       setBookingState({
         selection,
         status: 'submitting',
+        traceId: trace.traceId,
       })
 
       try {
-        const result = await bookingService.book({
-          code: normalizeOptionalCode(settings.seasonPassCode),
-          profile: bookingProfile,
-          selection,
-        })
+        const result = await bookingService.book(
+          {
+            code: normalizeOptionalCode(settings.seasonPassCode),
+            profile: bookingProfile,
+            selection,
+          },
+          trace,
+        )
 
         setBookingState({
           result,
           selection,
           status: 'completed',
+          traceId: trace.traceId,
         })
       } catch (error) {
         const errorMessage = getErrorMessage(error)
@@ -66,10 +75,11 @@ export function useBookingFlow() {
           },
           selection,
           status: 'completed',
+          traceId: trace.traceId,
         })
       }
     },
-    [bookingProfile, bookingService, settings.seasonPassCode],
+    [bookingProfile, bookingService, diagnostics, settings.seasonPassCode],
   )
 
   const dismissBookingStatus = useCallback(() => {
@@ -82,7 +92,6 @@ export function useBookingFlow() {
     dismissBookingStatus,
     isBookingInProgress: bookingState.status === 'submitting',
     isBookingReady,
-    traceId,
   }
 }
 

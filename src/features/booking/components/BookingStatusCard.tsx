@@ -1,12 +1,14 @@
 import {
   CircleAlert,
   CircleCheckBig,
+  Copy,
   CreditCard,
   LoaderCircle,
   type LucideIcon,
   X,
 } from 'lucide-react'
 import type * as React from 'react'
+import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -15,6 +17,7 @@ import {
   statusToneClassNames,
   subtleSurfaceBackgroundClassName,
 } from '@/components/ui/styles'
+import { copyTextToClipboard } from '@/lib/clipboard'
 import { cn } from '@/lib/utils'
 import type {
   BookingFlowResult,
@@ -34,6 +37,7 @@ type BookingStatusCardProps =
       result: BookingFlowResult
       selection: BookingSlotSelection
       status: 'completed'
+      traceExport?: (() => Promise<void>) | undefined
       traceId: string
     }
 
@@ -56,15 +60,21 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
   }
 
   const presentation = getResultPresentation(props.result, selectionLabel)
+
   return (
     <BookingStatusPanel
       action={
-        props.result.status === 'payment_required' &&
-        props.result.redirectUrl !== null ? (
-          <Button asChild className="w-full sm:w-auto">
-            <a href={props.result.redirectUrl}>Continue to payment</a>
-          </Button>
-        ) : null
+        <BookingStatusAction
+          key={props.traceId}
+          onCopyDiagnostics={
+            props.result.status === 'failed' ? props.traceExport : undefined
+          }
+          redirectUrl={
+            props.result.status === 'payment_required'
+              ? props.result.redirectUrl
+              : null
+          }
+        />
       }
       body={presentation.body}
       icon={presentation.icon}
@@ -75,6 +85,70 @@ export function BookingStatusCard(props: BookingStatusCardProps) {
       traceId={props.traceId}
       toneClassName={presentation.tone.surface}
     />
+  )
+}
+
+type BookingStatusActionProps = {
+  onCopyDiagnostics?: (() => Promise<void>) | undefined
+  redirectUrl: string | null
+}
+
+function BookingStatusAction({
+  onCopyDiagnostics,
+  redirectUrl,
+}: BookingStatusActionProps) {
+  const [copyState, setCopyState] = useState<'idle' | 'failed' | 'succeeded'>(
+    'idle',
+  )
+
+  async function handleCopyDiagnostics() {
+    if (onCopyDiagnostics === undefined) {
+      return
+    }
+
+    try {
+      await onCopyDiagnostics()
+      setCopyState('succeeded')
+    } catch {
+      setCopyState('failed')
+    }
+  }
+
+  if (redirectUrl !== null) {
+    return (
+      <Button asChild className="w-full sm:w-auto">
+        <a href={redirectUrl}>Continue to payment</a>
+      </Button>
+    )
+  }
+
+  if (onCopyDiagnostics === undefined) {
+    return null
+  }
+
+  return (
+    <div className="space-y-2">
+      <Button
+        type="button"
+        className="w-full sm:w-auto"
+        onClick={() => {
+          void handleCopyDiagnostics()
+        }}
+      >
+        <Copy className="size-4" />
+        Copy diagnostics
+      </Button>
+      {copyState === 'succeeded' ? (
+        <p className="text-xs text-muted-foreground">
+          Diagnostics copied to the clipboard.
+        </p>
+      ) : null}
+      {copyState === 'failed' ? (
+        <p className="text-xs text-muted-foreground">
+          Diagnostics could not be copied on this device.
+        </p>
+      ) : null}
+    </div>
   )
 }
 
@@ -213,4 +287,11 @@ function formatSelectionLabel(selection: BookingSlotSelection): string {
   }).format(new Date(`${selection.date}T00:00:00`))
 
   return `${cable.label} on ${displayDate} at ${selection.startTime}-${selection.endTime}`
+}
+
+export async function exportBookingDiagnosticsForTrace(
+  exportLogs: (options: { traceId?: string }) => string,
+  traceId: string,
+): Promise<void> {
+  await copyTextToClipboard(exportLogs({ traceId }))
 }

@@ -9,7 +9,10 @@ import {
   type BookingService,
   DefaultBookingService,
 } from '../features/booking/booking-service'
-import { LocalDiagnosticsStore } from '../features/diagnostics/logs'
+import {
+  type Diagnostics,
+  LocalDiagnosticsStore,
+} from '../features/diagnostics/logs'
 import { FetchHttpClient } from '../lib/api/client'
 import { type LaguuniApi, LaguuniApiClient } from '../lib/api/laguuni-api'
 import {
@@ -22,8 +25,8 @@ type AppDependencies = {
   api: LaguuniApi
   availabilityReferenceDate?: Date | undefined
   bookingService: BookingService
+  diagnostics: Diagnostics
   settingsStore: UserSettingsStore
-  traceId: string
 }
 
 const AppDependenciesContext = createContext<AppDependencies | null>(null)
@@ -61,10 +64,9 @@ export function AppProviders({
       availabilityReferenceDate,
       bookingService: new DefaultBookingService({
         api,
-        diagnostics,
       }),
+      diagnostics,
       settingsStore,
-      traceId: diagnostics.traceId,
     }
   }, [apiBaseUrl, appVersion, availabilityReferenceDate])
 
@@ -101,6 +103,6 @@ export function useUserSettingsStore(): UserSettingsStore {
   return useAppDependencies().settingsStore
 }
 
-export function useDiagnosticsTraceId(): string {
-  return useAppDependencies().traceId
+export function useDiagnostics(): Diagnostics {
+  return useAppDependencies().diagnostics
 }

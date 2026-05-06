@@ -4,13 +4,13 @@ import type { BookingFlowState } from '../../booking/use-booking-flow'
 type AvailabilityBookingStatusProps = {
   bookingState: BookingFlowState
   onDismiss?: (() => void) | undefined
-  traceId: string
+  onExportTrace?: ((traceId: string) => Promise<void>) | undefined
 }
 
 export function AvailabilityBookingStatus({
   bookingState,
   onDismiss,
-  traceId,
+  onExportTrace,
 }: AvailabilityBookingStatusProps) {
   if (bookingState.status === 'idle') {
     return null
@@ -21,7 +21,7 @@ export function AvailabilityBookingStatus({
       <BookingStatusCard
         selection={bookingState.selection}
         status="submitting"
-        traceId={traceId}
+        traceId={bookingState.traceId}
       />
     )
   }
@@ -34,7 +34,12 @@ export function AvailabilityBookingStatus({
       result={bookingState.result}
       selection={bookingState.selection}
       status="completed"
-      traceId={traceId}
+      traceExport={
+        bookingState.result.status === 'failed' && onExportTrace !== undefined
+          ? () => onExportTrace(bookingState.traceId)
+          : undefined
+      }
+      traceId={bookingState.traceId}
     />
   )
 }

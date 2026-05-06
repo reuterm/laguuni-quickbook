@@ -5,9 +5,9 @@ import type {
   BookingSlotSelection,
 } from '../../domain/booking'
 import type { CheckoutResponseObservation } from '../../lib/api/booking-contracts'
-import type { Diagnostics } from '../diagnostics/logs'
+import type { DiagnosticsTrace } from '../diagnostics/logs'
 
-type DiagnosticAppender = Pick<Diagnostics, 'append'>
+type DiagnosticAppender = Pick<DiagnosticsTrace, 'append'>
 
 export type BookingDiagnosticsReporter = {
   recordBasketCreated(): void
@@ -54,49 +54,48 @@ export function createBookingDiagnosticsReporter(
     },
     recordCheckoutPlan(plan) {
       diagnostics.append({
-        event: 'booking.checkout_planned',
-        fields: {
+        data: {
           paymentMethod: plan.paymentMethod,
           totalDueCents: plan.totalDueCents,
         },
+        event: 'booking.checkout_planned',
       })
     },
     recordCashCheckoutStep(step) {
       diagnostics.append({
-        event: 'booking.cash_checkout_step',
-        fields: {
+        data: {
           step,
         },
+        event: 'booking.cash_checkout_step',
       })
     },
     recordCheckoutCompleted(result: BookingFlowResult) {
       diagnostics.append({
-        event: 'booking.checkout_completed',
-        fields: {
+        data: {
           errorCode: result.status === 'failed' ? result.errorCode : null,
           hasRedirect:
             result.status === 'payment_required' && result.redirectUrl !== null,
           outcome: result.status,
           step: result.status === 'failed' ? result.step : null,
         },
+        event: 'booking.checkout_completed',
       })
     },
     recordCheckoutRedirectObserved(redirectUrl) {
       const redirectParts = readRedirectParts(redirectUrl)
 
       diagnostics.append({
-        event: 'booking.checkout_redirect_observed',
-        fields: {
+        data: {
           hasRedirect: redirectParts !== null,
           redirectHost: redirectParts?.host ?? null,
           redirectPath: redirectParts?.path ?? null,
         },
+        event: 'booking.checkout_redirect_observed',
       })
     },
     recordCheckoutResponseObserved(observation: CheckoutResponseObservation) {
       diagnostics.append({
-        event: 'booking.checkout_response_observed',
-        fields: {
+        data: {
           // Temporary: keep this to shape-only fields until the live checkout
           // response is captured and we know which artifacts are worth persisting.
           hasErrorCode: observation.hasErrorCode,
@@ -108,35 +107,36 @@ export function createBookingDiagnosticsReporter(
           redirectUrlFieldKind: observation.redirectUrlFieldKind,
           responseKeys: observation.responseKeys,
         },
+        event: 'booking.checkout_response_observed',
       })
     },
     recordCodeApplied(source) {
       diagnostics.append({
-        event: 'booking.code_applied',
-        fields: {
+        data: {
           source,
         },
+        event: 'booking.code_applied',
       })
     },
     recordCodeAccepted(
       result: Extract<BookingCodeValidationResult, { status: 'accepted' }>,
     ) {
       diagnostics.append({
-        event: 'booking.code_accepted',
-        fields: {
+        data: {
           remainingBalanceCents: result.remainingBalanceCents,
           source: result.source,
         },
+        event: 'booking.code_accepted',
       })
     },
     recordCodeInvalid(
       result: Extract<BookingCodeValidationResult, { status: 'invalid' }>,
     ) {
       diagnostics.append({
-        event: 'booking.code_invalid',
-        fields: {
+        data: {
           errorCode: result.errorCode,
         },
+        event: 'booking.code_invalid',
       })
     },
     recordProfileInvalid(
@@ -145,42 +145,42 @@ export function createBookingDiagnosticsReporter(
       hasCode: boolean,
     ) {
       diagnostics.append({
-        event: 'booking.profile_invalid',
-        fields: {
+        data: {
           errorCode: failure.errorCode,
           hasCode,
           missingFields: missingFields.join(','),
         },
+        event: 'booking.profile_invalid',
       })
     },
     recordReservationAdded(selection: BookingSlotSelection) {
       diagnostics.append({
-        event: 'booking.reservation_added',
-        fields: {
+        data: {
           cableId: selection.cableId,
         },
+        event: 'booking.reservation_added',
       })
     },
     recordStarted(selection: BookingSlotSelection, hasCode: boolean) {
       diagnostics.append({
-        event: 'booking.started',
-        fields: {
+        data: {
           cableId: selection.cableId,
           date: selection.date,
           endTime: selection.endTime,
           hasCode,
           startTime: selection.startTime,
         },
+        event: 'booking.started',
       })
     },
     recordUnexpectedError(selection: BookingSlotSelection) {
       diagnostics.append({
-        event: 'booking.unexpected_error',
-        fields: {
+        data: {
           errorCode: 'unexpected-error',
           selectionDate: selection.date,
           selectionStartTime: selection.startTime,
         },
+        event: 'booking.unexpected_error',
       })
     },
   }

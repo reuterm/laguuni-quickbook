@@ -52,13 +52,17 @@ describe('DefaultBookingService', () => {
   it('runs the expected basket, code, and checkout sequence', async () => {
     const api = createApiStub()
     const service = new DefaultBookingService({ api })
+    const trace = createTrace()
 
     await expect(
-      service.book({
-        code: 'FIXTURE-DISCOUNT',
-        profile,
-        selection,
-      }),
+      service.book(
+        {
+          code: 'FIXTURE-DISCOUNT',
+          profile,
+          selection,
+        },
+        trace,
+      ),
     ).resolves.toEqual({
       orderIdentifier: 'fixture-order-id',
       status: 'success',
@@ -98,13 +102,17 @@ describe('DefaultBookingService', () => {
     })
 
     const service = new DefaultBookingService({ api })
+    const trace = createTrace()
 
     await expect(
-      service.book({
-        code: 'INVALID',
-        profile,
-        selection,
-      }),
+      service.book(
+        {
+          code: 'INVALID',
+          profile,
+          selection,
+        },
+        trace,
+      ),
     ).resolves.toEqual({
       errorCode: 'GENERAL_ERROR',
       message: 'Antamasi koodi on virheellinen.',
@@ -119,15 +127,19 @@ describe('DefaultBookingService', () => {
   it('fails early when required booking profile details are missing', async () => {
     const api = createApiStub()
     const service = new DefaultBookingService({ api })
+    const trace = createTrace()
 
     await expect(
-      service.book({
-        profile: {
-          ...profile,
-          email: ' ',
+      service.book(
+        {
+          profile: {
+            ...profile,
+            email: ' ',
+          },
+          selection,
         },
-        selection,
-      }),
+        trace,
+      ),
     ).resolves.toEqual({
       errorCode: 'missing-profile',
       message: 'Missing required profile fields: email',
@@ -146,13 +158,17 @@ describe('DefaultBookingService', () => {
     })
 
     const service = new DefaultBookingService({ api })
+    const trace = createTrace()
 
     await expect(
-      service.book({
-        code: 'FIXTURE-DISCOUNT',
-        profile,
-        selection,
-      }),
+      service.book(
+        {
+          code: 'FIXTURE-DISCOUNT',
+          profile,
+          selection,
+        },
+        trace,
+      ),
     ).resolves.toEqual({
       orderIdentifier: 'fixture-order-id',
       status: 'success',
@@ -169,22 +185,24 @@ describe('DefaultBookingService', () => {
   it('logs booking flow events without persisting raw code or profile data', async () => {
     const diagnostics = new LocalDiagnosticsStore({
       appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
       platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
       storage: createMemoryStorage(),
-      traceId: 'lqk-fixedtrace',
     })
     const api = createApiStub()
-    const service = new DefaultBookingService({
-      api,
-      diagnostics,
-    })
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
 
     await expect(
-      service.book({
-        code: 'FIXTURE-DISCOUNT',
-        profile,
-        selection,
-      }),
+      service.book(
+        {
+          code: 'FIXTURE-DISCOUNT',
+          profile,
+          selection,
+        },
+        trace,
+      ),
     ).resolves.toEqual({
       orderIdentifier: 'fixture-order-id',
       status: 'success',
@@ -206,9 +224,10 @@ describe('DefaultBookingService', () => {
   it('records checkout planning for paid bookings', async () => {
     const diagnostics = new LocalDiagnosticsStore({
       appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
       platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
       storage: createMemoryStorage(),
-      traceId: 'lqk-fixedtrace',
     })
     const api = createApiStub()
 
@@ -216,17 +235,18 @@ describe('DefaultBookingService', () => {
       totalDueCents: 1200,
     })
 
-    const service = new DefaultBookingService({
-      api,
-      diagnostics,
-    })
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
 
     await expect(
-      service.book({
-        code: 'FIXTURE-DISCOUNT',
-        profile,
-        selection,
-      }),
+      service.book(
+        {
+          code: 'FIXTURE-DISCOUNT',
+          profile,
+          selection,
+        },
+        trace,
+      ),
     ).resolves.toEqual({
       orderIdentifier: 'fixture-order-id',
       status: 'success',
@@ -242,9 +262,10 @@ describe('DefaultBookingService', () => {
   it('keeps checkout diagnostics on safe codes instead of raw error messages', async () => {
     const diagnostics = new LocalDiagnosticsStore({
       appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
       platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
       storage: createMemoryStorage(),
-      traceId: 'lqk-fixedtrace',
     })
     const api = createApiStub()
 
@@ -254,16 +275,17 @@ describe('DefaultBookingService', () => {
       status: 'failed',
     })
 
-    const service = new DefaultBookingService({
-      api,
-      diagnostics,
-    })
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
 
     await expect(
-      service.book({
-        profile,
-        selection,
-      }),
+      service.book(
+        {
+          profile,
+          selection,
+        },
+        trace,
+      ),
     ).resolves.toEqual({
       errorCode: 'GENERAL_ERROR',
       message: 'Fixture checkout failed.',
@@ -280,9 +302,10 @@ describe('DefaultBookingService', () => {
   it('records a safe summary of the observed checkout response shape', async () => {
     const diagnostics = new LocalDiagnosticsStore({
       appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
       platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
       storage: createMemoryStorage(),
-      traceId: 'lqk-fixedtrace',
     })
     const api = createApiStub()
 
@@ -305,16 +328,17 @@ describe('DefaultBookingService', () => {
       }
     })
 
-    const service = new DefaultBookingService({
-      api,
-      diagnostics,
-    })
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
 
     await expect(
-      service.book({
-        profile,
-        selection,
-      }),
+      service.book(
+        {
+          profile,
+          selection,
+        },
+        trace,
+      ),
     ).resolves.toEqual({
       orderIdentifier: '12345',
       redirectUrl: fixtureMobilePayRedirectUrl,
@@ -331,9 +355,10 @@ describe('DefaultBookingService', () => {
   it('records sanitized payment redirect diagnostics without storing raw tokens', async () => {
     const diagnostics = new LocalDiagnosticsStore({
       appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
       platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
       storage: createMemoryStorage(),
-      traceId: 'lqk-fixedtrace',
     })
     const api = createApiStub()
 
@@ -347,16 +372,17 @@ describe('DefaultBookingService', () => {
       }
     })
 
-    const service = new DefaultBookingService({
-      api,
-      diagnostics,
-    })
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
 
     await expect(
-      service.book({
-        profile,
-        selection,
-      }),
+      service.book(
+        {
+          profile,
+          selection,
+        },
+        trace,
+      ),
     ).resolves.toEqual({
       orderIdentifier: null,
       redirectUrl: fixtureMobilePayRedirectUrl,
@@ -371,6 +397,18 @@ describe('DefaultBookingService', () => {
     expect(exportedLogs).not.toContain('test@example.com')
   })
 })
+
+function createTrace() {
+  const diagnostics = new LocalDiagnosticsStore({
+    appVersion: '0.1.0',
+    createId: () => 'trace-fixed',
+    platform: 'Vitest Browser',
+    sessionId: 'session-fixed',
+    storage: createMemoryStorage(),
+  })
+
+  return diagnostics.beginTrace({ name: 'booking' })
+}
 
 function createMemoryStorage() {
   const values = new Map<string, string>()

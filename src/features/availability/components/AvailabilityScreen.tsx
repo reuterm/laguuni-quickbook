@@ -10,10 +10,12 @@ import {
 import { cn } from '@/lib/utils'
 import {
   useAvailabilityReferenceDate,
+  useDiagnostics,
   useLaguuniApi,
 } from '../../../app/providers'
 import type { BookingSlotSelection } from '../../../domain/booking'
 import { getCableById } from '../../../domain/cable'
+import { exportBookingDiagnosticsForTrace } from '../../booking/components/BookingStatusCard'
 import { useBookingFlow } from '../../booking/use-booking-flow'
 import {
   loadReadOnlyNoticeDismissed,
@@ -34,6 +36,7 @@ export function AvailabilityScreen({
   onOpenSettings,
 }: AvailabilityScreenProps) {
   const api = useLaguuniApi()
+  const diagnostics = useDiagnostics()
   const availabilityReferenceDate = useAvailabilityReferenceDate()
   const [isReadOnlyNoticeDismissed, setIsReadOnlyNoticeDismissed] = useState(
     () => loadReadOnlyNoticeDismissed(),
@@ -51,7 +54,6 @@ export function AvailabilityScreen({
     dismissBookingStatus,
     isBookingInProgress,
     isBookingReady,
-    traceId,
   } = useBookingFlow()
   const handleBookSelection = useCallback(
     (selection: BookingSlotSelection) => {
@@ -63,6 +65,15 @@ export function AvailabilityScreen({
     saveReadOnlyNoticeDismissed(true)
     setIsReadOnlyNoticeDismissed(true)
   }, [])
+  const handleExportTrace = useCallback(
+    async (traceId: string) => {
+      await exportBookingDiagnosticsForTrace(
+        (options) => diagnostics.exportLogs(options),
+        traceId,
+      )
+    },
+    [diagnostics],
+  )
   const showReadOnlyNotice = !isBookingReady && !isReadOnlyNoticeDismissed
   const bookingActionProps = getAvailabilityBookingActionProps(
     isBookingReady,
@@ -75,8 +86,8 @@ export function AvailabilityScreen({
       <div className="space-y-5">
         <AvailabilityBookingStatus
           onDismiss={dismissBookingStatus}
+          onExportTrace={handleExportTrace}
           bookingState={bookingState}
-          traceId={traceId}
         />
 
         {showReadOnlyNotice ? (
