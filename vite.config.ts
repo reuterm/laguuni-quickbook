@@ -14,7 +14,18 @@ function readBuildSha(): string {
   return 'local-dev'
 }
 
+function normalizeBasePath(basePath: string | undefined): string {
+  const normalizedBasePath = basePath?.trim()
+
+  if (!normalizedBasePath) {
+    return '/'
+  }
+
+  return `/${normalizedBasePath.replace(/^\/+|\/+$/g, '')}/`
+}
+
 export default defineConfig({
+  base: normalizeBasePath(process.env.BASE_PATH),
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(readBuildSha()),
   },
