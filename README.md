@@ -7,8 +7,6 @@ A mobile-first browser app for quickly booking Laguuni wakeboarding slots.
 - Product spec: [`docs/specs/product.md`](docs/specs/product.md)
 - Technical direction: [`docs/adrs/001-technical-direction.md`](docs/adrs/001-technical-direction.md)
 - UI foundation: [`docs/adrs/002-ui-foundation.md`](docs/adrs/002-ui-foundation.md)
-- Walking skeleton plan: [`docs/plans/001-walking-skeleton.md`](docs/plans/001-walking-skeleton.md)
-- UI refactor plan: [`docs/plans/002-ui-refactor.md`](docs/plans/002-ui-refactor.md)
 
 ## Tooling
 
