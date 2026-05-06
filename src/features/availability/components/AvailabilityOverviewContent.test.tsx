@@ -17,6 +17,37 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.getByText('Loading availability…')).toBeInTheDocument()
   })
 
+  it('keeps rendered slots visible while refreshing availability', () => {
+    renderContent({
+      dayGroups: [
+        {
+          date: '2026-05-14',
+          displayDate: 'Thu 14 May',
+          slots: [
+            {
+              endTime: '16:00',
+              freeCapacity: 3,
+              id: '2026-05-14-900',
+              selection: {
+                cableId: 'pro',
+                date: '2026-05-14',
+                endTime: '16:00',
+                startTime: '15:00',
+              },
+              startTime: '15:00',
+              totalCapacity: 4,
+            },
+          ],
+        },
+      ],
+      status: 'refreshing',
+    })
+
+    expect(screen.getByText('Refreshing availability…')).toBeInTheDocument()
+    expect(screen.getByText('3/4')).toBeInTheDocument()
+    expect(screen.queryByText('Loading availability…')).not.toBeInTheDocument()
+  })
+
   it('renders API errors as alerts', () => {
     renderContent({
       message: 'Fixture outage',
