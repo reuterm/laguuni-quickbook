@@ -29,9 +29,7 @@ export function AvailabilityBookingStatus({
   return (
     <BookingStatusCard
       attemptKey={bookingState.traceId}
-      onDismiss={
-        bookingState.result.status === 'failed' ? onDismiss : undefined
-      }
+      onDismiss={onDismiss}
       result={bookingState.result}
       selection={bookingState.selection}
       status="completed"

@@ -1,4 +1,4 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -171,6 +171,105 @@ describe('booking flow integration', () => {
     expect(
       screen.queryByRole('heading', { name: 'Booking failed' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('allows dismissing a successful booking status', async () => {
+    const user = userEvent.setup()
+
+    saveUserSettings({
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+      seasonPassCode: 'FIXTURE-DISCOUNT',
+    })
+
+    renderApp()
+    await clickFirstBookButton(user)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Booking confirmed' }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Dismiss booking status' }),
+    )
+
+    expect(
+      screen.queryByRole('heading', { name: 'Booking confirmed' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('refreshes the availability overview after a completed booking', async () => {
+    const user = userEvent.setup()
+    let availabilityRequestCount = 0
+
+    saveUserSettings({
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+      seasonPassCode: 'FIXTURE-DISCOUNT',
+    })
+    server.use(
+      http.get(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/products/:productId/availabletimes/:date.json`,
+        ({ params, request }) => {
+          const url = new URL(request.url)
+
+          if (
+            String(params.productId) !== '6' ||
+            url.searchParams.get('capacity') !== 'true'
+          ) {
+            return
+          }
+
+          availabilityRequestCount += 1
+
+          if (availabilityRequestCount < 8) {
+            return HttpResponse.json({
+              endtimes: {
+                '15.00': ['16.00'],
+              },
+              starttimes: ['15.00'],
+              tuples: [
+                [0, 900, 4],
+                [900, 960, 3],
+                [960, 1440, 4],
+              ],
+              tomorrowtuples: [[0, 1440, 4]],
+            })
+          }
+
+          return HttpResponse.json({
+            endtimes: {
+              '15.00': ['16.00'],
+            },
+            starttimes: ['15.00'],
+            tuples: [
+              [0, 900, 4],
+              [900, 960, 2],
+              [960, 1440, 4],
+            ],
+            tomorrowtuples: [[0, 1440, 4]],
+          })
+        },
+      ),
+    )
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+    })
+
+    expect(await screen.findAllByText('3/4')).not.toHaveLength(0)
+
+    await clickFirstBookButton(user)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Booking confirmed' }),
+    ).toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(screen.getAllByText('2/4')).not.toHaveLength(0)
+    })
   })
 })
 

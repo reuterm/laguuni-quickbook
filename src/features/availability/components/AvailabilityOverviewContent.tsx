@@ -1,6 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+  eyebrowClassName,
   panelSurfaceClassName,
   subtleSurfaceBackgroundClassName,
 } from '@/components/ui/styles'
@@ -20,6 +21,8 @@ export function AvailabilityOverviewContent({
   availabilityState,
   ...bookingActionProps
 }: AvailabilityOverviewContentProps) {
+  const isRefreshing = availabilityState.status === 'refreshing'
+
   if (availabilityState.status === 'loading') {
     return (
       <div role="status" aria-live="polite" className="grid gap-6">
@@ -51,20 +54,36 @@ export function AvailabilityOverviewContent({
 
   if (availabilityState.dayGroups.length === 0) {
     return (
-      <Alert role="status" className={subtleSurfaceBackgroundClassName}>
-        <AlertTitle>No bookable slots in range</AlertTitle>
-        <AlertDescription>
-          No bookable one-hour slots are available for {activeCableLabel} in the
-          loaded range.
-        </AlertDescription>
-      </Alert>
+      <div className="space-y-3">
+        {isRefreshing ? (
+          <p className={eyebrowClassName} role="status" aria-live="polite">
+            Refreshing availability…
+          </p>
+        ) : null}
+
+        <Alert role="status" className={subtleSurfaceBackgroundClassName}>
+          <AlertTitle>No bookable slots in range</AlertTitle>
+          <AlertDescription>
+            No bookable one-hour slots are available for {activeCableLabel} in
+            the loaded range.
+          </AlertDescription>
+        </Alert>
+      </div>
     )
   }
 
   return (
-    <AvailabilityDayGroups
-      dayGroups={availabilityState.dayGroups}
-      {...bookingActionProps}
-    />
+    <div className="space-y-3">
+      {isRefreshing ? (
+        <p className={eyebrowClassName} role="status" aria-live="polite">
+          Refreshing availability…
+        </p>
+      ) : null}
+
+      <AvailabilityDayGroups
+        dayGroups={availabilityState.dayGroups}
+        {...bookingActionProps}
+      />
+    </div>
   )
 }

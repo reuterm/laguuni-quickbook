@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { CableId } from '../../domain/cable'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
@@ -13,6 +13,10 @@ export type AvailabilityState =
     }
   | {
       dayGroups: readonly AvailabilityDayGroup[]
+      status: 'refreshing'
+    }
+  | {
+      dayGroups: readonly AvailabilityDayGroup[]
       status: 'ready'
     }
   | {
@@ -20,56 +24,88 @@ export type AvailabilityState =
       status: 'error'
     }
 
+type UseAvailabilityOverviewResult = {
+  availabilityState: AvailabilityState
+  refreshAvailability: () => Promise<void>
+}
+
 export function useAvailabilityOverview(
   api: LaguuniApi,
   selectedCable: CableId,
   referenceDate?: Date,
-): AvailabilityState {
+): UseAvailabilityOverviewResult {
   const [availabilityState, setAvailabilityState] = useState<AvailabilityState>(
     {
       status: 'loading',
     },
   )
+  const isMountedRef = useRef(true)
+  const latestRequestIdRef = useRef(0)
 
-  useEffect(() => {
-    let isCancelled = false
+  const refreshAvailability = useCallback(async () => {
+    const requestId = latestRequestIdRef.current + 1
+    latestRequestIdRef.current = requestId
 
-    async function fetchAvailability() {
-      setAvailabilityState({
-        status: 'loading',
-      })
-
-      try {
-        const dayGroups = await loadAvailabilityOverview(
-          api,
-          selectedCable,
-          referenceDate,
-        )
-
-        if (!isCancelled) {
-          setAvailabilityState({
-            dayGroups,
-            status: 'ready',
-          })
-        }
-      } catch (error) {
-        if (!isCancelled) {
-          setAvailabilityState({
-            message: getErrorMessage(error),
-            status: 'error',
-          })
+    setAvailabilityState((currentState) => {
+      if (
+        currentState.status === 'ready' ||
+        currentState.status === 'refreshing'
+      ) {
+        return {
+          dayGroups: currentState.dayGroups,
+          status: 'refreshing',
         }
       }
-    }
 
-    void fetchAvailability()
+      return {
+        status: 'loading',
+      }
+    })
 
-    return () => {
-      isCancelled = true
+    try {
+      const dayGroups = await loadAvailabilityOverview(
+        api,
+        selectedCable,
+        referenceDate,
+      )
+
+      if (!isMountedRef.current || latestRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setAvailabilityState({
+        dayGroups,
+        status: 'ready',
+      })
+    } catch (error) {
+      if (!isMountedRef.current || latestRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setAvailabilityState({
+        message: getErrorMessage(error),
+        status: 'error',
+      })
     }
   }, [api, referenceDate, selectedCable])
 
-  return availabilityState
+  useEffect(() => {
+    isMountedRef.current = true
+    void refreshAvailability()
+
+    return undefined
+  }, [refreshAvailability])
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
+  return {
+    availabilityState,
+    refreshAvailability,
+  }
 }
 
 function getErrorMessage(error: unknown): string {

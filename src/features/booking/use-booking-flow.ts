@@ -63,20 +63,26 @@ export function useBookingFlow() {
           status: 'completed',
           traceId: trace.traceId,
         })
+
+        return result
       } catch (error) {
         const errorMessage = getErrorMessage(error)
 
+        const result: BookingFlowResult = {
+          errorCode: 'unexpected-error',
+          message: errorMessage,
+          status: 'failed',
+          step: 'unexpected',
+        }
+
         setBookingState({
-          result: {
-            errorCode: 'unexpected-error',
-            message: errorMessage,
-            status: 'failed',
-            step: 'unexpected',
-          },
+          result,
           selection,
           status: 'completed',
           traceId: trace.traceId,
         })
+
+        return result
       }
     },
     [bookingProfile, bookingService, diagnostics, settings.seasonPassCode],

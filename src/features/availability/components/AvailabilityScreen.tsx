@@ -43,7 +43,7 @@ export function AvailabilityScreen({
   )
   const { selectedCable, selectCable } = useAvailabilityScope()
   const activeCable = getCableById(selectedCable)
-  const availabilityState = useAvailabilityOverview(
+  const { availabilityState, refreshAvailability } = useAvailabilityOverview(
     api,
     selectedCable,
     availabilityReferenceDate,
@@ -56,10 +56,14 @@ export function AvailabilityScreen({
     isBookingReady,
   } = useBookingFlow()
   const handleBookSelection = useCallback(
-    (selection: BookingSlotSelection) => {
-      void bookSelection(selection)
+    async (selection: BookingSlotSelection) => {
+      const result = await bookSelection(selection)
+
+      if (result.status !== 'failed') {
+        refreshAvailability()
+      }
     },
-    [bookSelection],
+    [bookSelection, refreshAvailability],
   )
   const handleDismissReadOnlyNotice = useCallback(() => {
     saveReadOnlyNoticeDismissed(true)
