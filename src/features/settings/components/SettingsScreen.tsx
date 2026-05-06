@@ -35,6 +35,7 @@ const NO_DEFAULT_CABLE_VALUE = '__none__'
 const settingsFieldDefinitions = [
   {
     autoComplete: 'name',
+    autoCapitalize: 'words',
     id: 'name',
     key: 'name',
     label: 'Name',
@@ -42,18 +43,24 @@ const settingsFieldDefinitions = [
   },
   {
     autoComplete: 'tel',
+    autoCapitalize: 'off',
     id: 'phone',
+    inputMode: 'tel',
     key: 'phone',
     label: 'Phone',
     placeholder: '+358 40 123 4567',
+    spellCheck: false,
     type: 'tel',
   },
   {
     autoComplete: 'email',
+    autoCapitalize: 'off',
     id: 'email',
+    inputMode: 'email',
     key: 'email',
     label: 'Email',
     placeholder: 'test@example.com',
+    spellCheck: false,
     type: 'email',
   },
   {
@@ -66,10 +73,13 @@ const settingsFieldDefinitions = [
 
 type SettingsFieldDefinition = {
   autoComplete?: string
+  autoCapitalize?: React.ComponentProps<typeof Input>['autoCapitalize']
   id: string
+  inputMode?: React.ComponentProps<typeof Input>['inputMode']
   key: EditableField
   label: string
   placeholder: string
+  spellCheck?: boolean
   type?: React.ComponentProps<typeof Input>['type']
 }
 
@@ -278,7 +288,10 @@ function SettingsTextField({
         id={definition.id}
         name={definition.key}
         autoComplete={definition.autoComplete}
+        autoCapitalize={definition.autoCapitalize}
+        inputMode={definition.inputMode}
         placeholder={definition.placeholder}
+        spellCheck={definition.spellCheck}
         type={definition.type}
         value={value}
         onChange={onChange}
