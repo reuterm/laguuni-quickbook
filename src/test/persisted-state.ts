@@ -4,7 +4,10 @@ import {
   DIAGNOSTICS_STORAGE_KEY,
   type DiagnosticsRecoveryIssue,
 } from '../features/diagnostics/logs'
-import { DEVELOPER_MODE_STORAGE_KEY } from '../features/settings/developer-mode-storage'
+import {
+  DEVELOPER_MODE_STORAGE_KEY,
+  saveDeveloperModeEnabled,
+} from '../features/settings/developer-mode-storage'
 import {
   type BrowserStorage,
   LocalSettingsStore,
@@ -30,6 +33,12 @@ export function saveUserSettings(
     ...DEFAULT_USER_SETTINGS,
     ...overrides,
   })
+}
+
+export function enableDeveloperMode(
+  storage: BrowserStorage = window.localStorage,
+) {
+  saveDeveloperModeEnabled(true, storage)
 }
 
 export function writeCorruptedDiagnostics(
