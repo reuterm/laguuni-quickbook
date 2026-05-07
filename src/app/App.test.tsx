@@ -134,7 +134,14 @@ describe('App', () => {
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
-    await clickFirstBookButton(user)
+
+    await openFirstBookingSheet(user)
+
+    expect(
+      screen.getByRole('heading', { name: 'Confirm booking' }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Confirm booking' }))
 
     expect(
       await screen.findByRole('heading', { name: 'Booking confirmed' }),
@@ -143,7 +150,7 @@ describe('App', () => {
   })
 })
 
-async function clickFirstBookButton(user: ReturnType<typeof userEvent.setup>) {
+async function openFirstBookingSheet(user: ReturnType<typeof userEvent.setup>) {
   const bookButtons = await screen.findAllByRole('button', {
     name: 'Book',
   })

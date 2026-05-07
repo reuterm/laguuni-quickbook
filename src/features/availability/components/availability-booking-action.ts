@@ -3,7 +3,7 @@ import type { BookingSlotSelection } from '../../../domain/booking'
 type AvailabilityBookingActionProps =
   | {
       bookingActionMode: 'enabled'
-      onBookSelection: (selection: BookingSlotSelection) => Promise<void>
+      onBookSelection: (selection: BookingSlotSelection) => void
     }
   | {
       bookingActionMode: 'disabled' | 'hidden'
@@ -13,7 +13,7 @@ type AvailabilityBookingActionProps =
 function getAvailabilityBookingActionProps(
   isBookingReady: boolean,
   isBookingInProgress: boolean,
-  onBookSelection: (selection: BookingSlotSelection) => Promise<void>,
+  onBookSelection: (selection: BookingSlotSelection) => void,
 ): AvailabilityBookingActionProps {
   if (!isBookingReady) {
     return { bookingActionMode: 'hidden' }
