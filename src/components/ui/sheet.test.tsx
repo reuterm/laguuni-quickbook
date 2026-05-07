@@ -1,0 +1,75 @@
+import { cleanup, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+} from './sheet'
+
+afterEach(() => {
+  cleanup()
+})
+
+describe('Sheet', () => {
+  it('renders the default close button', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <Sheet>
+        <SheetTrigger>Open</SheetTrigger>
+        <SheetContent>
+          <SheetTitle>Test sheet</SheetTitle>
+          <SheetDescription>Test description</SheetDescription>
+        </SheetContent>
+      </Sheet>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+  })
+
+  it('omits the close button when opted out', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <Sheet>
+        <SheetTrigger>Open</SheetTrigger>
+        <SheetContent showCloseButton={false}>
+          <SheetTitle>Test sheet</SheetTitle>
+          <SheetDescription>Test description</SheetDescription>
+        </SheetContent>
+      </Sheet>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+
+    expect(
+      screen.queryByRole('button', { name: 'Close' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('closes when the default close button is pressed', async () => {
+    const user = userEvent.setup()
+    const onOpenChange = vi.fn()
+
+    render(
+      <Sheet onOpenChange={onOpenChange}>
+        <SheetTrigger>Open</SheetTrigger>
+        <SheetContent>
+          <SheetTitle>Test sheet</SheetTitle>
+          <SheetDescription>Test description</SheetDescription>
+        </SheetContent>
+      </Sheet>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+})

@@ -13,9 +13,9 @@ import {
   useDiagnostics,
   useLaguuniApi,
 } from '../../../app/providers'
-import type { BookingSlotSelection } from '../../../domain/booking'
 import { getCableById } from '../../../domain/cable'
-import { useBookingFlow } from '../../booking/use-booking-flow'
+import { BookingSheetFlow } from '../../booking/components/BookingSheetFlow'
+import { useBookingSheetController } from '../../booking/use-booking-sheet-controller'
 import { exportDiagnosticsForTrace } from '../../diagnostics/export'
 import {
   loadReadOnlyNoticeDismissed,
@@ -23,7 +23,6 @@ import {
 } from '../read-only-notice-storage'
 import { useAvailabilityOverview } from '../use-availability-overview'
 import { useAvailabilityScope } from '../use-availability-scope'
-import { AvailabilityBookingStatus } from './AvailabilityBookingStatus'
 import { AvailabilityCableSelector } from './AvailabilityCableSelector'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 import { getAvailabilityBookingActionProps } from './availability-booking-action'
@@ -48,27 +47,6 @@ export function AvailabilityScreen({
     selectedCable,
     availabilityReferenceDate,
   )
-  const {
-    bookSelection,
-    bookingState,
-    dismissBookingStatus,
-    isBookingInProgress,
-    isBookingReady,
-  } = useBookingFlow()
-  const handleBookSelection = useCallback(
-    async (selection: BookingSlotSelection) => {
-      const result = await bookSelection(selection)
-
-      if (result.status !== 'failed') {
-        refreshAvailability()
-      }
-    },
-    [bookSelection, refreshAvailability],
-  )
-  const handleDismissReadOnlyNotice = useCallback(() => {
-    saveReadOnlyNoticeDismissed(true)
-    setIsReadOnlyNoticeDismissed(true)
-  }, [])
   const handleExportTrace = useCallback(
     async (traceId: string) => {
       await exportDiagnosticsForTrace(
@@ -78,20 +56,36 @@ export function AvailabilityScreen({
     },
     [diagnostics],
   )
+  const {
+    bookingSheetState,
+    confirmBooking,
+    dismissBookingSheet,
+    isBookingInProgress,
+    isBookingReady,
+    requestBooking,
+  } = useBookingSheetController({
+    onBookingSubmitted: refreshAvailability,
+  })
+
+  const handleDismissReadOnlyNotice = useCallback(() => {
+    saveReadOnlyNoticeDismissed(true)
+    setIsReadOnlyNoticeDismissed(true)
+  }, [])
   const showReadOnlyNotice = !isBookingReady && !isReadOnlyNoticeDismissed
   const bookingActionProps = getAvailabilityBookingActionProps(
     isBookingReady,
     isBookingInProgress,
-    handleBookSelection,
+    requestBooking,
   )
 
   return (
     <section aria-labelledby="availability-title" className="space-y-6">
       <div className="space-y-5">
-        <AvailabilityBookingStatus
-          onDismiss={dismissBookingStatus}
+        <BookingSheetFlow
+          bookingSheetState={bookingSheetState}
+          confirmBooking={confirmBooking}
+          dismissBookingSheet={dismissBookingSheet}
           onExportTrace={handleExportTrace}
-          bookingState={bookingState}
         />
 
         {showReadOnlyNotice ? (

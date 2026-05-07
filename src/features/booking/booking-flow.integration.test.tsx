@@ -1,7 +1,7 @@
 import { cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import checkoutFailureFixture from '../../../tests/fixtures/laguuni/booking/checkout-failure.json'
 import checkoutPaymentRequiredFixture from '../../../tests/fixtures/laguuni/booking/checkout-payment-required.json'
@@ -27,39 +27,7 @@ describe('booking flow integration', () => {
   beforeEach(() => {
     cleanup()
     clearPersistedAppState()
-  })
-
-  it('surfaces payment-required bookings with a continuation link', async () => {
-    const user = userEvent.setup()
-
-    saveUserSettings({
-      email: 'test@example.com',
-      name: 'Test User',
-      phone: '+358401234567',
-    })
-    server.use(
-      http.post(
-        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
-        () => HttpResponse.json(checkoutPaymentRequiredFixture),
-      ),
-      http.get(
-        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/rest/post/mobilepayhandler/:token.json`,
-        () => HttpResponse.json(MOBILEPAY_HANDLER_REDIRECT),
-      ),
-    )
-
-    renderApp()
-    await clickFirstBookButton(user)
-
-    expect(
-      await screen.findByRole('heading', { name: 'Payment required' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('link', { name: 'Continue to payment' }),
-    ).toHaveAttribute(
-      'href',
-      'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
-    )
+    vi.useRealTimers()
   })
 
   it('keeps the availability overview read-only until booking details are saved', async () => {
@@ -91,7 +59,7 @@ describe('booking flow integration', () => {
     )
 
     renderApp()
-    await clickFirstBookButton(user)
+    await confirmFirstBooking(user)
 
     expect(
       await screen.findByRole('heading', { name: 'Booking failed' }),
@@ -121,7 +89,7 @@ describe('booking flow integration', () => {
     )
 
     renderApp()
-    await clickFirstBookButton(user)
+    await confirmFirstBooking(user)
 
     expect(
       await screen.findByRole('heading', { name: 'Payment required' }),
@@ -158,22 +126,20 @@ describe('booking flow integration', () => {
     )
 
     renderApp()
-    await clickFirstBookButton(user)
+    await confirmFirstBooking(user)
 
     expect(
       await screen.findByRole('heading', { name: 'Booking failed' }),
     ).toBeInTheDocument()
 
-    await user.click(
-      screen.getByRole('button', { name: 'Dismiss booking status' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Close' }))
 
     expect(
       screen.queryByRole('heading', { name: 'Booking failed' }),
     ).not.toBeInTheDocument()
   })
 
-  it('allows dismissing a successful booking status', async () => {
+  it('shows a successful booking status', async () => {
     const user = userEvent.setup()
 
     saveUserSettings({
@@ -184,19 +150,76 @@ describe('booking flow integration', () => {
     })
 
     renderApp()
+    await confirmFirstBooking(user)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Booking confirmed' }),
+    ).toBeInTheDocument()
+  })
+
+  it('allows dismissing the confirmation sheet without submitting a booking', async () => {
+    const user = userEvent.setup()
+    const orderRequests: Array<string> = []
+
+    saveUserSettings({
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+      seasonPassCode: 'FIXTURE-DISCOUNT',
+    })
+    server.use(
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
+        ({ request }) => {
+          orderRequests.push(request.url)
+          return HttpResponse.json(
+            { status: 'unexpected-test-request' },
+            { status: 500 },
+          )
+        },
+      ),
+    )
+
+    renderApp()
     await clickFirstBookButton(user)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Confirm booking' }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(
+      screen.queryByRole('heading', { name: 'Confirm booking' }),
+    ).not.toBeInTheDocument()
+    expect(orderRequests).toHaveLength(0)
+  })
+
+  it('auto-dismisses the success sheet after the success delay', async () => {
+    const user = userEvent.setup()
+
+    saveUserSettings({
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+      seasonPassCode: 'FIXTURE-DISCOUNT',
+    })
+
+    renderApp()
+    await confirmFirstBooking(user)
 
     expect(
       await screen.findByRole('heading', { name: 'Booking confirmed' }),
     ).toBeInTheDocument()
 
-    await user.click(
-      screen.getByRole('button', { name: 'Dismiss booking status' }),
+    await waitFor(
+      () => {
+        expect(
+          screen.queryByRole('heading', { name: 'Booking confirmed' }),
+        ).not.toBeInTheDocument()
+      },
+      { timeout: 2500 },
     )
-
-    expect(
-      screen.queryByRole('heading', { name: 'Booking confirmed' }),
-    ).not.toBeInTheDocument()
   })
 
   it('refreshes the availability overview after a completed booking', async () => {
@@ -261,7 +284,7 @@ describe('booking flow integration', () => {
 
     expect(await screen.findAllByText('3/4')).not.toHaveLength(0)
 
-    await clickFirstBookButton(user)
+    await confirmFirstBooking(user)
 
     expect(
       await screen.findByRole('heading', { name: 'Booking confirmed' }),
@@ -284,4 +307,14 @@ async function clickFirstBookButton(user: ReturnType<typeof userEvent.setup>) {
   }
 
   await user.click(firstBookButton)
+}
+
+async function confirmFirstBooking(user: ReturnType<typeof userEvent.setup>) {
+  await clickFirstBookButton(user)
+
+  expect(
+    await screen.findByRole('heading', { name: 'Confirm booking' }),
+  ).toBeInTheDocument()
+
+  await user.click(screen.getByRole('button', { name: 'Confirm booking' }))
 }

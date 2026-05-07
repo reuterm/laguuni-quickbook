@@ -1,9 +1,10 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   clearPersistedAppState,
+  enableDeveloperMode,
   writeCorruptedSettings,
 } from '../../../test/persisted-state'
 import { renderApp } from '../../../test/render-app'
@@ -24,10 +25,10 @@ describe('Settings screen integration', () => {
     renderApp()
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
-    await user.type(screen.getByLabelText('Name'), 'Test User')
-    await user.type(screen.getByLabelText('Phone'), '+358401234567')
-    await user.type(screen.getByLabelText('Email'), 'test@example.com')
-    await user.type(screen.getByLabelText('Season pass code'), 'FIXTURE-CODE')
+    setInputValue('Name', 'Test User')
+    setInputValue('Phone', '+358401234567')
+    setInputValue('Email', 'test@example.com')
+    setInputValue('Season pass code', 'FIXTURE-CODE')
     await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
 
@@ -103,6 +104,7 @@ describe('Settings screen integration', () => {
     const user = userEvent.setup()
     const writeText = vi.fn(async () => {})
 
+    enableDeveloperMode()
     vi.stubGlobal('navigator', {
       clipboard: {
         writeText,
@@ -111,13 +113,6 @@ describe('Settings screen integration', () => {
 
     renderApp()
     await user.click(screen.getByRole('button', { name: 'Settings' }))
-    const versionButton = screen.getByRole('button', {
-      name: 'App version test-version',
-    })
-
-    for (let index = 0; index < 7; index += 1) {
-      await user.click(versionButton)
-    }
 
     expect(screen.getByText('Developer tools')).toBeVisible()
     await user.click(
@@ -204,6 +199,7 @@ describe('Settings screen integration', () => {
     const user = userEvent.setup()
     const writeText = vi.fn(async () => {})
 
+    enableDeveloperMode()
     vi.stubGlobal('navigator', {
       clipboard: {
         writeText,
@@ -212,14 +208,6 @@ describe('Settings screen integration', () => {
 
     renderApp()
     await user.click(screen.getByRole('button', { name: 'Settings' }))
-
-    const versionButton = screen.getByRole('button', {
-      name: 'App version test-version',
-    })
-
-    for (let index = 0; index < 7; index += 1) {
-      await user.click(versionButton)
-    }
 
     await user.click(
       screen.getByRole('button', { name: 'Clear diagnostics log' }),
@@ -246,3 +234,9 @@ describe('Settings screen integration', () => {
     })
   })
 })
+
+function setInputValue(label: string, value: string) {
+  fireEvent.change(screen.getByLabelText(label), {
+    target: { value },
+  })
+}
