@@ -17,6 +17,7 @@ import {
   applyCodeToBasket as applyCodeToBasketRequest,
   type BasketPricingSummary,
   createBasket as createBasketRequest,
+  deleteBasket as deleteBasketRequest,
   type LookupCodeArgs,
   loadBasketPricingSummary as loadBasketPricingSummaryRequest,
   lookupCode as lookupCodeRequest,
@@ -33,6 +34,7 @@ export type LaguuniApi = {
   }): Promise<AddReservationResponse>
   applyCodeToBasket(args: ApplyCodeArgs): Promise<void>
   createBasket(): Promise<BasketToken>
+  deleteBasket(basketToken: BasketToken): Promise<void>
   getAvailableDates(
     cableId: CableId,
     anchorDate: string,
@@ -71,6 +73,10 @@ export class LaguuniApiClient implements LaguuniApi {
 
   async createBasket(): Promise<BasketToken> {
     return createBasketRequest(this.#client)
+  }
+
+  async deleteBasket(basketToken: BasketToken): Promise<void> {
+    return deleteBasketRequest(this.#client, basketToken)
   }
 
   async applyCodeToBasket({ basketToken, code }: ApplyCodeArgs): Promise<void> {

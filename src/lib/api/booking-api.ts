@@ -67,6 +67,23 @@ export async function createBasket(client: HttpClient): Promise<BasketToken> {
   return expectResponse(response, [200], 'create basket')
 }
 
+export async function deleteBasket(
+  client: HttpClient,
+  basketToken: BasketToken,
+): Promise<void> {
+  const response = await client.request({
+    decoder: () => null,
+    method: 'DELETE',
+    path: `/api/laguuni/baskets/${basketToken}.json`,
+  })
+
+  if (response.status !== 200) {
+    throw new Error(
+      `Unexpected status ${response.status} while trying to delete basket`,
+    )
+  }
+}
+
 export async function applyCodeToBasket(
   client: HttpClient,
   { basketToken, code }: ApplyCodeArgs,

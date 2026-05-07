@@ -4,7 +4,7 @@ export type JsonDecoder<T> = (value: unknown) => T
 
 export type QueryValue = boolean | number | string
 
-export type HttpMethod = 'GET' | 'POST'
+export type HttpMethod = 'DELETE' | 'GET' | 'POST'
 
 export type HttpRequest<T> = {
   body?: unknown
