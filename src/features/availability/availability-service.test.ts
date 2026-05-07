@@ -19,6 +19,7 @@ describe('loadAvailabilityOverview', () => {
       addReservationToBasket: unexpectedApiCall,
       applyCodeToBasket: unexpectedApiCall,
       createBasket: unexpectedApiCall,
+      deleteBasket: unexpectedApiCall,
       getAvailableDates: unexpectedApiCall,
       getDailyAvailabilityWindow,
       loadBasketPricingSummary: unexpectedApiCall,

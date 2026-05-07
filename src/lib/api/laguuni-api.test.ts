@@ -114,6 +114,25 @@ describe('LaguuniApiClient', () => {
     })
   })
 
+  it('deletes baskets through the client layer', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const api = new LaguuniApiClient({
+      client: createSequentialHttpClientWithCapture(requests, {
+        data: null,
+        status: 200,
+      }),
+    })
+
+    await expect(
+      api.deleteBasket('fixture-basket-token'),
+    ).resolves.toBeUndefined()
+
+    expect(requests[0]).toMatchObject({
+      method: 'DELETE',
+      path: '/api/laguuni/baskets/fixture-basket-token.json',
+    })
+  })
+
   it('loads basket pricing summaries from storefront basket items', async () => {
     const api = new LaguuniApiClient({
       client: createSequentialHttpClient({

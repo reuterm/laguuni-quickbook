@@ -4,6 +4,7 @@ import type { BookingProfile, BookingSlotSelection } from '../../domain/booking'
 import {
   addReservationToBasket,
   applyCodeToBasket,
+  deleteBasket,
   loadBasketPricingSummary,
   submitCheckout,
 } from './booking-api'
@@ -246,6 +247,20 @@ describe('booking-api transport mapping', () => {
       },
       method: 'POST',
       path: '/api/laguuni/fi_FI/baskets/fixture-basket-token/items/new.json',
+    })
+  })
+
+  it('deletes baskets through the generic basket endpoint', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const client = createCapturingClient(requests, null)
+
+    await expect(
+      deleteBasket(client, 'fixture-basket-token'),
+    ).resolves.toBeUndefined()
+
+    expect(requests[0]).toMatchObject({
+      method: 'DELETE',
+      path: '/api/laguuni/baskets/fixture-basket-token.json',
     })
   })
 

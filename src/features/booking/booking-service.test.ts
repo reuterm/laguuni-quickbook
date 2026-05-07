@@ -27,6 +27,7 @@ function createApiStub(): LaguuniApi {
     })),
     applyCodeToBasket: vi.fn(async () => {}),
     createBasket: vi.fn(async () => 'created-basket-token'),
+    deleteBasket: vi.fn(async () => {}),
     getAvailableDates: vi.fn(),
     getDailyAvailabilityWindow: vi.fn(),
     loadBasketPricingSummary: vi.fn(async () => ({
