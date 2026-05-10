@@ -129,6 +129,38 @@ describe('DefaultBookingService', () => {
     expect(api.applyCodeToBasket).not.toHaveBeenCalled()
   })
 
+  it('returns basket cleanup when the code is invalid after basket creation', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.lookupCode).mockResolvedValueOnce({
+      errorCode: 'GENERAL_ERROR',
+      errorMessage: 'Antamasi koodi on virheellinen.',
+      status: 'invalid',
+    })
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        code: 'INVALID',
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'GENERAL_ERROR',
+      message: 'Antamasi koodi on virheellinen.',
+      status: 'failed',
+      step: 'code',
+    })
+
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+  })
+
   it('fails early when required booking profile details are missing', async () => {
     const api = createApiStub()
     const service = new DefaultBookingService({ api })
@@ -414,6 +446,69 @@ describe('DefaultBookingService', () => {
     expect(exportedLogs).toContain('pay.mobilepay.fi')
     expect(exportedLogs).toContain('/')
     expect(exportedLogs).not.toContain('test@example.com')
+  })
+
+  it('returns basket cleanup for unexpected errors after basket creation', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.addReservationToBasket).mockRejectedValueOnce(
+      new Error('Fixture reservation failed.'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'unexpected-error',
+      message: 'Fixture reservation failed.',
+      status: 'failed',
+      step: 'unexpected',
+    })
+
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+  })
+
+  it('records reservation cleanup failures in diagnostics', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
+      platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
+      storage: createMemoryStorage(),
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockResolvedValueOnce({
+      orderIdentifier: null,
+      redirectUrl: fixtureMobilePayRedirectUrl,
+      status: 'payment_required',
+    })
+    vi.mocked(api.deleteBasket).mockRejectedValueOnce(
+      new Error('Fixture basket delete failed.'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    await submission.releaseReservation()
+
+    expect(diagnostics.exportLogs()).toContain('booking.basket_release_failed')
   })
 
   it('returns basket cleanup for failed checkout results', async () => {

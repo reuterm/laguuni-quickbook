@@ -66,6 +66,9 @@ export class DefaultBookingService implements BookingService {
       reservationRelease = createReservationRelease({
         api: this.#api,
         basketToken,
+        onError: () => {
+          diagnosticsReporter.recordBasketReleaseFailed()
+        },
       })
       diagnosticsReporter.recordBasketCreated()
 
@@ -192,9 +195,11 @@ function createBookingSubmission({
 function createReservationRelease({
   api,
   basketToken,
+  onError,
 }: {
   api: LaguuniApi
   basketToken: string
+  onError: () => void
 }): ReservationRelease {
   let releasePromise: Promise<void> | null = null
 
@@ -204,7 +209,9 @@ function createReservationRelease({
         return releasePromise
       }
 
-      releasePromise = api.deleteBasket(basketToken).catch(() => {})
+      releasePromise = api.deleteBasket(basketToken).catch(() => {
+        onError()
+      })
 
       return releasePromise
     },

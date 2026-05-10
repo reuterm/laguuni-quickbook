@@ -143,8 +143,8 @@ describe('useBookingSheetController', () => {
     })
   })
 
-  it('calls onBookingCompleted for successful bookings', async () => {
-    const onBookingCompleted = vi.fn(async () => {})
+  it('calls onBookingFinalized for successful bookings', async () => {
+    const onBookingFinalized = vi.fn(async () => {})
 
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: vi.fn(async () => {}),
@@ -157,7 +157,7 @@ describe('useBookingSheetController', () => {
     mockBookingFlow()
 
     const { result } = renderHook(() =>
-      useBookingSheetController({ onBookingCompleted }),
+      useBookingSheetController({ onBookingFinalized }),
     )
 
     await act(async () => {
@@ -168,11 +168,11 @@ describe('useBookingSheetController', () => {
       await result.current.confirmBooking()
     })
 
-    expect(onBookingCompleted).toHaveBeenCalledOnce()
+    expect(onBookingFinalized).toHaveBeenCalledOnce()
   })
 
-  it('does not call onBookingCompleted for payment-required bookings before dismiss', async () => {
-    const onBookingCompleted = vi.fn(async () => {})
+  it('does not call onBookingFinalized for payment-required bookings before dismiss', async () => {
+    const onBookingFinalized = vi.fn(async () => {})
 
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: releaseReservationMock,
@@ -185,7 +185,7 @@ describe('useBookingSheetController', () => {
     mockBookingFlow()
 
     const { result } = renderHook(() =>
-      useBookingSheetController({ onBookingCompleted }),
+      useBookingSheetController({ onBookingFinalized }),
     )
 
     await act(async () => {
@@ -196,11 +196,11 @@ describe('useBookingSheetController', () => {
       await result.current.confirmBooking()
     })
 
-    expect(onBookingCompleted).not.toHaveBeenCalled()
+    expect(onBookingFinalized).not.toHaveBeenCalled()
   })
 
-  it('does not call onBookingCompleted for failed bookings before dismiss', async () => {
-    const onBookingCompleted = vi.fn(async () => {})
+  it('does not call onBookingFinalized for failed bookings before dismiss', async () => {
+    const onBookingFinalized = vi.fn(async () => {})
 
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: releaseReservationMock,
@@ -215,7 +215,7 @@ describe('useBookingSheetController', () => {
     mockBookingFlow()
 
     const { result } = renderHook(() =>
-      useBookingSheetController({ onBookingCompleted }),
+      useBookingSheetController({ onBookingFinalized }),
     )
 
     await act(async () => {
@@ -226,7 +226,7 @@ describe('useBookingSheetController', () => {
       await result.current.confirmBooking()
     })
 
-    expect(onBookingCompleted).not.toHaveBeenCalled()
+    expect(onBookingFinalized).not.toHaveBeenCalled()
   })
 
   it('closes the sheet when dismissed', async () => {
@@ -333,7 +333,7 @@ describe('useBookingSheetController', () => {
   })
 
   it('cleans up failed bookings when dismissed', async () => {
-    const onBookingCompleted = vi.fn(async () => {})
+    const onBookingFinalized = vi.fn(async () => {})
 
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: releaseReservationMock,
@@ -348,7 +348,7 @@ describe('useBookingSheetController', () => {
     mockBookingFlow()
 
     const { result } = renderHook(() =>
-      useBookingSheetController({ onBookingCompleted }),
+      useBookingSheetController({ onBookingFinalized }),
     )
 
     await act(async () => {
@@ -365,7 +365,7 @@ describe('useBookingSheetController', () => {
 
     expect(releaseReservationMock).toHaveBeenCalledTimes(1)
     await waitFor(() => {
-      expect(onBookingCompleted).toHaveBeenCalledWith({
+      expect(onBookingFinalized).toHaveBeenCalledWith({
         errorCode: 'GENERAL_ERROR',
         message: 'Fixture checkout failed.',
         status: 'failed',
@@ -375,7 +375,7 @@ describe('useBookingSheetController', () => {
   })
 
   it('cleans up payment-required bookings when dismissed', async () => {
-    const onBookingCompleted = vi.fn(async () => {})
+    const onBookingFinalized = vi.fn(async () => {})
 
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: releaseReservationMock,
@@ -388,7 +388,7 @@ describe('useBookingSheetController', () => {
     mockBookingFlow()
 
     const { result } = renderHook(() =>
-      useBookingSheetController({ onBookingCompleted }),
+      useBookingSheetController({ onBookingFinalized }),
     )
 
     await act(async () => {
@@ -405,7 +405,7 @@ describe('useBookingSheetController', () => {
 
     expect(releaseReservationMock).toHaveBeenCalledTimes(1)
     await waitFor(() => {
-      expect(onBookingCompleted).toHaveBeenCalledWith({
+      expect(onBookingFinalized).toHaveBeenCalledWith({
         redirectUrl: 'https://example.com/pay',
         status: 'payment_required',
       })

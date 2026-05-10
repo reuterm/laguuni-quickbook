@@ -30,13 +30,13 @@ export type BookingSheetState =
 
 type UseBookingSheetControllerOptions = {
   successDismissDelayMs?: number
-  onBookingCompleted?:
+  onBookingFinalized?:
     | ((result: BookingFlowResult) => void | Promise<void>)
     | undefined
 }
 
 export function useBookingSheetController({
-  onBookingCompleted,
+  onBookingFinalized,
   successDismissDelayMs = SUCCESS_DISMISS_DELAY_MS,
 }: UseBookingSheetControllerOptions = {}) {
   const { isBookingReady, submitBooking } = useBookingFlow()
@@ -64,9 +64,9 @@ export function useBookingSheetController({
     }
 
     void completedSubmission.releaseReservation().then(() => {
-      void onBookingCompleted?.(completedSubmission.result)
+      void onBookingFinalized?.(completedSubmission.result)
     })
-  }, [onBookingCompleted])
+  }, [onBookingFinalized])
 
   const requestBooking = useCallback((selection: BookingSlotSelection) => {
     setBookingSheetState((currentState) => {
@@ -106,12 +106,12 @@ export function useBookingSheetController({
       })
 
       if (submission.result.status === 'success') {
-        await onBookingCompleted?.(submission.result)
+        await onBookingFinalized?.(submission.result)
       }
     } finally {
       submitInFlightRef.current = false
     }
-  }, [bookingSheetState, onBookingCompleted, submitBooking])
+  }, [bookingSheetState, onBookingFinalized, submitBooking])
 
   useEffect(() => {
     return () => {
