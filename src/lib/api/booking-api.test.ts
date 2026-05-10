@@ -101,8 +101,10 @@ describe('booking-api transport mapping', () => {
     await expect(
       submitCheckout(client, {
         basketToken: 'fixture-basket-token',
-        observeResponse: (observation) => {
-          observations.push(observation)
+        observers: {
+          response: (observation) => {
+            observations.push(observation)
+          },
         },
         paymentMethod: 'mobilepay',
         profile: {
@@ -143,8 +145,10 @@ describe('booking-api transport mapping', () => {
     await expect(
       submitCheckout(client, {
         basketToken: 'fixture-basket-token',
-        observeResponse: (observation) => {
-          observations.push(observation)
+        observers: {
+          response: (observation) => {
+            observations.push(observation)
+          },
         },
         paymentMethod: 'mobilepay',
         profile: {
@@ -205,8 +209,10 @@ describe('booking-api transport mapping', () => {
     await expect(
       submitCheckout(client, {
         basketToken: 'fixture-basket-token',
-        observeCashCheckoutStep: (step) => {
-          cashSteps.push(step)
+        observers: {
+          cashCheckoutStep: (step) => {
+            cashSteps.push(step)
+          },
         },
         paymentMethod: 'cash',
         profile: {
@@ -262,6 +268,28 @@ describe('booking-api transport mapping', () => {
       method: 'DELETE',
       path: '/api/laguuni/baskets/fixture-basket-token.json',
     })
+  })
+
+  it('treats deleting an already-removed basket as successful', async () => {
+    const client = createSequentialCapturingClient([], {
+      data: null,
+      status: 404,
+    })
+
+    await expect(
+      deleteBasket(client, 'fixture-basket-token'),
+    ).resolves.toBeUndefined()
+  })
+
+  it('fails when deleting a basket returns an unexpected status', async () => {
+    const client = createSequentialCapturingClient([], {
+      data: null,
+      status: 500,
+    })
+
+    await expect(deleteBasket(client, 'fixture-basket-token')).rejects.toThrow(
+      'Unexpected status 500 while trying to delete basket',
+    )
   })
 
   it('sums basket pricing using discounted prices when present', async () => {
@@ -339,6 +367,24 @@ function createSequentialCapturingClient(
         throw new Error(
           'No queued response was configured for this HTTP request',
         )
+      }
+
+      const isWrappedResponse =
+        typeof nextResponse === 'object' &&
+        nextResponse !== null &&
+        'data' in nextResponse &&
+        'status' in nextResponse
+
+      if (isWrappedResponse) {
+        const response = nextResponse as {
+          data: unknown
+          status: number
+        }
+
+        return {
+          data: request.decoder(response.data),
+          status: response.status,
+        } satisfies HttpResponse<R>
       }
 
       return {

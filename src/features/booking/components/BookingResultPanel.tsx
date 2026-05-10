@@ -56,7 +56,9 @@ function BookingResultAction({
     case 'payment':
       return (
         <Button asChild className="w-full sm:w-auto">
-          <a href={action.href}>Continue to payment</a>
+          <a href={action.href} rel="noopener noreferrer" target="_blank">
+            Continue to payment
+          </a>
         </Button>
       )
     case 'copy-diagnostics':

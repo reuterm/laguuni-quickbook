@@ -3,6 +3,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { BookingSheetFlow } from './BookingSheetFlow'
 
+const selection = {
+  cableId: 'pro' as const,
+  date: '2026-05-20',
+  endTime: '16:00',
+  startTime: '15:00',
+}
+
 afterEach(() => {
   cleanup()
 })
@@ -26,12 +33,7 @@ describe('BookingSheetFlow', () => {
     render(
       <BookingSheetFlow
         bookingSheetState={{
-          selection: {
-            cableId: 'pro',
-            date: '2026-05-20',
-            endTime: '16:00',
-            startTime: '15:00',
-          },
+          selection,
           status: 'confirm',
         }}
         confirmBooking={async () => {}}
@@ -51,12 +53,7 @@ describe('BookingSheetFlow', () => {
     render(
       <BookingSheetFlow
         bookingSheetState={{
-          selection: {
-            cableId: 'pro',
-            date: '2026-05-20',
-            endTime: '16:00',
-            startTime: '15:00',
-          },
+          selection,
           status: 'submitting',
         }}
         confirmBooking={async () => {}}
@@ -84,12 +81,7 @@ describe('BookingSheetFlow', () => {
             status: 'failed',
             step: 'checkout',
           },
-          selection: {
-            cableId: 'pro',
-            date: '2026-05-20',
-            endTime: '16:00',
-            startTime: '15:00',
-          },
+          selection,
           status: 'completed',
           traceId: 'trace-failed',
         }}

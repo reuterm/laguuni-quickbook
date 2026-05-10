@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
 import { LocalDiagnosticsStore } from '../diagnostics/logs'
-import { DefaultBookingService } from './booking-service'
+import { BookingExecutionError, DefaultBookingService } from './booking-service'
 
 const selection = {
   cableId: 'pro' as const,
@@ -64,9 +64,11 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      orderIdentifier: 'fixture-order-id',
-      status: 'success',
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
     })
 
     expect(api.createBasket).toHaveBeenCalledOnce()
@@ -114,15 +116,199 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      errorCode: 'GENERAL_ERROR',
-      message: 'Antamasi koodi on virheellinen.',
-      status: 'failed',
-      step: 'code',
+    ).resolves.toMatchObject({
+      result: {
+        errorCode: 'GENERAL_ERROR',
+        message: 'Antamasi koodi on virheellinen.',
+        status: 'failed',
+        step: 'code',
+      },
     })
 
     expect(api.submitCheckout).not.toHaveBeenCalled()
     expect(api.applyCodeToBasket).not.toHaveBeenCalled()
+  })
+
+  it('returns cleanup for failed checkout results after creating a basket', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockResolvedValueOnce({
+      errorCode: 'GENERAL_ERROR',
+      message: 'Fixture checkout failed.',
+      status: 'failed',
+    })
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'GENERAL_ERROR',
+      message: 'Fixture checkout failed.',
+      status: 'failed',
+      step: 'checkout',
+    })
+
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+  })
+
+  it('returns cleanup when adding the reservation fails after basket creation', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.addReservationToBasket).mockRejectedValueOnce(
+      new Error('Reservation add failed'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'unexpected-error',
+      message: 'Reservation add failed',
+      status: 'failed',
+      step: 'unexpected',
+    })
+
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+  })
+
+  it('records the add reservation phase for unexpected reservation add errors', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
+      platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
+      storage: createMemoryStorage(),
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.addReservationToBasket).mockRejectedValueOnce(
+      new Error('Reservation add failed'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
+
+    await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(exportedLogs).toContain('booking.unexpected_error')
+    expect(exportedLogs).toContain('"phase": "add_reservation"')
+  })
+
+  it('returns cleanup when applying the code fails after basket creation', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.applyCodeToBasket).mockRejectedValueOnce(
+      new Error('Code apply failed'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        code: 'FIXTURE-DISCOUNT',
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'unexpected-error',
+      message: 'Code apply failed',
+      status: 'failed',
+      step: 'unexpected',
+    })
+
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+  })
+
+  it('records the apply code phase for unexpected code apply errors', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
+      platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
+      storage: createMemoryStorage(),
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.applyCodeToBasket).mockRejectedValueOnce(
+      new Error('Code apply failed'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
+
+    await service.book(
+      {
+        code: 'FIXTURE-DISCOUNT',
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(exportedLogs).toContain('booking.unexpected_error')
+    expect(exportedLogs).toContain('"phase": "apply_code"')
+  })
+
+  it('returns cleanup when loading basket pricing fails after basket creation', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.loadBasketPricingSummary).mockRejectedValueOnce(
+      new Error('Pricing load failed'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'unexpected-error',
+      message: 'Pricing load failed',
+      status: 'failed',
+      step: 'unexpected',
+    })
+
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
   })
 
   it('fails early when required booking profile details are missing', async () => {
@@ -141,14 +327,48 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      errorCode: 'missing-profile',
-      message: 'Missing required profile fields: email',
-      status: 'failed',
-      step: 'profile',
+    ).resolves.toMatchObject({
+      result: {
+        errorCode: 'missing-profile',
+        message: 'Missing required profile fields: email',
+        status: 'failed',
+        step: 'profile',
+      },
     })
 
     expect(api.createBasket).not.toHaveBeenCalled()
+  })
+
+  it('records the lookup code phase for unexpected code lookup errors', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
+      platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
+      storage: createMemoryStorage(),
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.lookupCode).mockRejectedValueOnce(
+      new Error('Code lookup failed'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
+
+    await service.book(
+      {
+        code: 'FIXTURE-DISCOUNT',
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(exportedLogs).toContain('booking.unexpected_error')
+    expect(exportedLogs).toContain('"phase": "lookup_code"')
   })
 
   it('uses paid checkout when accepted code leaves a remaining balance', async () => {
@@ -170,9 +390,11 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      orderIdentifier: 'fixture-order-id',
-      status: 'success',
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
     })
 
     expect(api.submitCheckout).toHaveBeenCalledWith(
@@ -204,9 +426,11 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      orderIdentifier: 'fixture-order-id',
-      status: 'success',
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
     })
 
     const exportedLogs = diagnostics.exportLogs()
@@ -249,8 +473,14 @@ describe('DefaultBookingService', () => {
         trace,
       ),
     ).resolves.toEqual({
-      orderIdentifier: 'fixture-order-id',
-      status: 'success',
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+      releaseReservation: expect.any(Function),
+      trace: expect.objectContaining({
+        traceId: expect.any(String),
+      }),
     })
 
     const exportedLogs = diagnostics.exportLogs()
@@ -258,6 +488,27 @@ describe('DefaultBookingService', () => {
     expect(exportedLogs).toContain('booking.checkout_planned')
     expect(exportedLogs).toContain('"paymentMethod": "mobilepay"')
     expect(exportedLogs).toContain('"totalDueCents": 1200')
+  })
+
+  it('does not delete the basket when successful booking cleanup is finalized', async () => {
+    const api = createApiStub()
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    await submission.releaseReservation()
+
+    expect(submission.result).toEqual({
+      orderIdentifier: 'fixture-order-id',
+      status: 'success',
+    })
+    expect(api.deleteBasket).not.toHaveBeenCalled()
   })
 
   it('keeps checkout diagnostics on safe codes instead of raw error messages', async () => {
@@ -287,11 +538,13 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      errorCode: 'GENERAL_ERROR',
-      message: 'Fixture checkout failed.',
-      status: 'failed',
-      step: 'checkout',
+    ).resolves.toMatchObject({
+      result: {
+        errorCode: 'GENERAL_ERROR',
+        message: 'Fixture checkout failed.',
+        status: 'failed',
+        step: 'checkout',
+      },
     })
 
     const exportedLogs = diagnostics.exportLogs()
@@ -311,7 +564,7 @@ describe('DefaultBookingService', () => {
     const api = createApiStub()
 
     vi.mocked(api.submitCheckout).mockImplementationOnce(async (request) => {
-      request.observeResponse?.({
+      request.observers?.response?.({
         hasErrorCode: false,
         hasErrorMessage: false,
         normalizedStatus: 'ok',
@@ -332,15 +585,15 @@ describe('DefaultBookingService', () => {
     const service = new DefaultBookingService({ api })
     const trace = diagnostics.beginTrace({ name: 'booking' })
 
-    await expect(
-      service.book(
-        {
-          profile,
-          selection,
-        },
-        trace,
-      ),
-    ).resolves.toEqual({
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
       orderIdentifier: '12345',
       redirectUrl: fixtureMobilePayRedirectUrl,
       status: 'payment_required',
@@ -364,7 +617,7 @@ describe('DefaultBookingService', () => {
     const api = createApiStub()
 
     vi.mocked(api.submitCheckout).mockImplementationOnce(async (request) => {
-      request.observePaymentRedirect?.(fixtureMobilePayRedirectUrl)
+      request.observers?.paymentRedirect?.(fixtureMobilePayRedirectUrl)
 
       return {
         orderIdentifier: null,
@@ -376,15 +629,15 @@ describe('DefaultBookingService', () => {
     const service = new DefaultBookingService({ api })
     const trace = diagnostics.beginTrace({ name: 'booking' })
 
-    await expect(
-      service.book(
-        {
-          profile,
-          selection,
-        },
-        trace,
-      ),
-    ).resolves.toEqual({
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
       orderIdentifier: null,
       redirectUrl: fixtureMobilePayRedirectUrl,
       status: 'payment_required',
@@ -396,6 +649,240 @@ describe('DefaultBookingService', () => {
     expect(exportedLogs).toContain('pay.mobilepay.fi')
     expect(exportedLogs).toContain('/')
     expect(exportedLogs).not.toContain('test@example.com')
+  })
+
+  it('records cleanup diagnostics when basket cleanup succeeds', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
+      platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
+      storage: createMemoryStorage(),
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockResolvedValueOnce({
+      orderIdentifier: null,
+      redirectUrl: fixtureMobilePayRedirectUrl,
+      status: 'payment_required',
+    })
+
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    await submission.releaseReservation()
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+    expect(exportedLogs).toContain('booking.basket_cleanup_requested')
+    expect(exportedLogs).toContain('booking.basket_cleaned_up')
+  })
+
+  it('reuses the same cleanup operation when cleanup is requested multiple times', async () => {
+    const api = createApiStub()
+    let resolveDelete!: () => void
+
+    vi.mocked(api.submitCheckout).mockResolvedValueOnce({
+      orderIdentifier: null,
+      redirectUrl: fixtureMobilePayRedirectUrl,
+      status: 'payment_required',
+    })
+    vi.mocked(api.deleteBasket).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveDelete = resolve
+        }),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    const firstCleanup = submission.releaseReservation()
+    const secondCleanup = submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledOnce()
+
+    resolveDelete()
+
+    await Promise.all([firstCleanup, secondCleanup])
+  })
+
+  it('records failed cleanup diagnostics without persisting raw error messages', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
+      platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
+      storage: createMemoryStorage(),
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockResolvedValueOnce({
+      orderIdentifier: null,
+      redirectUrl: fixtureMobilePayRedirectUrl,
+      status: 'payment_required',
+    })
+    vi.mocked(api.deleteBasket).mockRejectedValueOnce(
+      new Error('Unable to clean up reservation'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    await expect(submission.releaseReservation()).resolves.toBeUndefined()
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(exportedLogs).toContain('booking.basket_cleanup_requested')
+    expect(exportedLogs).toContain('booking.basket_cleanup_failed')
+    expect(exportedLogs).not.toContain('Unable to clean up reservation')
+  })
+
+  it('returns unexpected failures with cleanup when checkout throws after creating the basket', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
+      platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
+      storage: createMemoryStorage(),
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockRejectedValueOnce(
+      new Error('Checkout transport failed'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'unexpected-error',
+      message: 'Checkout transport failed',
+      status: 'failed',
+      step: 'unexpected',
+    })
+
+    await submission.releaseReservation()
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+    expect(exportedLogs).toContain('"phase": "submit_checkout"')
+  })
+
+  it('preserves the original error as cause when tagging booking phases', () => {
+    const originalError = new Error('Checkout transport failed')
+    const executionError = new BookingExecutionError(
+      'submit_checkout',
+      originalError,
+    )
+
+    expect(executionError).toMatchObject({
+      cause: originalError,
+      message: 'Checkout transport failed',
+      name: 'BookingExecutionError',
+      phase: 'submit_checkout',
+    })
+  })
+
+  it('records the failing phase for unexpected basket setup errors', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
+      platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
+      storage: createMemoryStorage(),
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.loadBasketPricingSummary).mockRejectedValueOnce(
+      new Error('Pricing load failed'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
+
+    await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(exportedLogs).toContain('booking.unexpected_error')
+    expect(exportedLogs).toContain('"phase": "load_basket_pricing"')
+  })
+
+  it('records the create basket phase for unexpected basket creation errors', async () => {
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: '0.1.0',
+      createId: () => 'lqk-fixedtrace',
+      platform: 'Vitest Browser',
+      sessionId: 'session-fixed',
+      storage: createMemoryStorage(),
+    })
+    const api = createApiStub()
+
+    vi.mocked(api.createBasket).mockRejectedValueOnce(
+      new Error('Basket create failed'),
+    )
+
+    const service = new DefaultBookingService({ api })
+    const trace = diagnostics.beginTrace({ name: 'booking' })
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'unexpected-error',
+      message: 'Basket create failed',
+      status: 'failed',
+      step: 'unexpected',
+    })
+
+    await submission.releaseReservation()
+
+    const exportedLogs = diagnostics.exportLogs()
+
+    expect(api.deleteBasket).not.toHaveBeenCalled()
+    expect(exportedLogs).toContain('booking.unexpected_error')
+    expect(exportedLogs).toContain('"phase": "create_basket"')
   })
 })
 

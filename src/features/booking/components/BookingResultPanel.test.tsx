@@ -112,6 +112,14 @@ describe('BookingResultPanel', () => {
 
     expect(
       screen.getByRole('link', { name: 'Continue to payment' }),
-    ).toHaveAttribute('href', 'https://example.com/pay')
+    ).toBeInTheDocument()
+
+    const paymentLink = screen.getByRole('link', {
+      name: 'Continue to payment',
+    })
+
+    expect(paymentLink).toHaveAttribute('href', 'https://example.com/pay')
+    expect(paymentLink).toHaveAttribute('target', '_blank')
+    expect(paymentLink).toHaveAttribute('rel', 'noopener noreferrer')
   })
 })
