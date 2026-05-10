@@ -77,7 +77,7 @@ export async function deleteBasket(
     path: `/api/laguuni/baskets/${basketToken}.json`,
   })
 
-  if (response.status !== 200) {
+  if (![200, 404].includes(response.status)) {
     throw new Error(
       `Unexpected status ${response.status} while trying to delete basket`,
     )

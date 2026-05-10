@@ -64,9 +64,11 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      orderIdentifier: 'fixture-order-id',
-      status: 'success',
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
     })
 
     expect(api.createBasket).toHaveBeenCalledOnce()
@@ -114,11 +116,13 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      errorCode: 'GENERAL_ERROR',
-      message: 'Antamasi koodi on virheellinen.',
-      status: 'failed',
-      step: 'code',
+    ).resolves.toMatchObject({
+      result: {
+        errorCode: 'GENERAL_ERROR',
+        message: 'Antamasi koodi on virheellinen.',
+        status: 'failed',
+        step: 'code',
+      },
     })
 
     expect(api.submitCheckout).not.toHaveBeenCalled()
@@ -141,11 +145,13 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      errorCode: 'missing-profile',
-      message: 'Missing required profile fields: email',
-      status: 'failed',
-      step: 'profile',
+    ).resolves.toMatchObject({
+      result: {
+        errorCode: 'missing-profile',
+        message: 'Missing required profile fields: email',
+        status: 'failed',
+        step: 'profile',
+      },
     })
 
     expect(api.createBasket).not.toHaveBeenCalled()
@@ -170,9 +176,11 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      orderIdentifier: 'fixture-order-id',
-      status: 'success',
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
     })
 
     expect(api.submitCheckout).toHaveBeenCalledWith(
@@ -204,9 +212,11 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      orderIdentifier: 'fixture-order-id',
-      status: 'success',
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
     })
 
     const exportedLogs = diagnostics.exportLogs()
@@ -248,9 +258,11 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      orderIdentifier: 'fixture-order-id',
-      status: 'success',
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
     })
 
     const exportedLogs = diagnostics.exportLogs()
@@ -287,11 +299,13 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      errorCode: 'GENERAL_ERROR',
-      message: 'Fixture checkout failed.',
-      status: 'failed',
-      step: 'checkout',
+    ).resolves.toMatchObject({
+      result: {
+        errorCode: 'GENERAL_ERROR',
+        message: 'Fixture checkout failed.',
+        status: 'failed',
+        step: 'checkout',
+      },
     })
 
     const exportedLogs = diagnostics.exportLogs()
@@ -340,10 +354,12 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      orderIdentifier: '12345',
-      redirectUrl: fixtureMobilePayRedirectUrl,
-      status: 'payment_required',
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: '12345',
+        redirectUrl: fixtureMobilePayRedirectUrl,
+        status: 'payment_required',
+      },
     })
 
     const exportedLogs = diagnostics.exportLogs()
@@ -384,10 +400,12 @@ describe('DefaultBookingService', () => {
         },
         trace,
       ),
-    ).resolves.toEqual({
-      orderIdentifier: null,
-      redirectUrl: fixtureMobilePayRedirectUrl,
-      status: 'payment_required',
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: null,
+        redirectUrl: fixtureMobilePayRedirectUrl,
+        status: 'payment_required',
+      },
     })
 
     const exportedLogs = diagnostics.exportLogs()
@@ -396,6 +414,103 @@ describe('DefaultBookingService', () => {
     expect(exportedLogs).toContain('pay.mobilepay.fi')
     expect(exportedLogs).toContain('/')
     expect(exportedLogs).not.toContain('test@example.com')
+  })
+
+  it('returns basket cleanup for failed checkout results', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockResolvedValueOnce({
+      errorCode: 'GENERAL_ERROR',
+      message: 'Fixture checkout failed.',
+      status: 'failed',
+    })
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'GENERAL_ERROR',
+      message: 'Fixture checkout failed.',
+      status: 'failed',
+      step: 'checkout',
+    })
+
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+  })
+
+  it('returns basket cleanup for payment-required results', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockResolvedValueOnce({
+      orderIdentifier: null,
+      redirectUrl: fixtureMobilePayRedirectUrl,
+      status: 'payment_required',
+    })
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+  })
+
+  it('does not delete baskets after successful booking completion', async () => {
+    const api = createApiStub()
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).not.toHaveBeenCalled()
+  })
+
+  it('deletes a basket at most once when cleanup is called repeatedly', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockResolvedValueOnce({
+      orderIdentifier: null,
+      redirectUrl: fixtureMobilePayRedirectUrl,
+      status: 'payment_required',
+    })
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    await submission.releaseReservation()
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledTimes(1)
   })
 })
 

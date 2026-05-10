@@ -64,7 +64,7 @@ export function AvailabilityScreen({
     isBookingReady,
     requestBooking,
   } = useBookingSheetController({
-    onBookingSubmitted: refreshAvailability,
+    onBookingCompleted: refreshAvailability,
   })
 
   const handleDismissReadOnlyNotice = useCallback(() => {

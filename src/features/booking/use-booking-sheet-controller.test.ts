@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { useBookingSheetController } from './use-booking-sheet-controller'
@@ -14,6 +14,8 @@ const bookingFlowMocks = vi.hoisted(() => ({
   submitBooking: vi.fn(),
   useBookingFlow: vi.fn(),
 }))
+
+const releaseReservationMock = vi.hoisted(() => vi.fn(async () => {}))
 
 vi.mock('./use-booking-flow', () => ({
   useBookingFlow: bookingFlowMocks.useBookingFlow,
@@ -48,6 +50,7 @@ describe('useBookingSheetController', () => {
         new Promise((resolve) => {
           resolveBooking = () => {
             resolve({
+              releaseReservation: vi.fn(async () => {}),
               result: {
                 orderIdentifier: 'fixture-order-id',
                 status: 'success',
@@ -97,6 +100,7 @@ describe('useBookingSheetController', () => {
         new Promise((resolve) => {
           resolveBooking = () => {
             resolve({
+              releaseReservation: vi.fn(async () => {}),
               result: {
                 orderIdentifier: 'fixture-order-id',
                 status: 'success',
@@ -139,10 +143,11 @@ describe('useBookingSheetController', () => {
     })
   })
 
-  it('calls onBookingSubmitted for successful bookings', async () => {
-    const onBookingSubmitted = vi.fn(async () => {})
+  it('calls onBookingCompleted for successful bookings', async () => {
+    const onBookingCompleted = vi.fn(async () => {})
 
     bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: vi.fn(async () => {}),
       result: {
         orderIdentifier: 'fixture-order-id',
         status: 'success',
@@ -152,7 +157,7 @@ describe('useBookingSheetController', () => {
     mockBookingFlow()
 
     const { result } = renderHook(() =>
-      useBookingSheetController({ onBookingSubmitted }),
+      useBookingSheetController({ onBookingCompleted }),
     )
 
     await act(async () => {
@@ -163,13 +168,14 @@ describe('useBookingSheetController', () => {
       await result.current.confirmBooking()
     })
 
-    expect(onBookingSubmitted).toHaveBeenCalledOnce()
+    expect(onBookingCompleted).toHaveBeenCalledOnce()
   })
 
-  it('calls onBookingSubmitted for payment-required bookings', async () => {
-    const onBookingSubmitted = vi.fn(async () => {})
+  it('does not call onBookingCompleted for payment-required bookings before dismiss', async () => {
+    const onBookingCompleted = vi.fn(async () => {})
 
     bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: releaseReservationMock,
       result: {
         redirectUrl: 'https://example.com/pay',
         status: 'payment_required',
@@ -179,7 +185,7 @@ describe('useBookingSheetController', () => {
     mockBookingFlow()
 
     const { result } = renderHook(() =>
-      useBookingSheetController({ onBookingSubmitted }),
+      useBookingSheetController({ onBookingCompleted }),
     )
 
     await act(async () => {
@@ -190,13 +196,14 @@ describe('useBookingSheetController', () => {
       await result.current.confirmBooking()
     })
 
-    expect(onBookingSubmitted).toHaveBeenCalledOnce()
+    expect(onBookingCompleted).not.toHaveBeenCalled()
   })
 
-  it('does not call onBookingSubmitted for failed bookings', async () => {
-    const onBookingSubmitted = vi.fn(async () => {})
+  it('does not call onBookingCompleted for failed bookings before dismiss', async () => {
+    const onBookingCompleted = vi.fn(async () => {})
 
     bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: releaseReservationMock,
       result: {
         errorCode: 'GENERAL_ERROR',
         message: 'Fixture checkout failed.',
@@ -208,7 +215,7 @@ describe('useBookingSheetController', () => {
     mockBookingFlow()
 
     const { result } = renderHook(() =>
-      useBookingSheetController({ onBookingSubmitted }),
+      useBookingSheetController({ onBookingCompleted }),
     )
 
     await act(async () => {
@@ -219,7 +226,7 @@ describe('useBookingSheetController', () => {
       await result.current.confirmBooking()
     })
 
-    expect(onBookingSubmitted).not.toHaveBeenCalled()
+    expect(onBookingCompleted).not.toHaveBeenCalled()
   })
 
   it('closes the sheet when dismissed', async () => {
@@ -246,6 +253,7 @@ describe('useBookingSheetController', () => {
         new Promise((resolve) => {
           resolveBooking = () => {
             resolve({
+              releaseReservation: vi.fn(async () => {}),
               result: {
                 orderIdentifier: 'fixture-order-id',
                 status: 'success',
@@ -286,6 +294,7 @@ describe('useBookingSheetController', () => {
   it('auto-dismisses a successful completed state after the configured delay', async () => {
     vi.useFakeTimers()
     bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: vi.fn(async () => {}),
       result: {
         orderIdentifier: 'fixture-order-id',
         status: 'success',
@@ -321,6 +330,140 @@ describe('useBookingSheetController', () => {
     })
 
     expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
+  })
+
+  it('cleans up failed bookings when dismissed', async () => {
+    const onBookingCompleted = vi.fn(async () => {})
+
+    bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: releaseReservationMock,
+      result: {
+        errorCode: 'GENERAL_ERROR',
+        message: 'Fixture checkout failed.',
+        status: 'failed',
+        step: 'checkout',
+      },
+      traceId: 'trace-failure',
+    })
+    mockBookingFlow()
+
+    const { result } = renderHook(() =>
+      useBookingSheetController({ onBookingCompleted }),
+    )
+
+    await act(async () => {
+      await result.current.requestBooking(selection)
+    })
+
+    await act(async () => {
+      await result.current.confirmBooking()
+    })
+
+    act(() => {
+      result.current.dismissBookingSheet()
+    })
+
+    expect(releaseReservationMock).toHaveBeenCalledTimes(1)
+    await waitFor(() => {
+      expect(onBookingCompleted).toHaveBeenCalledWith({
+        errorCode: 'GENERAL_ERROR',
+        message: 'Fixture checkout failed.',
+        status: 'failed',
+        step: 'checkout',
+      })
+    })
+  })
+
+  it('cleans up payment-required bookings when dismissed', async () => {
+    const onBookingCompleted = vi.fn(async () => {})
+
+    bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: releaseReservationMock,
+      result: {
+        redirectUrl: 'https://example.com/pay',
+        status: 'payment_required',
+      },
+      traceId: 'trace-payment',
+    })
+    mockBookingFlow()
+
+    const { result } = renderHook(() =>
+      useBookingSheetController({ onBookingCompleted }),
+    )
+
+    await act(async () => {
+      await result.current.requestBooking(selection)
+    })
+
+    await act(async () => {
+      await result.current.confirmBooking()
+    })
+
+    act(() => {
+      result.current.dismissBookingSheet()
+    })
+
+    expect(releaseReservationMock).toHaveBeenCalledTimes(1)
+    await waitFor(() => {
+      expect(onBookingCompleted).toHaveBeenCalledWith({
+        redirectUrl: 'https://example.com/pay',
+        status: 'payment_required',
+      })
+    })
+  })
+
+  it('does not clean up successful bookings when dismissed', async () => {
+    bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: releaseReservationMock,
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+      traceId: 'trace-success',
+    })
+    mockBookingFlow()
+
+    const { result } = renderHook(() => useBookingSheetController())
+
+    await act(async () => {
+      await result.current.requestBooking(selection)
+    })
+
+    await act(async () => {
+      await result.current.confirmBooking()
+    })
+
+    act(() => {
+      result.current.dismissBookingSheet()
+    })
+
+    expect(releaseReservationMock).not.toHaveBeenCalled()
+  })
+
+  it('cleans up abandoned completed bookings on unmount', async () => {
+    bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: releaseReservationMock,
+      result: {
+        redirectUrl: 'https://example.com/pay',
+        status: 'payment_required',
+      },
+      traceId: 'trace-payment',
+    })
+    mockBookingFlow()
+
+    const { result, unmount } = renderHook(() => useBookingSheetController())
+
+    await act(async () => {
+      await result.current.requestBooking(selection)
+    })
+
+    await act(async () => {
+      await result.current.confirmBooking()
+    })
+
+    unmount()
+
+    expect(releaseReservationMock).toHaveBeenCalledTimes(1)
   })
 })
 

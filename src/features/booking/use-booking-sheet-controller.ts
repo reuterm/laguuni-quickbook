@@ -4,6 +4,7 @@ import type {
   BookingFlowResult,
   BookingSlotSelection,
 } from '../../domain/booking'
+import type { BookingFlowSubmission } from './use-booking-flow'
 import { useBookingFlow } from './use-booking-flow'
 
 const SUCCESS_DISMISS_DELAY_MS = 1250
@@ -29,11 +30,13 @@ export type BookingSheetState =
 
 type UseBookingSheetControllerOptions = {
   successDismissDelayMs?: number
-  onBookingSubmitted?: (() => void | Promise<void>) | undefined
+  onBookingCompleted?:
+    | ((result: BookingFlowResult) => void | Promise<void>)
+    | undefined
 }
 
 export function useBookingSheetController({
-  onBookingSubmitted,
+  onBookingCompleted,
   successDismissDelayMs = SUCCESS_DISMISS_DELAY_MS,
 }: UseBookingSheetControllerOptions = {}) {
   const { isBookingReady, submitBooking } = useBookingFlow()
@@ -41,16 +44,29 @@ export function useBookingSheetController({
     { status: 'closed' },
   )
   const submitInFlightRef = useRef(false)
+  const completedSubmissionRef = useRef<BookingFlowSubmission | null>(null)
 
   const dismissBookingSheet = useCallback(() => {
-    setBookingSheetState((currentState) => {
-      if (currentState.status === 'submitting') {
-        return currentState
-      }
+    if (submitInFlightRef.current) {
+      return
+    }
 
-      return { status: 'closed' }
+    const completedSubmission = completedSubmissionRef.current
+    completedSubmissionRef.current = null
+
+    setBookingSheetState({ status: 'closed' })
+
+    if (
+      completedSubmission === null ||
+      completedSubmission.result.status === 'success'
+    ) {
+      return
+    }
+
+    void completedSubmission.releaseReservation().then(() => {
+      void onBookingCompleted?.(completedSubmission.result)
     })
-  }, [])
+  }, [onBookingCompleted])
 
   const requestBooking = useCallback((selection: BookingSlotSelection) => {
     setBookingSheetState((currentState) => {
@@ -80,6 +96,7 @@ export function useBookingSheetController({
 
     try {
       const submission = await submitBooking(selection)
+      completedSubmissionRef.current = submission
 
       setBookingSheetState({
         result: submission.result,
@@ -88,13 +105,28 @@ export function useBookingSheetController({
         traceId: submission.traceId,
       })
 
-      if (submission.result.status !== 'failed') {
-        await onBookingSubmitted?.()
+      if (submission.result.status === 'success') {
+        await onBookingCompleted?.(submission.result)
       }
     } finally {
       submitInFlightRef.current = false
     }
-  }, [bookingSheetState, onBookingSubmitted, submitBooking])
+  }, [bookingSheetState, onBookingCompleted, submitBooking])
+
+  useEffect(() => {
+    return () => {
+      const completedSubmission = completedSubmissionRef.current
+
+      if (
+        completedSubmission === null ||
+        completedSubmission.result.status === 'success'
+      ) {
+        return
+      }
+
+      void completedSubmission.releaseReservation()
+    }
+  }, [])
 
   useEffect(() => {
     if (
