@@ -28,10 +28,12 @@ import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 import { getAvailabilityBookingActionProps } from './availability-booking-action'
 
 type AvailabilityScreenProps = {
+  bookingSuccessDismissDelayMs?: number | undefined
   onOpenSettings: () => void
 }
 
 export function AvailabilityScreen({
+  bookingSuccessDismissDelayMs,
   onOpenSettings,
 }: AvailabilityScreenProps) {
   const api = useLaguuniApi()
@@ -64,7 +66,11 @@ export function AvailabilityScreen({
     isBookingReady,
     requestBooking,
   } = useBookingSheetController({
-    onBookingSubmitted: refreshAvailability,
+    onDismissCompleted: {
+      effect: 'refresh_availability',
+      run: refreshAvailability,
+    },
+    successDismissDelayMs: bookingSuccessDismissDelayMs,
   })
 
   const handleDismissReadOnlyNotice = useCallback(() => {

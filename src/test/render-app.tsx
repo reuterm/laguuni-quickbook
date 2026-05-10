@@ -7,6 +7,7 @@ type RenderAppOptions = {
   apiBaseUrl?: string
   appVersion?: string
   availabilityReferenceDate?: Date
+  bookingSuccessDismissDelayMs?: number
 }
 
 const DEFAULT_API_BASE_URL = 'https://shop.laguuniin.fi'
@@ -16,6 +17,7 @@ export function renderApp({
   apiBaseUrl = DEFAULT_API_BASE_URL,
   appVersion = DEFAULT_APP_VERSION,
   availabilityReferenceDate,
+  bookingSuccessDismissDelayMs,
 }: RenderAppOptions = {}) {
   return render(
     <AppProviders
@@ -23,7 +25,7 @@ export function renderApp({
       appVersion={appVersion}
       availabilityReferenceDate={availabilityReferenceDate}
     >
-      <App />
+      <App bookingSuccessDismissDelayMs={bookingSuccessDismissDelayMs} />
     </AppProviders>,
   )
 }

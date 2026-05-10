@@ -12,7 +12,11 @@ import {
 import { SettingsScreen } from '../features/settings/components/SettingsScreen'
 import { UserSettingsProvider } from '../features/settings/use-user-settings'
 
-function App() {
+type AppProps = {
+  bookingSuccessDismissDelayMs?: number | undefined
+}
+
+function App({ bookingSuccessDismissDelayMs }: AppProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   return (
@@ -45,6 +49,7 @@ function App() {
 
             <main className="flex-1">
               <AvailabilityScreen
+                bookingSuccessDismissDelayMs={bookingSuccessDismissDelayMs}
                 onOpenSettings={() => setIsSettingsOpen(true)}
               />
             </main>

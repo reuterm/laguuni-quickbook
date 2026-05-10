@@ -77,7 +77,7 @@ export async function deleteBasket(
     path: `/api/laguuni/baskets/${basketToken}.json`,
   })
 
-  if (response.status !== 200) {
+  if (![200, 404].includes(response.status)) {
     throw new Error(
       `Unexpected status ${response.status} while trying to delete basket`,
     )
@@ -149,14 +149,7 @@ export async function lookupCode(
 
 export async function submitCheckout(
   client: HttpClient,
-  {
-    basketToken,
-    observeCashCheckoutStep,
-    observePaymentRedirect,
-    observeResponse,
-    paymentMethod,
-    profile,
-  }: SubmitCheckoutArgs,
+  { basketToken, observers, paymentMethod, profile }: SubmitCheckoutArgs,
 ): Promise<BookingCheckoutResult> {
   const response = await client.request({
     body: createCheckoutRequestBody(profile, paymentMethod),
@@ -169,14 +162,14 @@ export async function submitCheckout(
 
   // Temporary: record only a safe response-shape summary during live tests
   // while the exact checkout response contract is still being discovered.
-  observeResponse?.(checkoutResponse.observation)
+  observers?.response?.(checkoutResponse.observation)
 
   if (hasCheckoutPaymentToken(checkoutResponse)) {
     if (paymentMethod === 'cash') {
       return completeCashCheckout(
         client,
         checkoutResponse.paymentToken,
-        observeCashCheckoutStep,
+        observers?.cashCheckoutStep,
       )
     }
 
@@ -194,7 +187,7 @@ export async function submitCheckout(
       'create MobilePay payment redirect',
     )
 
-    observePaymentRedirect?.(paymentRedirect.redirectUrl)
+    observers?.paymentRedirect?.(paymentRedirect.redirectUrl)
 
     return {
       orderIdentifier: null,
@@ -209,7 +202,7 @@ export async function submitCheckout(
 async function completeCashCheckout(
   client: HttpClient,
   orderIdentifier: string,
-  observeCashCheckoutStep?: (
+  cashCheckoutStepObserver?: (
     step: 'cashreturn_completed' | 'order_details_loaded',
   ) => void,
 ): Promise<BookingCheckoutResult> {
@@ -231,7 +224,7 @@ async function completeCashCheckout(
     )
   }
 
-  observeCashCheckoutStep?.('cashreturn_completed')
+  cashCheckoutStepObserver?.('cashreturn_completed')
 
   const orderDetailsResponse = await client.request({
     decoder: decodeCompletedOrderDetailsResponse,
@@ -248,7 +241,7 @@ async function completeCashCheckout(
     throw new Error('Completed order details returned a different identifier')
   }
 
-  observeCashCheckoutStep?.('order_details_loaded')
+  cashCheckoutStepObserver?.('order_details_loaded')
 
   return {
     orderIdentifier,

@@ -1,19 +1,11 @@
 import { useCallback } from 'react'
 
 import { useBookingService, useDiagnostics } from '../../app/providers'
-import type {
-  BookingFlowResult,
-  BookingProfile,
-  BookingSlotSelection,
-} from '../../domain/booking'
+import type { BookingProfile, BookingSlotSelection } from '../../domain/booking'
 import type { UserSettings } from '../../domain/settings'
 import { useUserSettings } from '../settings/use-user-settings'
+import type { BookingSession } from './booking-service'
 import { validateBookingProfile } from './booking-validation'
-
-export type BookingSubmission = {
-  result: BookingFlowResult
-  traceId: string
-}
 
 export function useBookingFlow() {
   const bookingService = useBookingService()
@@ -23,38 +15,16 @@ export function useBookingFlow() {
   const isBookingReady =
     validateBookingProfile(bookingProfile).status === 'valid'
   const submitBooking = useCallback(
-    async (selection: BookingSlotSelection): Promise<BookingSubmission> => {
+    async (selection: BookingSlotSelection): Promise<BookingSession> => {
       const trace = diagnostics.beginTrace({ name: 'booking' })
-
-      try {
-        const result = await bookingService.book(
-          {
-            code: normalizeOptionalCode(settings.seasonPassCode),
-            profile: bookingProfile,
-            selection,
-          },
-          trace,
-        )
-
-        return {
-          result,
-          traceId: trace.traceId,
-        }
-      } catch (error) {
-        const errorMessage = getErrorMessage(error)
-
-        const result: BookingFlowResult = {
-          errorCode: 'unexpected-error',
-          message: errorMessage,
-          status: 'failed',
-          step: 'unexpected',
-        }
-
-        return {
-          result,
-          traceId: trace.traceId,
-        }
-      }
+      return bookingService.book(
+        {
+          code: normalizeOptionalCode(settings.seasonPassCode),
+          profile: bookingProfile,
+          selection,
+        },
+        trace,
+      )
     },
     [bookingProfile, bookingService, diagnostics, settings.seasonPassCode],
   )
@@ -77,12 +47,4 @@ function normalizeOptionalCode(code: string): string | null {
   const normalizedCode = code.trim()
 
   return normalizedCode.length > 0 ? normalizedCode : null
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return 'The booking flow failed unexpectedly.'
 }

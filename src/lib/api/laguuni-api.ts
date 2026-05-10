@@ -116,19 +116,15 @@ export class LaguuniApiClient implements LaguuniApi {
 
   async submitCheckout({
     basketToken,
-    observeCashCheckoutStep,
-    observePaymentRedirect,
-    observeResponse,
+    observers,
     paymentMethod,
     profile,
   }: SubmitCheckoutArgs): Promise<BookingCheckoutResult> {
     return submitCheckoutRequest(this.#client, {
       basketToken,
-      ...(observeCashCheckoutStep ? { observeCashCheckoutStep } : {}),
-      ...(observePaymentRedirect ? { observePaymentRedirect } : {}),
+      ...(observers ? { observers } : {}),
       profile,
       paymentMethod,
-      ...(observeResponse ? { observeResponse } : {}),
     })
   }
 }

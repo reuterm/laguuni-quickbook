@@ -46,11 +46,13 @@ export type AddReservationArgs = {
 
 export type SubmitCheckoutArgs = {
   basketToken: BasketToken
-  observeCashCheckoutStep?: (
-    step: 'cashreturn_completed' | 'order_details_loaded',
-  ) => void
-  observeResponse?: (observation: CheckoutResponseObservation) => void
-  observePaymentRedirect?: (redirectUrl: string | null) => void
+  observers?: {
+    cashCheckoutStep?: (
+      step: 'cashreturn_completed' | 'order_details_loaded',
+    ) => void
+    paymentRedirect?: (redirectUrl: string | null) => void
+    response?: (observation: CheckoutResponseObservation) => void
+  }
   paymentMethod: CheckoutPaymentMethod
   profile: BookingProfile
 }

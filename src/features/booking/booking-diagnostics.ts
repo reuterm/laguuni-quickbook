@@ -9,8 +9,19 @@ import type { DiagnosticsTrace } from '../diagnostics/logs'
 
 type DiagnosticAppender = Pick<DiagnosticsTrace, 'append'>
 
+export type BookingUnexpectedErrorPhase =
+  | 'add_reservation'
+  | 'apply_code'
+  | 'create_basket'
+  | 'load_basket_pricing'
+  | 'lookup_code'
+  | 'submit_checkout'
+
 export type BookingDiagnosticsReporter = {
   recordBasketCreated(): void
+  recordBasketCleanupFailed(): void
+  recordBasketCleanupRequested(): void
+  recordBasketCleanedUp(): void
   recordCheckoutPlan(plan: {
     paymentMethod: 'cash' | 'mobilepay'
     totalDueCents: number
@@ -38,9 +49,16 @@ export type BookingDiagnosticsReporter = {
     missingFields: readonly string[],
     hasCode: boolean,
   ): void
+  recordSheetDismissSideEffectFailed(options: {
+    bookingTraceId: string
+    effect: 'refresh_availability'
+  }): void
   recordReservationAdded(selection: BookingSlotSelection): void
   recordStarted(selection: BookingSlotSelection, hasCode: boolean): void
-  recordUnexpectedError(selection: BookingSlotSelection): void
+  recordUnexpectedError(
+    selection: BookingSlotSelection,
+    phase: BookingUnexpectedErrorPhase,
+  ): void
 }
 
 export function createBookingDiagnosticsReporter(
@@ -50,6 +68,21 @@ export function createBookingDiagnosticsReporter(
     recordBasketCreated() {
       diagnostics.append({
         event: 'booking.basket_created',
+      })
+    },
+    recordBasketCleanupFailed() {
+      diagnostics.append({
+        event: 'booking.basket_cleanup_failed',
+      })
+    },
+    recordBasketCleanupRequested() {
+      diagnostics.append({
+        event: 'booking.basket_cleanup_requested',
+      })
+    },
+    recordBasketCleanedUp() {
+      diagnostics.append({
+        event: 'booking.basket_cleaned_up',
       })
     },
     recordCheckoutPlan(plan) {
@@ -153,6 +186,15 @@ export function createBookingDiagnosticsReporter(
         event: 'booking.profile_invalid',
       })
     },
+    recordSheetDismissSideEffectFailed({ bookingTraceId, effect }) {
+      diagnostics.append({
+        data: {
+          bookingTraceId,
+          effect,
+        },
+        event: 'booking.sheet_dismiss_side_effect_failed',
+      })
+    },
     recordReservationAdded(selection: BookingSlotSelection) {
       diagnostics.append({
         data: {
@@ -173,10 +215,14 @@ export function createBookingDiagnosticsReporter(
         event: 'booking.started',
       })
     },
-    recordUnexpectedError(selection: BookingSlotSelection) {
+    recordUnexpectedError(
+      selection: BookingSlotSelection,
+      phase: BookingUnexpectedErrorPhase,
+    ) {
       diagnostics.append({
         data: {
           errorCode: 'unexpected-error',
+          phase,
           selectionDate: selection.date,
           selectionStartTime: selection.startTime,
         },

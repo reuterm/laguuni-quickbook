@@ -165,6 +165,14 @@ export const laguuniHandlers = [
     },
   ),
 
+  http.delete(
+    `${TEST_API_BASE_URL}/api/laguuni/baskets/:basketToken.json`,
+    ({ params }) => {
+      basketStateByToken.delete(String(params.basketToken))
+      return HttpResponse.json(null)
+    },
+  ),
+
   http.post(
     `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
     async ({ params, request }) => {
