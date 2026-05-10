@@ -374,6 +374,96 @@ describe('useBookingSheetController', () => {
     })
   })
 
+  it('waits for cleanup before finalizing dismissed bookings', async () => {
+    let resolveCleanup!: () => void
+    const onBookingFinalized = vi.fn(async () => {})
+    const releaseReservation = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveCleanup = resolve
+        }),
+    )
+
+    bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation,
+      result: {
+        redirectUrl: 'https://example.com/pay',
+        status: 'payment_required',
+      },
+      traceId: 'trace-payment',
+    })
+    mockBookingFlow()
+
+    const { result } = renderHook(() =>
+      useBookingSheetController({ onBookingFinalized }),
+    )
+
+    await act(async () => {
+      await result.current.requestBooking(selection)
+    })
+
+    await act(async () => {
+      await result.current.confirmBooking()
+    })
+
+    act(() => {
+      result.current.dismissBookingSheet()
+    })
+
+    expect(releaseReservation).toHaveBeenCalledTimes(1)
+    expect(onBookingFinalized).not.toHaveBeenCalled()
+
+    resolveCleanup()
+
+    await waitFor(() => {
+      expect(onBookingFinalized).toHaveBeenCalledWith({
+        redirectUrl: 'https://example.com/pay',
+        status: 'payment_required',
+      })
+    })
+  })
+
+  it('ignores rejected finalization callbacks after dismiss', async () => {
+    const onBookingFinalized = vi.fn(async () => {
+      throw new Error('Fixture refresh failed.')
+    })
+
+    bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: releaseReservationMock,
+      result: {
+        redirectUrl: 'https://example.com/pay',
+        status: 'payment_required',
+      },
+      traceId: 'trace-payment',
+    })
+    mockBookingFlow()
+
+    const { result } = renderHook(() =>
+      useBookingSheetController({ onBookingFinalized }),
+    )
+
+    await act(async () => {
+      await result.current.requestBooking(selection)
+    })
+
+    await act(async () => {
+      await result.current.confirmBooking()
+    })
+
+    act(() => {
+      result.current.dismissBookingSheet()
+    })
+
+    await waitFor(() => {
+      expect(releaseReservationMock).toHaveBeenCalledTimes(1)
+      expect(onBookingFinalized).toHaveBeenCalledWith({
+        redirectUrl: 'https://example.com/pay',
+        status: 'payment_required',
+      })
+    })
+    expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
+  })
+
   it('cleans up payment-required bookings when dismissed', async () => {
     const onBookingFinalized = vi.fn(async () => {})
 

@@ -46,6 +46,30 @@ export function useBookingSheetController({
   const submitInFlightRef = useRef(false)
   const completedSubmissionRef = useRef<BookingFlowSubmission | null>(null)
 
+  const finalizeCompletedSubmission = useCallback(
+    async (submission: BookingFlowSubmission): Promise<void> => {
+      if (submission.result.status !== 'success') {
+        await submission.releaseReservation()
+      }
+
+      await onBookingFinalized?.(submission.result)
+    },
+    [onBookingFinalized],
+  )
+
+  const finalizeDismissedSubmission = useCallback(
+    async (submission: BookingFlowSubmission): Promise<void> => {
+      try {
+        await finalizeCompletedSubmission(submission)
+      } catch {
+        // Dismissal finalization is best-effort. The sheet is already closed,
+        // so ignore failures from reservation cleanup and follow-up work such
+        // as refreshing availability.
+      }
+    },
+    [finalizeCompletedSubmission],
+  )
+
   const dismissBookingSheet = useCallback(() => {
     if (submitInFlightRef.current) {
       return
@@ -63,10 +87,8 @@ export function useBookingSheetController({
       return
     }
 
-    void completedSubmission.releaseReservation().then(() => {
-      void onBookingFinalized?.(completedSubmission.result)
-    })
-  }, [onBookingFinalized])
+    void finalizeDismissedSubmission(completedSubmission)
+  }, [finalizeDismissedSubmission])
 
   const requestBooking = useCallback((selection: BookingSlotSelection) => {
     setBookingSheetState((currentState) => {
@@ -106,12 +128,12 @@ export function useBookingSheetController({
       })
 
       if (submission.result.status === 'success') {
-        await onBookingFinalized?.(submission.result)
+        await finalizeCompletedSubmission(submission)
       }
     } finally {
       submitInFlightRef.current = false
     }
-  }, [bookingSheetState, onBookingFinalized, submitBooking])
+  }, [bookingSheetState, finalizeCompletedSubmission, submitBooking])
 
   useEffect(() => {
     return () => {

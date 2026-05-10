@@ -209,6 +209,9 @@ function createReservationRelease({
         return releasePromise
       }
 
+      // Basket cleanup is best-effort. The storefront eventually reclaims
+      // abandoned baskets, so callers should not block the user on delete
+      // failures beyond recording diagnostics for later inspection.
       releasePromise = api.deleteBasket(basketToken).catch(() => {
         onError()
       })
