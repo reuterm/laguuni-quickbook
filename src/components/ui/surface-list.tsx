@@ -34,6 +34,7 @@ function SurfaceList<Element extends React.ElementType = 'div'>({
 type SurfaceListItemProps<Element extends React.ElementType> = {
   as?: Element
   interactive?: boolean
+  layout?: 'inline' | 'responsive'
 } & Omit<React.ComponentPropsWithoutRef<Element>, 'as' | 'className'> & {
     className?: string
   }
@@ -42,6 +43,7 @@ function SurfaceListItem<Element extends React.ElementType = 'div'>({
   as,
   className,
   interactive = false,
+  layout = 'responsive',
   ...props
 }: SurfaceListItemProps<Element>) {
   const Comp = as ?? 'div'
@@ -49,7 +51,9 @@ function SurfaceListItem<Element extends React.ElementType = 'div'>({
   return (
     <Comp
       className={cn(
-        'flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5',
+        layout === 'inline'
+          ? 'flex items-center justify-between gap-3 px-4 py-4'
+          : 'flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5',
         interactive && subtleHoverSurfaceClassName,
         className,
       )}

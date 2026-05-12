@@ -1,6 +1,7 @@
 import { Settings2 } from 'lucide-react'
 import { useState } from 'react'
 
+import { ContentRail } from '@/components/ui/content-rail'
 import { Button } from '@/components/ui/button'
 import { eyebrowClassName } from '@/components/ui/styles'
 import { AvailabilityScreen } from '../features/availability/components/AvailabilityScreen'
@@ -20,9 +21,12 @@ function App() {
       <DiagnosticsRuntimeCapture />
       <UserSettingsProvider>
         <AvailabilityScopeProvider>
-          <div className="mx-auto flex min-h-svh w-full max-w-7xl flex-col gap-8 px-4 py-5 sm:py-8">
+          <ContentRail
+            size="page"
+            className="flex min-h-svh flex-col gap-8 px-4 py-5 sm:py-8"
+          >
             <header>
-              <div className="mx-auto w-full max-w-4xl space-y-3 border-b border-border/70 pb-4 sm:px-2">
+              <ContentRail className="space-y-3 border-b border-border/70 pb-4">
                 <div className="flex items-center justify-between gap-3">
                   <span className={eyebrowClassName}>Laguuni Quickbook</span>
                   <Button
@@ -40,7 +44,7 @@ function App() {
                 <h1 className="max-w-2xl text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
                   Book a one-hour cable slot
                 </h1>
-              </div>
+              </ContentRail>
             </header>
 
             <main className="flex-1">
@@ -53,7 +57,7 @@ function App() {
               open={isSettingsOpen}
               onOpenChange={setIsSettingsOpen}
             />
-          </div>
+          </ContentRail>
         </AvailabilityScopeProvider>
       </UserSettingsProvider>
     </AppDiagnosticsBoundary>
