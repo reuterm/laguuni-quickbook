@@ -170,7 +170,7 @@ describe('booking flow integration', () => {
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
 
-    expect(await screen.findAllByText('3/4')).not.toHaveLength(0)
+    await expectCapacityLabel('3/4')
 
     await confirmFirstBooking(user)
 
@@ -184,9 +184,7 @@ describe('booking flow integration', () => {
       expect(deletedBasketTokens).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      expect(screen.getAllByText('2/4')).not.toHaveLength(0)
-    })
+    await expectCapacityLabel('2/4')
   })
 
   it('deletes and refreshes availability when a failed booking is dismissed', async () => {
@@ -235,7 +233,7 @@ describe('booking flow integration', () => {
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
 
-    expect(await screen.findAllByText('3/4')).not.toHaveLength(0)
+    await expectCapacityLabel('3/4')
 
     await confirmFirstBooking(user)
 
@@ -249,9 +247,7 @@ describe('booking flow integration', () => {
       expect(deletedBasketTokens).toHaveLength(1)
     })
 
-    await waitFor(() => {
-      expect(screen.getAllByText('2/4')).not.toHaveLength(0)
-    })
+    await expectCapacityLabel('2/4')
   })
 
   it('allows dismissing a failed booking status', async () => {
@@ -434,7 +430,7 @@ describe('booking flow integration', () => {
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
 
-    expect(await screen.findAllByText('3/4')).not.toHaveLength(0)
+    await expectCapacityLabel('3/4')
 
     await confirmFirstBooking(user)
 
@@ -442,11 +438,15 @@ describe('booking flow integration', () => {
       await screen.findByRole('heading', { name: 'Booking confirmed' }),
     ).toBeInTheDocument()
 
-    await waitFor(() => {
-      expect(screen.getAllByText('2/4')).not.toHaveLength(0)
-    })
+    await expectCapacityLabel('2/4')
   })
 })
+
+async function expectCapacityLabel(label: string) {
+  const matches = await screen.findAllByText(label)
+
+  expect(matches.length).toBeGreaterThan(0)
+}
 
 async function clickFirstBookButton(user: ReturnType<typeof userEvent.setup>) {
   const bookButtons = await screen.findAllByRole('button', {

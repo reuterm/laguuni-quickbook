@@ -17,9 +17,7 @@ export type BookingService = {
   ): Promise<BookingSubmission>
 }
 
-type ReservationRelease = {
-  release(): Promise<void>
-}
+type ReservationRelease = () => Promise<void>
 
 export type BookingSubmission = {
   result: BookingFlowResult
@@ -186,7 +184,7 @@ function createBookingSubmission({
 }): BookingSubmission {
   return {
     async releaseReservation() {
-      await reservationRelease.release()
+      await reservationRelease()
     },
     result,
   }
@@ -203,28 +201,24 @@ function createReservationRelease({
 }): ReservationRelease {
   let releasePromise: Promise<void> | null = null
 
-  return {
-    async release() {
-      if (releasePromise !== null) {
-        return releasePromise
-      }
-
-      // Basket cleanup is best-effort. The storefront eventually reclaims
-      // abandoned baskets, so callers should not block the user on delete
-      // failures beyond recording diagnostics for later inspection.
-      releasePromise = api.deleteBasket(basketToken).catch(() => {
-        onError()
-      })
-
+  return async () => {
+    if (releasePromise !== null) {
       return releasePromise
-    },
+    }
+
+    // Basket cleanup is best-effort. The storefront eventually reclaims
+    // abandoned baskets, so callers should not block the user on delete
+    // failures beyond recording diagnostics for later inspection.
+    releasePromise = api.deleteBasket(basketToken).catch(() => {
+      onError()
+    })
+
+    return releasePromise
   }
 }
 
 function createNoopReservationRelease(): ReservationRelease {
-  return {
-    async release() {},
-  }
+  return async () => {}
 }
 
 function getErrorMessage(error: unknown): string {
