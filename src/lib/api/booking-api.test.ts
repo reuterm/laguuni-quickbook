@@ -264,6 +264,29 @@ describe('booking-api transport mapping', () => {
     })
   })
 
+  it('treats missing baskets as already cleaned up', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const client = createStatusCapturingClient(requests, null, 404)
+
+    await expect(
+      deleteBasket(client, 'fixture-basket-token'),
+    ).resolves.toBeUndefined()
+
+    expect(requests[0]).toMatchObject({
+      method: 'DELETE',
+      path: '/api/laguuni/baskets/fixture-basket-token.json',
+    })
+  })
+
+  it('rejects unexpected basket delete statuses', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const client = createStatusCapturingClient(requests, null, 500)
+
+    await expect(deleteBasket(client, 'fixture-basket-token')).rejects.toThrow(
+      'Unexpected status 500 while trying to delete basket',
+    )
+  })
+
   it('sums basket pricing using discounted prices when present', async () => {
     const requests: HttpRequest<unknown>[] = []
     const client = createCapturingClient(requests, [
@@ -318,6 +341,23 @@ function createCapturingClient(
       return {
         data: request.decoder(responseData),
         status: 200,
+      } satisfies HttpResponse<R>
+    },
+  }
+}
+
+function createStatusCapturingClient(
+  requests: HttpRequest<unknown>[],
+  responseData: unknown,
+  status: number,
+): HttpClient {
+  return {
+    async request<R>(request: HttpRequest<R>) {
+      requests.push(request as HttpRequest<unknown>)
+
+      return {
+        data: request.decoder(responseData),
+        status,
       } satisfies HttpResponse<R>
     },
   }

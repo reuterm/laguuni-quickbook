@@ -11,6 +11,7 @@ type DiagnosticAppender = Pick<DiagnosticsTrace, 'append'>
 
 export type BookingDiagnosticsReporter = {
   recordBasketCreated(): void
+  recordBasketReleaseFailed(): void
   recordCheckoutPlan(plan: {
     paymentMethod: 'cash' | 'mobilepay'
     totalDueCents: number
@@ -50,6 +51,11 @@ export function createBookingDiagnosticsReporter(
     recordBasketCreated() {
       diagnostics.append({
         event: 'booking.basket_created',
+      })
+    },
+    recordBasketReleaseFailed() {
+      diagnostics.append({
+        event: 'booking.basket_release_failed',
       })
     },
     recordCheckoutPlan(plan) {

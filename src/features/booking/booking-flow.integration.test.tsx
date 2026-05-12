@@ -23,6 +23,21 @@ const MOBILEPAY_HANDLER_REDIRECT = {
     'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
 }
 
+function createAvailabilityResponse(capacityAtThreePm: number) {
+  return {
+    endtimes: {
+      '15.00': ['16.00'],
+    },
+    starttimes: ['15.00'],
+    tuples: [
+      [0, 900, 4],
+      [900, 960, capacityAtThreePm],
+      [960, 1440, 4],
+    ],
+    tomorrowtuples: [[0, 1440, 4]],
+  }
+}
+
 describe('booking flow integration', () => {
   beforeEach(() => {
     cleanup()
@@ -100,6 +115,139 @@ describe('booking flow integration', () => {
       'href',
       'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
     )
+    expect(
+      screen.getByRole('link', { name: 'Continue to payment' }),
+    ).toHaveAttribute('target', '_blank')
+  })
+
+  it('deletes and refreshes availability when a payment-required booking is dismissed', async () => {
+    const user = userEvent.setup()
+    const deletedBasketTokens: Array<string> = []
+    let hasDeletedBasket = false
+
+    saveUserSettings({
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+    })
+    server.use(
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
+        () => HttpResponse.json(checkoutPaymentRequiredFixture),
+      ),
+      http.get(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/rest/post/mobilepayhandler/:token.json`,
+        () => HttpResponse.json(MOBILEPAY_HANDLER_REDIRECT),
+      ),
+      http.delete(
+        `${TEST_API_BASE_URL}/api/laguuni/baskets/:basketToken.json`,
+        ({ params }) => {
+          deletedBasketTokens.push(String(params.basketToken))
+          hasDeletedBasket = true
+          return HttpResponse.json(null)
+        },
+      ),
+      http.get(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/products/:productId/availabletimes/:date.json`,
+        ({ params, request }) => {
+          const url = new URL(request.url)
+
+          if (
+            String(params.productId) !== '6' ||
+            url.searchParams.get('capacity') !== 'true'
+          ) {
+            return
+          }
+
+          return HttpResponse.json(
+            createAvailabilityResponse(hasDeletedBasket ? 2 : 3),
+          )
+        },
+      ),
+    )
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+    })
+
+    await expectCapacityLabel('3/4')
+
+    await confirmFirstBooking(user)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Payment required' }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    await waitFor(() => {
+      expect(deletedBasketTokens).toHaveLength(1)
+    })
+
+    await expectCapacityLabel('2/4')
+  })
+
+  it('deletes and refreshes availability when a failed booking is dismissed', async () => {
+    const user = userEvent.setup()
+    const deletedBasketTokens: Array<string> = []
+    let hasDeletedBasket = false
+
+    saveUserSettings({
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+    })
+    server.use(
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
+        () => HttpResponse.json(checkoutFailureFixture, { status: 200 }),
+      ),
+      http.delete(
+        `${TEST_API_BASE_URL}/api/laguuni/baskets/:basketToken.json`,
+        ({ params }) => {
+          deletedBasketTokens.push(String(params.basketToken))
+          hasDeletedBasket = true
+          return HttpResponse.json(null)
+        },
+      ),
+      http.get(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/products/:productId/availabletimes/:date.json`,
+        ({ params, request }) => {
+          const url = new URL(request.url)
+
+          if (
+            String(params.productId) !== '6' ||
+            url.searchParams.get('capacity') !== 'true'
+          ) {
+            return
+          }
+
+          return HttpResponse.json(
+            createAvailabilityResponse(hasDeletedBasket ? 2 : 3),
+          )
+        },
+      ),
+    )
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+    })
+
+    await expectCapacityLabel('3/4')
+
+    await confirmFirstBooking(user)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Booking failed' }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    await waitFor(() => {
+      expect(deletedBasketTokens).toHaveLength(1)
+    })
+
+    await expectCapacityLabel('2/4')
   })
 
   it('allows dismissing a failed booking status', async () => {
@@ -282,7 +430,7 @@ describe('booking flow integration', () => {
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
 
-    expect(await screen.findAllByText('3/4')).not.toHaveLength(0)
+    await expectCapacityLabel('3/4')
 
     await confirmFirstBooking(user)
 
@@ -290,11 +438,15 @@ describe('booking flow integration', () => {
       await screen.findByRole('heading', { name: 'Booking confirmed' }),
     ).toBeInTheDocument()
 
-    await waitFor(() => {
-      expect(screen.getAllByText('2/4')).not.toHaveLength(0)
-    })
+    await expectCapacityLabel('2/4')
   })
 })
+
+async function expectCapacityLabel(label: string) {
+  const matches = await screen.findAllByText(label)
+
+  expect(matches.length).toBeGreaterThan(0)
+}
 
 async function clickFirstBookButton(user: ReturnType<typeof userEvent.setup>) {
   const bookButtons = await screen.findAllByRole('button', {

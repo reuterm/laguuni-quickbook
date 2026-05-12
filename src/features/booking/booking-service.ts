@@ -14,7 +14,14 @@ export type BookingService = {
   book(
     request: BookingRequest,
     diagnostics: DiagnosticsTrace,
-  ): Promise<BookingFlowResult>
+  ): Promise<BookingSubmission>
+}
+
+type ReservationRelease = () => Promise<void>
+
+export type BookingSubmission = {
+  result: BookingFlowResult
+  releaseReservation(): Promise<void>
 }
 
 type BookingServiceOptions = {
@@ -31,10 +38,11 @@ export class DefaultBookingService implements BookingService {
   async book(
     { code, profile, selection }: BookingRequest,
     diagnostics: DiagnosticsTrace,
-  ): Promise<BookingFlowResult> {
+  ): Promise<BookingSubmission> {
     const normalizedCode = code?.trim()
     const diagnosticsReporter = createBookingDiagnosticsReporter(diagnostics)
     const profileValidation = validateBookingProfile(profile)
+    let reservationRelease = createNoopReservationRelease()
 
     if (profileValidation.status === 'invalid') {
       diagnosticsReporter.recordProfileInvalid(
@@ -43,13 +51,23 @@ export class DefaultBookingService implements BookingService {
         Boolean(normalizedCode),
       )
 
-      return profileValidation.failure
+      return createBookingSubmission({
+        reservationRelease,
+        result: profileValidation.failure,
+      })
     }
 
     diagnosticsReporter.recordStarted(selection, Boolean(normalizedCode))
 
     try {
       const basketToken = await this.#api.createBasket()
+      reservationRelease = createReservationRelease({
+        api: this.#api,
+        basketToken,
+        onError: () => {
+          diagnosticsReporter.recordBasketReleaseFailed()
+        },
+      })
       diagnosticsReporter.recordBasketCreated()
 
       await this.#api.addReservationToBasket({
@@ -66,7 +84,10 @@ export class DefaultBookingService implements BookingService {
         if (lookupResult.status === 'invalid') {
           diagnosticsReporter.recordCodeInvalid(lookupResult)
 
-          return mapInvalidCodeLookupToFailure(lookupResult)
+          return createBookingSubmission({
+            reservationRelease,
+            result: mapInvalidCodeLookupToFailure(lookupResult),
+          })
         }
 
         await this.#api.applyCodeToBasket({
@@ -107,10 +128,25 @@ export class DefaultBookingService implements BookingService {
 
       diagnosticsReporter.recordCheckoutCompleted(bookingResult)
 
-      return bookingResult
+      return createBookingSubmission({
+        reservationRelease:
+          bookingResult.status === 'success'
+            ? createNoopReservationRelease()
+            : reservationRelease,
+        result: bookingResult,
+      })
     } catch (error) {
       diagnosticsReporter.recordUnexpectedError(selection)
-      throw error
+
+      return createBookingSubmission({
+        reservationRelease,
+        result: {
+          errorCode: 'unexpected-error',
+          message: getErrorMessage(error),
+          status: 'failed',
+          step: 'unexpected',
+        },
+      })
     }
   }
 }
@@ -137,4 +173,58 @@ function mapInvalidCodeLookupToFailure(
     status: 'failed',
     step: 'code',
   }
+}
+
+function createBookingSubmission({
+  reservationRelease,
+  result,
+}: {
+  reservationRelease: ReservationRelease
+  result: BookingFlowResult
+}): BookingSubmission {
+  return {
+    async releaseReservation() {
+      await reservationRelease()
+    },
+    result,
+  }
+}
+
+function createReservationRelease({
+  api,
+  basketToken,
+  onError,
+}: {
+  api: LaguuniApi
+  basketToken: string
+  onError: () => void
+}): ReservationRelease {
+  let releasePromise: Promise<void> | null = null
+
+  return async () => {
+    if (releasePromise !== null) {
+      return releasePromise
+    }
+
+    // Basket cleanup is best-effort. The storefront eventually reclaims
+    // abandoned baskets, so callers should not block the user on delete
+    // failures beyond recording diagnostics for later inspection.
+    releasePromise = api.deleteBasket(basketToken).catch(() => {
+      onError()
+    })
+
+    return releasePromise
+  }
+}
+
+function createNoopReservationRelease(): ReservationRelease {
+  return async () => {}
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return 'The booking flow failed unexpectedly.'
 }
