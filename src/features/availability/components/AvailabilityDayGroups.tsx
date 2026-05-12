@@ -1,3 +1,5 @@
+import { useCallback, useLayoutEffect, useState } from 'react'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/ui/section-header'
@@ -22,11 +24,9 @@ const availabilityToneClassNames = {
 const availabilityDayLayout = {
   // This matches the smallest viable single-column day card at a 320px viewport.
   cardMinWidthRem: 18,
+  gapRem: 1.5,
   slotActionMinWidthClassName: 'min-w-[6.5rem]',
 } as const
-
-const dayGroupGridClassName =
-  `grid grid-cols-[repeat(auto-fit,minmax(min(100%,${availabilityDayLayout.cardMinWidthRem}rem),1fr))] items-start gap-6`
 
 type AvailabilityDayGroupsProps = {
   dayGroups: readonly AvailabilityDayGroup[]
@@ -37,8 +37,21 @@ export function AvailabilityDayGroups({
   dayGroups,
   onBookSelection,
 }: AvailabilityDayGroupsProps) {
+  const { containerRef, containerWidth, rootFontSizePx } = useElementMetrics()
+  const columnCount = getBalancedDayColumnCount(
+    dayGroups.length,
+    containerWidth,
+    rootFontSizePx,
+  )
+
   return (
-    <div className={dayGroupGridClassName}>
+    <div
+      ref={containerRef}
+      className="grid items-start gap-6"
+      style={{
+        gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+      }}
+    >
       {dayGroups.map((dayGroup) => (
         <section key={dayGroup.date} className="min-w-0 self-start space-y-3">
           <SectionHeader
@@ -98,6 +111,77 @@ export function AvailabilityDayGroups({
   )
 }
 
+function useElementMetrics<T extends HTMLElement>() {
+  const [element, setElement] = useState<T | null>(null)
+  const [width, setWidth] = useState(0)
+  const [rootFontSizePx, setRootFontSizePx] = useState(16)
+
+  const containerRef = useCallback((node: T | null) => {
+    setElement(node)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!element) {
+      return undefined
+    }
+
+    const updateMetrics = () => {
+      setWidth(element.getBoundingClientRect().width)
+      const nextRootFontSizePx = Number.parseFloat(
+        window.getComputedStyle(document.documentElement).fontSize,
+      )
+
+      if (Number.isFinite(nextRootFontSizePx) && nextRootFontSizePx > 0) {
+        setRootFontSizePx(nextRootFontSizePx)
+      }
+    }
+
+    updateMetrics()
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateMetrics()
+    })
+
+    resizeObserver.observe(element)
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [element])
+
+  return {
+    containerRef,
+    containerWidth: width,
+    rootFontSizePx,
+  }
+}
+
+function getBalancedDayColumnCount(
+  dayCount: number,
+  containerWidth: number,
+  rootFontSizePx: number = 16,
+) {
+  if (dayCount <= 1 || containerWidth <= 0) {
+    return 1
+  }
+
+  const minCardWidthPx = availabilityDayLayout.cardMinWidthRem * rootFontSizePx
+  const gapPx = availabilityDayLayout.gapRem * rootFontSizePx
+  const maxColumnsThatFit = Math.max(
+    1,
+    Math.min(
+      dayCount,
+      Math.floor((containerWidth + gapPx) / (minCardWidthPx + gapPx)),
+    ),
+  )
+
+  if (maxColumnsThatFit > 2 && dayCount % maxColumnsThatFit === 1) {
+    return maxColumnsThatFit - 1
+  }
+
+  return maxColumnsThatFit
+}
+
 function AvailabilityBadge({ slot }: { slot: AvailabilitySlot }) {
   const occupancyClassName = getAvailabilityToneClassName(
     slot.freeCapacity,
@@ -138,3 +222,5 @@ function getAvailabilityToneClassName(
 }
 
 export type { AvailabilityBookingActionProps, AvailabilityDayGroupsProps }
+
+export { getBalancedDayColumnCount }

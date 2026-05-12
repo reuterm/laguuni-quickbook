@@ -1,8 +1,7 @@
 import { Settings2 } from 'lucide-react'
 import { useState } from 'react'
-
-import { ContentRail } from '@/components/ui/content-rail'
 import { Button } from '@/components/ui/button'
+import { ContentRail } from '@/components/ui/content-rail'
 import { eyebrowClassName } from '@/components/ui/styles'
 import { AvailabilityScreen } from '../features/availability/components/AvailabilityScreen'
 import { AvailabilityScopeProvider } from '../features/availability/use-availability-scope'
