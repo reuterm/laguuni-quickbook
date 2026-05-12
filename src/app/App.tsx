@@ -20,9 +20,9 @@ function App() {
       <DiagnosticsRuntimeCapture />
       <UserSettingsProvider>
         <AvailabilityScopeProvider>
-          <div className="mx-auto flex min-h-svh w-full max-w-4xl flex-col gap-8 px-4 py-5 sm:px-6 sm:py-8">
+          <div className="mx-auto flex min-h-svh w-full max-w-7xl flex-col gap-8 px-4 py-5 sm:py-8">
             <header>
-              <div className="space-y-3 border-b border-border/70 pb-4">
+              <div className="mx-auto w-full max-w-4xl space-y-3 border-b border-border/70 pb-4 sm:px-2">
                 <div className="flex items-center justify-between gap-3">
                   <span className={eyebrowClassName}>Laguuni Quickbook</span>
                   <Button

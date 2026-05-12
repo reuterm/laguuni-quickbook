@@ -5,7 +5,7 @@ import {
   eyebrowClassName,
   subtleDividerClassName,
 } from '@/components/ui/styles'
-import { SurfaceList, SurfaceListItem } from '@/components/ui/surface-list'
+import { SurfaceList } from '@/components/ui/surface-list'
 import { cn } from '@/lib/utils'
 
 import type { AvailabilitySlot } from '../availability-model'
@@ -19,6 +19,9 @@ const availabilityToneClassNames = {
   low: 'border-transparent bg-[#9b5c49]/20 text-[#d69580]',
 } as const
 
+const dayGroupGridClassName =
+  'grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] items-start gap-6'
+
 type AvailabilityDayGroupsProps = {
   dayGroups: readonly AvailabilityDayGroup[]
 } & AvailabilityBookingActionProps
@@ -29,9 +32,9 @@ export function AvailabilityDayGroups({
   onBookSelection,
 }: AvailabilityDayGroupsProps) {
   return (
-    <div className="grid gap-6">
+    <div className={dayGroupGridClassName}>
       {dayGroups.map((dayGroup) => (
-        <section key={dayGroup.date} className="space-y-3">
+        <section key={dayGroup.date} className="min-w-0 self-start space-y-3">
           <SectionHeader
             className="items-center px-1"
             contentClassName="space-y-0"
@@ -48,7 +51,10 @@ export function AvailabilityDayGroups({
 
           <SurfaceList>
             {dayGroup.slots.map((slot) => (
-              <SurfaceListItem key={slot.id}>
+              <div
+                key={slot.id}
+                className="flex items-center justify-between gap-3 px-4 py-4"
+              >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                     <span className="font-semibold tabular-nums text-foreground">
@@ -66,7 +72,7 @@ export function AvailabilityDayGroups({
                     size="sm"
                     variant="secondary"
                     className={cn(
-                      'w-full border sm:min-w-[6.5rem] sm:w-auto',
+                      'min-w-[6.5rem] shrink-0 border',
                       subtleDividerClassName,
                     )}
                     disabled={bookingActionMode === 'disabled'}
@@ -79,7 +85,7 @@ export function AvailabilityDayGroups({
                     Book
                   </Button>
                 )}
-              </SurfaceListItem>
+              </div>
             ))}
           </SurfaceList>
         </section>

@@ -80,7 +80,7 @@ export function AvailabilityScreen({
 
   return (
     <section aria-labelledby="availability-title" className="space-y-6">
-      <div className="space-y-5">
+      <div className="mx-auto w-full max-w-4xl space-y-5 sm:px-2">
         <BookingSheetFlow
           bookingSheetState={bookingSheetState}
           confirmBooking={confirmBooking}
