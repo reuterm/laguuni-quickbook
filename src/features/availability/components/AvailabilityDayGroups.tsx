@@ -25,7 +25,13 @@ const availabilityDayLayout = {
   // This matches the smallest viable single-column day card at a 320px viewport.
   cardMinWidthRem: 18,
   gapRem: 1.5,
-  slotActionMinWidthClassName: 'min-w-[6.5rem]',
+  slotActionMinWidthRem: 6.5,
+} as const
+
+const availabilityDayLayoutStyles = {
+  cardMinWidth: `${availabilityDayLayout.cardMinWidthRem}rem`,
+  gap: `${availabilityDayLayout.gapRem}rem`,
+  slotActionMinWidth: `${availabilityDayLayout.slotActionMinWidthRem}rem`,
 } as const
 
 type AvailabilityDayGroupsProps = {
@@ -47,9 +53,10 @@ export function AvailabilityDayGroups({
   return (
     <div
       ref={containerRef}
-      className="grid items-start gap-6"
+      className="grid items-start"
       style={{
-        gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))`,
+        gap: availabilityDayLayoutStyles.gap,
+        gridTemplateColumns: `repeat(${columnCount}, minmax(min(${availabilityDayLayoutStyles.cardMinWidth}, 100%), 1fr))`,
       }}
     >
       {dayGroups.map((dayGroup) => (
@@ -88,10 +95,12 @@ export function AvailabilityDayGroups({
                     size="sm"
                     variant="secondary"
                     className={cn(
-                      availabilityDayLayout.slotActionMinWidthClassName,
                       'shrink-0 border',
                       subtleDividerClassName,
                     )}
+                    style={{
+                      minWidth: availabilityDayLayoutStyles.slotActionMinWidth,
+                    }}
                     disabled={bookingActionMode === 'disabled'}
                     onClick={
                       bookingActionMode === 'enabled'
