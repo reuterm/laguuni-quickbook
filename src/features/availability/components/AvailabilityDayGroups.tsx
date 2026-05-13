@@ -34,6 +34,16 @@ const availabilityDayLayoutStyles = {
   slotActionMinWidth: `${availabilityDayLayout.slotActionMinWidthRem}rem`,
 } as const
 
+const availabilityDayGridStyle = {
+  gap: availabilityDayLayoutStyles.gap,
+  gridTemplateColumns: `repeat(var(--availability-day-columns, 1), minmax(min(${availabilityDayLayoutStyles.cardMinWidth}, 100%), 1fr))`,
+} as const
+
+const availabilityDayAutoFitGridStyle = {
+  gap: availabilityDayLayoutStyles.gap,
+  gridTemplateColumns: `repeat(auto-fit, minmax(min(${availabilityDayLayoutStyles.cardMinWidth}, 100%), 1fr))`,
+} as const
+
 type AvailabilityDayGroupsProps = {
   dayGroups: readonly AvailabilityDayGroup[]
 } & AvailabilityBookingActionProps
@@ -55,8 +65,8 @@ export function AvailabilityDayGroups({
       ref={containerRef}
       className="grid items-start"
       style={{
-        gap: availabilityDayLayoutStyles.gap,
-        gridTemplateColumns: `repeat(${columnCount}, minmax(min(${availabilityDayLayoutStyles.cardMinWidth}, 100%), 1fr))`,
+        ...availabilityDayGridStyle,
+        ['--availability-day-columns' as string]: columnCount,
       }}
     >
       {dayGroups.map((dayGroup) => (
@@ -94,10 +104,7 @@ export function AvailabilityDayGroups({
                     type="button"
                     size="sm"
                     variant="secondary"
-                    className={cn(
-                      'shrink-0 border',
-                      subtleDividerClassName,
-                    )}
+                    className={cn('shrink-0 border', subtleDividerClassName)}
                     style={{
                       minWidth: availabilityDayLayoutStyles.slotActionMinWidth,
                     }}
@@ -232,4 +239,8 @@ function getAvailabilityToneClassName(
 
 export type { AvailabilityBookingActionProps, AvailabilityDayGroupsProps }
 
-export { getBalancedDayColumnCount }
+export {
+  availabilityDayAutoFitGridStyle,
+  availabilityDayGridStyle,
+  getBalancedDayColumnCount,
+}
