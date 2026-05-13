@@ -7,6 +7,7 @@ A mobile-first browser app for quickly booking Laguuni wakeboarding slots.
 - Product spec: [`docs/specs/product.md`](docs/specs/product.md)
 - Technical direction: [`docs/adrs/001-technical-direction.md`](docs/adrs/001-technical-direction.md)
 - UI foundation: [`docs/adrs/002-ui-foundation.md`](docs/adrs/002-ui-foundation.md)
+- Mock API harness: [`docs/adrs/004-dev-only-mock-api-harness.md`](docs/adrs/004-dev-only-mock-api-harness.md)
 
 ## Tooling
 
