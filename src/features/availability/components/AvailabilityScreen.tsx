@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { ContentRail } from '@/components/ui/content-rail'
 import {
   eyebrowClassName,
   subtleSurfaceBackgroundClassName,
@@ -80,7 +81,7 @@ export function AvailabilityScreen({
 
   return (
     <section aria-labelledby="availability-title" className="space-y-6">
-      <div className="space-y-5">
+      <ContentRail className="space-y-5">
         <BookingSheetFlow
           bookingSheetState={bookingSheetState}
           confirmBooking={confirmBooking}
@@ -143,7 +144,7 @@ export function AvailabilityScreen({
             selectedCable={selectedCable}
           />
         </div>
-      </div>
+      </ContentRail>
 
       <div className="space-y-4">
         <AvailabilityOverviewContent

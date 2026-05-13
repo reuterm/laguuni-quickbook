@@ -8,7 +8,10 @@ import {
 import { cn } from '@/lib/utils'
 
 import type { AvailabilityState } from '../use-availability-overview'
-import { AvailabilityDayGroups } from './AvailabilityDayGroups'
+import {
+  AvailabilityDayGroups,
+  availabilityDayAutoFitGridStyle,
+} from './AvailabilityDayGroups'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 
 type AvailabilityOverviewContentProps = {
@@ -25,7 +28,12 @@ export function AvailabilityOverviewContent({
 
   if (availabilityState.status === 'loading') {
     return (
-      <div role="status" aria-live="polite" className="grid gap-6">
+      <div
+        role="status"
+        aria-live="polite"
+        className="grid items-start"
+        style={availabilityDayAutoFitGridStyle}
+      >
         <p className="sr-only">Loading availability…</p>
         {[0, 1, 2].map((index) => (
           <div
@@ -34,8 +42,9 @@ export function AvailabilityOverviewContent({
           >
             <Skeleton className="h-5 w-28" />
             <div className="mt-4 space-y-2">
-              <Skeleton className="h-18 w-full rounded-xl" />
-              <Skeleton className="h-18 w-full rounded-xl" />
+              {[0, 1, 2].map((slotIndex) => (
+                <Skeleton key={slotIndex} className="h-18 w-full rounded-xl" />
+              ))}
             </div>
           </div>
         ))}
