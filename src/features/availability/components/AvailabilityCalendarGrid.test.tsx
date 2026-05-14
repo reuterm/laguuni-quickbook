@@ -191,7 +191,9 @@ describe('AvailabilityCalendarGrid', () => {
       />,
     )
 
-    const twelveRow = screen.getByRole('rowheader', { name: '12:00' }).closest('tr')
+    const twelveRow = screen
+      .getByRole('rowheader', { name: '12:00' })
+      .closest('tr')
 
     if (!(twelveRow instanceof HTMLTableRowElement)) {
       throw new Error('Expected 12:00 row')

@@ -27,7 +27,7 @@ type AvailabilityCapacityChipProps =
       disabled?: never
       onClick?: never
       slot: AvailabilitySlot
-     }
+    }
 
 export function AvailabilityCapacityChip({
   className,
@@ -42,7 +42,9 @@ export function AvailabilityCapacityChip({
   )
 
   if (onClick === undefined) {
-    return <span className={chipClassName}>{getAvailabilityBadgeLabel(slot)}</span>
+    return (
+      <span className={chipClassName}>{getAvailabilityBadgeLabel(slot)}</span>
+    )
   }
 
   return (
