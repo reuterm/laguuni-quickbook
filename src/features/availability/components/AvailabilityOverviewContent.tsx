@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { useUserSettings } from '../../settings/use-user-settings'
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
+import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
 import {
   AvailabilityDayGroups,
   availabilityDayAutoFitGridStyle,
@@ -34,7 +35,11 @@ export function AvailabilityOverviewContent({
 
   if (availabilityState.status === 'loading') {
     if (isCalendarView) {
-      return <AvailabilityCalendarLoadingState />
+      return (
+        <AvailabilityCalendarLoadingGrid
+          availabilityReferenceDate={availabilityReferenceDate}
+        />
+      )
     }
 
     return (
@@ -111,58 +116,6 @@ export function AvailabilityOverviewContent({
           {...bookingActionProps}
         />
       )}
-    </div>
-  )
-}
-
-function AvailabilityCalendarLoadingState() {
-  const loadingWeekKeys = ['week-1', 'week-2']
-  const loadingDayKeys = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-  const loadingTimeKeys = ['time-1', 'time-2', 'time-3', 'time-4', 'time-5']
-
-  return (
-    <div role="status" aria-live="polite" className="space-y-4">
-      <p className="sr-only">Loading availability…</p>
-
-      {loadingWeekKeys.map((weekKey) => (
-        <div
-          key={weekKey}
-          className={cn(panelSurfaceClassName, 'overflow-hidden')}
-        >
-          <div className="border-b border-border/70 px-4 py-3 sm:px-5">
-            <Skeleton className="h-4 w-32" />
-          </div>
-
-          <div className="overflow-x-auto">
-            <div className="min-w-[54rem] p-3 sm:p-4">
-              <div className="grid grid-cols-[5rem_repeat(7,minmax(7rem,1fr))] gap-px rounded-2xl bg-border/70 p-px">
-                <Skeleton className="h-14 rounded-l-[calc(var(--radius-lg)-1px)] bg-card/70" />
-                {loadingDayKeys.map((dayKey) => (
-                  <Skeleton
-                    key={`${weekKey}-${dayKey}-header`}
-                    className="h-14 rounded-none bg-card/70 last:rounded-r-[calc(var(--radius-lg)-1px)]"
-                  />
-                ))}
-
-                {loadingTimeKeys.flatMap((timeKey) => [
-                  <Skeleton
-                    key={`${weekKey}-${timeKey}-time`}
-                    className="h-12 rounded-none bg-card/55"
-                  />,
-                  ...loadingDayKeys.map((dayKey) => (
-                    <div
-                      key={`${weekKey}-${timeKey}-${dayKey}`}
-                      className="flex h-12 items-center justify-center bg-card/35"
-                    >
-                      <Skeleton className="h-8 w-12 rounded-full" />
-                    </div>
-                  )),
-                ])}
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
     </div>
   )
 }

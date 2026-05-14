@@ -163,8 +163,6 @@ describe('App', () => {
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
 
-    expect(await screen.findByText('18 May - 24 May')).toBeInTheDocument()
-
     const calendarButtons = await screen.findAllByRole('button', {
       name: 'Book 15:00-16:00, 4/4 spots free',
     })

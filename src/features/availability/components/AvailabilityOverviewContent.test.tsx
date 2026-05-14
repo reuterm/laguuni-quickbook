@@ -6,9 +6,14 @@ import { UserSettingsProvider } from '../../settings/use-user-settings'
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 
+type AvailabilityOverviewProps = Parameters<
+  typeof AvailabilityOverviewContent
+>[0]
+
 describe('AvailabilityOverviewContent', () => {
   afterEach(() => {
     cleanup()
+    vi.unstubAllGlobals()
   })
 
   it('renders the loading state', () => {
@@ -20,6 +25,8 @@ describe('AvailabilityOverviewContent', () => {
   })
 
   it('renders a calendar-shaped loading state when calendar view is enabled', () => {
+    stubMatchMedia(false)
+
     renderContent(
       {
         status: 'loading',
@@ -32,7 +39,9 @@ describe('AvailabilityOverviewContent', () => {
     expect(
       screen.queryByText('Refreshing availability…'),
     ).not.toBeInTheDocument()
-    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('table')).toHaveLength(2)
+    expect(screen.getByText('11 May - 17 May')).toBeInTheDocument()
+    expect(screen.getByText('18 May - 24 May')).toBeInTheDocument()
   })
 
   it('keeps rendered slots visible while refreshing availability', () => {
@@ -232,7 +241,7 @@ describe('AvailabilityOverviewContent', () => {
         ],
         status: 'ready',
       },
-      { bookingActionMode: 'disabled' },
+      { bookingActionMode: 'disabled', onBookSelection: vi.fn() },
     )
 
     expect(screen.getByRole('button', { name: 'Book' })).toBeDisabled()
@@ -241,10 +250,10 @@ describe('AvailabilityOverviewContent', () => {
 
 function renderContent(
   availabilityState: AvailabilityState,
-  bookingProps?: Pick<
-    Parameters<typeof AvailabilityOverviewContent>[0],
-    'bookingActionMode' | 'onBookSelection'
-  >,
+  bookingProps?: {
+    bookingActionMode?: 'disabled' | 'enabled' | 'hidden'
+    onBookSelection?: AvailabilityOverviewProps['onBookSelection']
+  },
   settingsOverrides?: {
     availabilityView?: 'cards' | 'calendar'
   },
@@ -262,31 +271,43 @@ function renderContent(
     }),
   )
 
-  if (
-    bookingProps === undefined ||
-    bookingProps.bookingActionMode === 'enabled'
-  ) {
+  if (bookingProps?.bookingActionMode === 'hidden') {
     return render(
       <TestProviders>
         <AvailabilityOverviewContent
           activeCableLabel="Pro"
           availabilityState={availabilityState}
-          bookingActionMode="enabled"
-          onBookSelection={bookingProps?.onBookSelection ?? vi.fn()}
+          bookingActionMode="hidden"
         />
       </TestProviders>,
     )
   }
+
+  const bookingActionMode =
+    bookingProps?.bookingActionMode === 'disabled' ? 'disabled' : 'enabled'
 
   return render(
     <TestProviders>
       <AvailabilityOverviewContent
         activeCableLabel="Pro"
         availabilityState={availabilityState}
-        bookingActionMode={bookingProps.bookingActionMode}
+        bookingActionMode={bookingActionMode}
+        onBookSelection={bookingProps?.onBookSelection ?? vi.fn()}
       />
     </TestProviders>,
   )
+}
+
+function stubMatchMedia(matches: boolean) {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn().mockImplementation(() => ({
+      matches,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  )
+  window.matchMedia = globalThis.matchMedia
 }
 
 function TestProviders({ children }: { children: React.ReactNode }) {
