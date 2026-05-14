@@ -47,6 +47,9 @@ export function AvailabilityOverviewContent({
   const hasLoadedDayGroups =
     availabilityState.status === 'ready' ||
     availabilityState.status === 'refreshing'
+  const hasAppendError =
+    hasLoadedDayGroups && availabilityState.appendErrorMessage !== null
+  const canAutoLoadMore = canLoadMore && !hasAppendError
   const renderedDayGroups = hasLoadedDayGroups
     ? availabilityState.dayGroups
     : []
@@ -85,7 +88,7 @@ export function AvailabilityOverviewContent({
     if (!hasLoadedDayGroups) {
       return undefined
     }
-    if (!canLoadMore || availabilityState.isLoadingMore) {
+    if (!canAutoLoadMore || availabilityState.isLoadingMore) {
       return undefined
     }
 
@@ -130,7 +133,7 @@ export function AvailabilityOverviewContent({
     }
   }, [
     availabilityState.isLoadingMore,
-    canLoadMore,
+    canAutoLoadMore,
     hasLoadedDayGroups,
     onLoadMore,
   ])
@@ -240,7 +243,7 @@ export function AvailabilityOverviewContent({
           <Spinner className="size-5" />
           <span className="sr-only">Loading another week…</span>
         </div>
-      ) : canLoadMore ? (
+      ) : canAutoLoadMore ? (
         <div className="px-1">
           <Button
             type="button"

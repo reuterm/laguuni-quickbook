@@ -312,6 +312,24 @@ describe('AvailabilityOverviewContent', () => {
       expect(onLoadMore).toHaveBeenCalledTimes(1)
     })
   })
+
+  it('does not auto-load or show manual load-more while an append error is present', () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    renderContent(
+      createLoadedState('ready', undefined, {
+        appendErrorMessage: 'Append failed',
+      }),
+      undefined,
+      undefined,
+      onLoadMore,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Load next week' }),
+    ).not.toBeInTheDocument()
+    expect(onLoadMore).toHaveBeenCalledTimes(0)
+  })
 })
 
 function renderContent(
