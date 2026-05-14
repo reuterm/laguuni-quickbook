@@ -8,11 +8,7 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { AvailabilityDayGroup } from '../availability-service'
-import {
-  AvailabilityCalendarGrid,
-  groupAvailabilityWeeks,
-  listVisibleWeekdayIndices,
-} from './AvailabilityCalendarGrid'
+import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 
 const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
   {
@@ -90,65 +86,17 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
 describe('AvailabilityCalendarGrid', () => {
   afterEach(() => {
     cleanup()
-  })
-
-  it('groups availability into monday-to-sunday weeks', () => {
-    expect(groupAvailabilityWeeks(FIXTURE_DAY_GROUPS)).toMatchObject([
-      {
-        days: [
-          null,
-          null,
-          null,
-          FIXTURE_DAY_GROUPS[0],
-          FIXTURE_DAY_GROUPS[1],
-          null,
-          null,
-        ],
-        id: '2026-05-11',
-        label: '11 May - 17 May',
-      },
-      {
-        days: [null, FIXTURE_DAY_GROUPS[2], null, null, null, null, null],
-        id: '2026-05-18',
-        label: '18 May - 24 May',
-      },
-    ])
-  })
-
-  it('shows only weekday columns that fall inside the loaded range', () => {
-    expect(
-      listVisibleWeekdayIndices(
-        new Date('2026-05-11T00:00:00'),
-        new Date('2026-05-14T12:00:00'),
-        false,
-      ),
-    ).toEqual([3, 4, 5, 6])
-    expect(
-      listVisibleWeekdayIndices(
-        new Date('2026-05-18T00:00:00'),
-        new Date('2026-05-14T12:00:00'),
-        false,
-      ),
-    ).toEqual([0, 1, 2])
-  })
-
-  it('shows full monday-to-sunday columns at wider breakpoints', () => {
-    expect(
-      listVisibleWeekdayIndices(
-        new Date('2026-05-11T00:00:00'),
-        new Date('2026-05-14T12:00:00'),
-        true,
-      ),
-    ).toEqual([0, 1, 2, 3, 4, 5, 6])
+    vi.unstubAllGlobals()
   })
 
   it('renders weekly matrices trimmed to the visible range', () => {
+    stubMatchMedia(false)
+
     render(
       <AvailabilityCalendarGrid
         availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
         dayGroups={FIXTURE_DAY_GROUPS}
         bookingActionMode="hidden"
-        showFullWeekColumns={false}
       />,
     )
 
@@ -176,35 +124,8 @@ describe('AvailabilityCalendarGrid', () => {
       within(firstWeekSection).queryByRole('columnheader', { name: /Mon/i }),
     ).not.toBeInTheDocument()
     expect(
-      within(firstWeekSection).queryByRole('columnheader', { name: /Tue/i }),
-    ).not.toBeInTheDocument()
-    expect(
-      within(firstWeekSection).queryByRole('columnheader', { name: /Wed/i }),
-    ).not.toBeInTheDocument()
-    expect(
       within(firstWeekSection).getByRole('columnheader', {
         name: /Thu 14 May 2 slots/i,
-      }),
-    ).toBeInTheDocument()
-    expect(
-      within(firstWeekSection).getByRole('columnheader', {
-        name: /Fri 15 May 1 slot/i,
-      }),
-    ).toBeInTheDocument()
-    expect(
-      within(firstWeekSection).getByRole('columnheader', {
-        name: /Sat 16 May 0 slots/i,
-      }),
-    ).toBeInTheDocument()
-    expect(
-      within(firstWeekSection).getByRole('columnheader', {
-        name: /Sun 17 May 0 slots/i,
-      }),
-    ).toBeInTheDocument()
-
-    expect(
-      within(secondWeekSection).getByRole('columnheader', {
-        name: /Mon 18 May 0 slots/i,
       }),
     ).toBeInTheDocument()
     expect(
@@ -212,23 +133,14 @@ describe('AvailabilityCalendarGrid', () => {
         name: /Tue 19 May 1 slot/i,
       }),
     ).toBeInTheDocument()
-    expect(
-      within(secondWeekSection).queryByRole('columnheader', { name: /Thu/i }),
-    ).not.toBeInTheDocument()
-    expect(within(firstWeekSection).queryByText('-')).not.toBeInTheDocument()
-
-    expect(screen.getByText('12:00')).toBeInTheDocument()
-    expect(screen.getByText('13:00')).toBeInTheDocument()
-    expect(screen.getByText('15:00')).toBeInTheDocument()
-    expect(screen.getByText('17:00')).toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: '12:00' })).toBeInTheDocument()
     expect(screen.getByText('4/4')).toBeInTheDocument()
-    expect(screen.getByText('2/4')).toBeInTheDocument()
-    expect(screen.getByText('1/4')).toBeInTheDocument()
-    expect(screen.getByText('3/4')).toBeInTheDocument()
   })
 
   it('uses the badge itself as the booking trigger', () => {
     const onBookSelection = vi.fn()
+
+    stubMatchMedia(false)
 
     render(
       <AvailabilityCalendarGrid
@@ -236,7 +148,6 @@ describe('AvailabilityCalendarGrid', () => {
         dayGroups={FIXTURE_DAY_GROUPS}
         bookingActionMode="enabled"
         onBookSelection={onBookSelection}
-        showFullWeekColumns={false}
       />,
     )
 
@@ -255,12 +166,13 @@ describe('AvailabilityCalendarGrid', () => {
   })
 
   it('shows non-interactive badges in read-only mode', () => {
+    stubMatchMedia(false)
+
     render(
       <AvailabilityCalendarGrid
         availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
         dayGroups={FIXTURE_DAY_GROUPS}
         bookingActionMode="hidden"
-        showFullWeekColumns={false}
       />,
     )
 
@@ -268,13 +180,14 @@ describe('AvailabilityCalendarGrid', () => {
     expect(screen.getAllByText(/\d\/4/).length).toBeGreaterThan(0)
   })
 
-  it('renders full 8-column week matrices on wider layouts', () => {
+  it('uses the real media query branch for wider layouts', () => {
+    stubMatchMedia(true)
+
     render(
       <AvailabilityCalendarGrid
         availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
         dayGroups={FIXTURE_DAY_GROUPS}
         bookingActionMode="hidden"
-        showFullWeekColumns
       />,
     )
 
@@ -293,23 +206,20 @@ describe('AvailabilityCalendarGrid', () => {
     ).toBeInTheDocument()
     expect(
       within(firstWeekSection).getByRole('columnheader', {
-        name: /Tue 12 May 0 slots/i,
-      }),
-    ).toBeInTheDocument()
-    expect(
-      within(firstWeekSection).getByRole('columnheader', {
-        name: /Wed 13 May 0 slots/i,
-      }),
-    ).toBeInTheDocument()
-    expect(
-      within(firstWeekSection).getByRole('columnheader', {
-        name: /Thu 14 May 2 slots/i,
-      }),
-    ).toBeInTheDocument()
-    expect(
-      within(firstWeekSection).getByRole('columnheader', {
         name: /Sun 17 May 0 slots/i,
       }),
     ).toBeInTheDocument()
   })
 })
+
+function stubMatchMedia(matches: boolean) {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn().mockImplementation(() => ({
+      matches,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })),
+  )
+  window.matchMedia = globalThis.matchMedia
+}

@@ -10,7 +10,7 @@ import { SurfaceList, SurfaceListItem } from '@/components/ui/surface-list'
 import { cn } from '@/lib/utils'
 
 import type { AvailabilityDayGroup } from '../availability-service'
-import { AvailabilityBadge } from './availability-badge'
+import { AvailabilityCapacityChip } from './availability-badge'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 
 const availabilityDayLayout = {
@@ -85,7 +85,7 @@ export function AvailabilityDayGroups({
                     <span className="font-semibold tabular-nums text-foreground">
                       {slot.startTime}-{slot.endTime}
                     </span>
-                    <AvailabilityBadge slot={slot} />
+                    <AvailabilityCapacityChip slot={slot} />
                   </div>
                 </div>
 
@@ -101,11 +101,7 @@ export function AvailabilityDayGroups({
                       minWidth: availabilityDayLayoutStyles.slotActionMinWidth,
                     }}
                     disabled={bookingActionMode === 'disabled'}
-                    onClick={
-                      bookingActionMode === 'enabled'
-                        ? () => onBookSelection(slot.selection)
-                        : undefined
-                    }
+                    onClick={() => onBookSelection(slot.selection)}
                   >
                     Book
                   </Button>

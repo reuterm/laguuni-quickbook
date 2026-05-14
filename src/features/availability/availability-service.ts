@@ -4,7 +4,7 @@ import { createAnchorDate, formatDisplayDate } from './availability-format'
 import type { AvailabilityDayGroup } from './availability-model'
 import { createAvailabilitySlots } from './availability-slots'
 
-const INITIAL_AVAILABILITY_RANGE_DAYS = 7
+export const AVAILABILITY_RANGE_DAY_COUNT = 7
 
 export type {
   AvailabilityDayGroup,
@@ -19,7 +19,7 @@ export async function loadAvailabilityOverview(
 ): Promise<readonly AvailabilityDayGroup[]> {
   const datesInRange = listDatesInRange(
     referenceDate,
-    INITIAL_AVAILABILITY_RANGE_DAYS,
+    AVAILABILITY_RANGE_DAY_COUNT,
   )
   const dailyWindows = await Promise.all(
     datesInRange.map((date) => api.getDailyAvailabilityWindow(cableId, date)),

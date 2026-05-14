@@ -23,6 +23,20 @@ type AvailabilityBadgeButtonProps = {
   slot: AvailabilitySlot
 }
 
+type AvailabilityCapacityChipProps =
+  | {
+      className?: string
+      disabled?: boolean
+      onClick: () => void
+      slot: AvailabilitySlot
+    }
+  | {
+      className?: string
+      disabled?: never
+      onClick?: never
+      slot: AvailabilitySlot
+    }
+
 export function AvailabilityBadge({ className, slot }: AvailabilityBadgeProps) {
   return (
     <Badge className={cn(getAvailabilityBadgeClassName(slot), className)}>
@@ -55,6 +69,28 @@ export function AvailabilityBadgeButton({
     >
       {getAvailabilityBadgeLabel(slot)}
     </Button>
+  )
+}
+
+export function AvailabilityCapacityChip({
+  className,
+  disabled,
+  onClick,
+  slot,
+}: AvailabilityCapacityChipProps) {
+  if (onClick === undefined) {
+    return (
+      <AvailabilityBadge {...(className ? { className } : {})} slot={slot} />
+    )
+  }
+
+  return (
+    <AvailabilityBadgeButton
+      slot={slot}
+      {...(disabled !== undefined ? { disabled } : {})}
+      {...(className ? { className } : {})}
+      onClick={onClick}
+    />
   )
 }
 
