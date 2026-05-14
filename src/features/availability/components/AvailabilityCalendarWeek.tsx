@@ -113,8 +113,10 @@ export function AvailabilityCalendarWeek({
                 ) : (
                   <span
                     aria-hidden="true"
-                    className="inline-block h-8 w-12 rounded-full border border-dashed border-border/50 bg-muted/20"
-                  />
+                    className="inline-flex h-8 w-12 items-center justify-center text-sm text-muted-foreground/50"
+                  >
+                    -
+                  </span>
                 )}
               </td>
             )

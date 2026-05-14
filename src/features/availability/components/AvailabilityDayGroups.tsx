@@ -36,6 +36,9 @@ const availabilityDayAutoFitGridStyle = {
   gridTemplateColumns: `repeat(auto-fit, minmax(min(${availabilityDayLayoutStyles.cardMinWidth}, 100%), 1fr))`,
 } as const
 
+const availabilityBookingButtonClassName =
+  'shrink-0 border hover:border-border/90 hover:bg-white/[0.08]'
+
 type AvailabilityDayGroupsProps = {
   dayGroups: readonly AvailabilityDayGroup[]
 } & AvailabilityBookingActionProps
@@ -96,7 +99,10 @@ export function AvailabilityDayGroups({
                     type="button"
                     size="sm"
                     variant="secondary"
-                    className={cn('shrink-0 border', subtleDividerClassName)}
+                    className={cn(
+                      availabilityBookingButtonClassName,
+                      subtleDividerClassName,
+                    )}
                     style={{
                       minWidth: availabilityDayLayoutStyles.slotActionMinWidth,
                     }}
