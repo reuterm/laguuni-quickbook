@@ -96,7 +96,10 @@ export function AvailabilityDayGroups({
                     type="button"
                     size="sm"
                     variant="secondary"
-                    className={cn('shrink-0 border', subtleDividerClassName)}
+                    className={cn(
+                      'shrink-0 border hover:border-border/90 hover:bg-white/[0.08]',
+                      subtleDividerClassName,
+                    )}
                     style={{
                       minWidth: availabilityDayLayoutStyles.slotActionMinWidth,
                     }}
