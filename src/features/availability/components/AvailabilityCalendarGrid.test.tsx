@@ -233,6 +233,57 @@ describe('AvailabilityCalendarGrid', () => {
       }),
     ).toBeInTheDocument()
   })
+
+  it('skips rendering weeks that have no bookable slots at all', () => {
+    stubMatchMedia(true)
+
+    render(
+      <AvailabilityCalendarGrid
+        availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+        dayGroups={[
+          ...FIXTURE_DAY_GROUPS,
+          {
+            date: '2026-05-25',
+            displayDate: 'Mon 25 May',
+            slots: [],
+          },
+          {
+            date: '2026-05-26',
+            displayDate: 'Tue 26 May',
+            slots: [],
+          },
+          {
+            date: '2026-05-27',
+            displayDate: 'Wed 27 May',
+            slots: [],
+          },
+          {
+            date: '2026-05-28',
+            displayDate: 'Thu 28 May',
+            slots: [],
+          },
+          {
+            date: '2026-05-29',
+            displayDate: 'Fri 29 May',
+            slots: [],
+          },
+          {
+            date: '2026-05-30',
+            displayDate: 'Sat 30 May',
+            slots: [],
+          },
+          {
+            date: '2026-05-31',
+            displayDate: 'Sun 31 May',
+            slots: [],
+          },
+        ]}
+        bookingActionMode="hidden"
+      />,
+    )
+
+    expect(screen.queryByText('25 May - 31 May')).not.toBeInTheDocument()
+  })
 })
 
 function stubMatchMedia(matches: boolean) {

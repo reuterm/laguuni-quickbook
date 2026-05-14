@@ -4,12 +4,15 @@ import type { CableId } from '../../domain/cable'
 import type { DailyAvailabilityWindow } from '../../domain/slot'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
 import {
+  AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
   createAvailabilitySlots,
+  loadAvailabilityDay,
   loadAvailabilityOverview,
+  loadAvailabilityWeek,
 } from './availability-service'
 
 describe('loadAvailabilityOverview', () => {
-  it('loads only the next seven days of availability across month boundaries', async () => {
+  it('loads whole calendar weeks across month boundaries', async () => {
     const getDailyAvailabilityWindow = vi.fn(
       async (_cableId: CableId, date: string) =>
         dailyAvailabilityByDate[date] ??
@@ -31,49 +34,122 @@ describe('loadAvailabilityOverview', () => {
       api,
       'pro',
       new Date('2026-05-29T12:00:00'),
+      1,
     )
 
     expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(7)
     expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
       1,
       'pro',
-      '2026-05-29',
-    )
-    expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
-      2,
-      'pro',
-      '2026-05-30',
-    )
-    expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
-      3,
-      'pro',
-      '2026-05-31',
-    )
-    expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
-      4,
-      'pro',
-      '2026-06-01',
-    )
-    expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
-      5,
-      'pro',
-      '2026-06-02',
-    )
-    expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
-      6,
-      'pro',
-      '2026-06-03',
+      '2026-05-25',
     )
     expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
       7,
       'pro',
-      '2026-06-04',
+      '2026-05-31',
     )
     expect(dayGroups.map((dayGroup) => dayGroup.date)).toEqual([
+      '2026-05-25',
+      '2026-05-26',
+      '2026-05-27',
+      '2026-05-28',
       '2026-05-29',
-      '2026-06-01',
-      '2026-06-04',
+      '2026-05-30',
+      '2026-05-31',
     ])
+  })
+
+  it('loads the initial two-week range by default', async () => {
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: string) =>
+        dailyAvailabilityByDate[date] ??
+        createEmptyDailyAvailabilityWindow(date),
+    )
+    const api = {
+      addReservationToBasket: unexpectedApiCall,
+      applyCodeToBasket: unexpectedApiCall,
+      createBasket: unexpectedApiCall,
+      deleteBasket: unexpectedApiCall,
+      getAvailableDates: unexpectedApiCall,
+      getDailyAvailabilityWindow,
+      loadBasketPricingSummary: unexpectedApiCall,
+      lookupCode: unexpectedApiCall,
+      submitCheckout: unexpectedApiCall,
+    } satisfies LaguuniApi
+
+    await loadAvailabilityOverview(api, 'pro', new Date('2026-05-26T12:00:00'))
+
+    expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(
+      AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
+    )
+    expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
+      14,
+      'pro',
+      '2026-06-07',
+    )
+  })
+})
+
+describe('loadAvailabilityWeek', () => {
+  it('returns full-week metadata and keeps empty days in the result', async () => {
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: string) =>
+        dailyAvailabilityByDate[date] ??
+        createEmptyDailyAvailabilityWindow(date),
+    )
+    const api = {
+      addReservationToBasket: unexpectedApiCall,
+      applyCodeToBasket: unexpectedApiCall,
+      createBasket: unexpectedApiCall,
+      deleteBasket: unexpectedApiCall,
+      getAvailableDates: unexpectedApiCall,
+      getDailyAvailabilityWindow,
+      loadBasketPricingSummary: unexpectedApiCall,
+      lookupCode: unexpectedApiCall,
+      submitCheckout: unexpectedApiCall,
+    } satisfies LaguuniApi
+
+    const weekPage = await loadAvailabilityWeek(
+      api,
+      'pro',
+      new Date('2026-05-29T12:00:00'),
+    )
+
+    expect(weekPage.weekId).toBe('2026-05-25')
+    expect(weekPage.hasBookableSlots).toBe(true)
+    expect(weekPage.dayGroups).toHaveLength(7)
+    expect(weekPage.dayGroups[0]).toMatchObject({
+      date: '2026-05-25',
+      slots: [],
+    })
+    expect(weekPage.dayGroups[4]).toMatchObject({ date: '2026-05-29' })
+  })
+})
+
+describe('loadAvailabilityDay', () => {
+  it('loads a single day group without expanding to the surrounding week', async () => {
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: string) =>
+        dailyAvailabilityByDate[date] ??
+        createEmptyDailyAvailabilityWindow(date),
+    )
+    const api = {
+      addReservationToBasket: unexpectedApiCall,
+      applyCodeToBasket: unexpectedApiCall,
+      createBasket: unexpectedApiCall,
+      deleteBasket: unexpectedApiCall,
+      getAvailableDates: unexpectedApiCall,
+      getDailyAvailabilityWindow,
+      loadBasketPricingSummary: unexpectedApiCall,
+      lookupCode: unexpectedApiCall,
+      submitCheckout: unexpectedApiCall,
+    } satisfies LaguuniApi
+
+    const dayGroup = await loadAvailabilityDay(api, 'pro', '2026-05-29')
+
+    expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(1)
+    expect(getDailyAvailabilityWindow).toHaveBeenCalledWith('pro', '2026-05-29')
+    expect(dayGroup).toMatchObject({ date: '2026-05-29' })
   })
 })
 

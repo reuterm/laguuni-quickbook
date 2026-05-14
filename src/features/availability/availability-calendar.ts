@@ -74,6 +74,22 @@ export function listVisibleWeekdayIndices(
   return visibleDayIndices
 }
 
+export function getAvailabilityWeekStartDate(date: Date) {
+  const currentDate = startOfDay(date)
+  const weekday = currentDate.getDay()
+  const mondayOffset = weekday === 0 ? -6 : 1 - weekday
+  currentDate.setDate(currentDate.getDate() + mondayOffset)
+
+  return currentDate
+}
+
+export function addCalendarDays(date: Date, dayCount: number) {
+  const nextDate = startOfDay(date)
+  nextDate.setDate(nextDate.getDate() + dayCount)
+
+  return nextDate
+}
+
 export function listCalendarSkeletonWeeks(
   rangeStartDate: Date,
   rangeDayCount: number,
@@ -82,7 +98,7 @@ export function listCalendarSkeletonWeeks(
   rangeEndDate.setDate(rangeEndDate.getDate() + rangeDayCount - 1)
 
   const weeks: Date[] = []
-  let currentWeekStartDate = getWeekStartDate(formatDateKey(rangeStartDate))
+  let currentWeekStartDate = getAvailabilityWeekStartDate(rangeStartDate)
 
   while (currentWeekStartDate <= rangeEndDate) {
     weeks.push(currentWeekStartDate)
@@ -173,12 +189,7 @@ export function getWeekdayLabel(dayIndex: number) {
 }
 
 function getWeekStartDate(date: string) {
-  const currentDate = parseLocalDate(date)
-  const weekday = currentDate.getDay()
-  const mondayOffset = weekday === 0 ? -6 : 1 - weekday
-  currentDate.setDate(currentDate.getDate() + mondayOffset)
-
-  return startOfDay(currentDate)
+  return getAvailabilityWeekStartDate(parseLocalDate(date))
 }
 
 function getWeekdayIndex(date: string) {

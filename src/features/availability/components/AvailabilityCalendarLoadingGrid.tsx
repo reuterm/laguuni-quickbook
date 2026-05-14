@@ -10,10 +10,11 @@ import {
   AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   formatAvailabilityWeekLabel,
   formatDateKey,
+  getAvailabilityWeekStartDate,
   listCalendarSkeletonWeeks,
   listVisibleWeekdayIndices,
 } from '../availability-calendar'
-import { AVAILABILITY_RANGE_DAY_COUNT } from '../availability-service'
+import { AVAILABILITY_INITIAL_RANGE_DAY_COUNT } from '../availability-service'
 import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame'
 import { availabilityCalendarColumnClassNames } from './availability-calendar-ui'
 
@@ -24,13 +25,15 @@ type AvailabilityCalendarLoadingGridProps = {
 export function AvailabilityCalendarLoadingGrid({
   availabilityReferenceDate,
 }: AvailabilityCalendarLoadingGridProps) {
-  const rangeStartDate = availabilityReferenceDate ?? new Date()
+  const rangeStartDate = getAvailabilityWeekStartDate(
+    availabilityReferenceDate ?? new Date(),
+  )
   const showFullWeekColumns = useMediaQuery(
     AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   )
   const loadingWeekStartDates = listCalendarSkeletonWeeks(
     rangeStartDate,
-    AVAILABILITY_RANGE_DAY_COUNT,
+    AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
   )
 
   return (
@@ -65,7 +68,7 @@ function AvailabilityCalendarLoadingWeek({
     weekStartDate,
     rangeStartDate,
     showFullWeekColumns,
-    AVAILABILITY_RANGE_DAY_COUNT,
+    AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
   )
   const loadingTimeKeys = ['time-1', 'time-2', 'time-3', 'time-4', 'time-5']
   const dayHeaders = visibleDayIndices.map((dayIndex) => (

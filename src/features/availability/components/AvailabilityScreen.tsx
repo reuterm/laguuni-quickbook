@@ -14,6 +14,7 @@ import {
   useDiagnostics,
   useLaguuniApi,
 } from '../../../app/providers'
+import type { BookingSlotSelection } from '../../../domain/booking'
 import { getCableById } from '../../../domain/cable'
 import { BookingSheetFlow } from '../../booking/components/BookingSheetFlow'
 import { useBookingSheetController } from '../../booking/use-booking-sheet-controller'
@@ -43,11 +44,12 @@ export function AvailabilityScreen({
   )
   const { selectedCable, selectCable } = useAvailabilityScope()
   const activeCable = getCableById(selectedCable)
-  const { availabilityState, refreshAvailability } = useAvailabilityOverview(
-    api,
-    selectedCable,
-    availabilityReferenceDate,
-  )
+  const {
+    availabilityState,
+    clearAppendError,
+    loadMoreAvailability,
+    refreshAvailabilityDay,
+  } = useAvailabilityOverview(api, selectedCable, availabilityReferenceDate)
   const handleExportTrace = useCallback(
     async (traceId: string) => {
       await exportDiagnosticsForTrace(
@@ -65,7 +67,9 @@ export function AvailabilityScreen({
     isBookingReady,
     requestBooking,
   } = useBookingSheetController({
-    onBookingFinalized: refreshAvailability,
+    onBookingFinalized: async ({ selection }) => {
+      await refreshAvailabilityAfterBooking(selection, refreshAvailabilityDay)
+    },
   })
 
   const handleDismissReadOnlyNotice = useCallback(() => {
@@ -150,9 +154,18 @@ export function AvailabilityScreen({
         <AvailabilityOverviewContent
           activeCableLabel={activeCable.label}
           availabilityState={availabilityState}
+          onClearAppendError={clearAppendError}
+          onLoadMore={loadMoreAvailability}
           {...bookingActionProps}
         />
       </div>
     </section>
   )
+}
+
+async function refreshAvailabilityAfterBooking(
+  selection: BookingSlotSelection,
+  refreshAvailabilityDay: (date: string) => Promise<void>,
+) {
+  await refreshAvailabilityDay(selection.date)
 }

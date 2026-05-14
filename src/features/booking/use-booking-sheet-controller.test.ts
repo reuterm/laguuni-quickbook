@@ -169,6 +169,13 @@ describe('useBookingSheetController', () => {
     })
 
     expect(onBookingFinalized).toHaveBeenCalledOnce()
+    expect(onBookingFinalized).toHaveBeenCalledWith({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+      selection,
+    })
   })
 
   it('does not call onBookingFinalized for payment-required bookings before dismiss', async () => {
@@ -366,10 +373,13 @@ describe('useBookingSheetController', () => {
     expect(releaseReservationMock).toHaveBeenCalledTimes(1)
     await waitFor(() => {
       expect(onBookingFinalized).toHaveBeenCalledWith({
-        errorCode: 'GENERAL_ERROR',
-        message: 'Fixture checkout failed.',
-        status: 'failed',
-        step: 'checkout',
+        result: {
+          errorCode: 'GENERAL_ERROR',
+          message: 'Fixture checkout failed.',
+          status: 'failed',
+          step: 'checkout',
+        },
+        selection,
       })
     })
   })
@@ -417,8 +427,11 @@ describe('useBookingSheetController', () => {
 
     await waitFor(() => {
       expect(onBookingFinalized).toHaveBeenCalledWith({
-        redirectUrl: 'https://example.com/pay',
-        status: 'payment_required',
+        result: {
+          redirectUrl: 'https://example.com/pay',
+          status: 'payment_required',
+        },
+        selection,
       })
     })
   })
@@ -457,8 +470,11 @@ describe('useBookingSheetController', () => {
     await waitFor(() => {
       expect(releaseReservationMock).toHaveBeenCalledTimes(1)
       expect(onBookingFinalized).toHaveBeenCalledWith({
-        redirectUrl: 'https://example.com/pay',
-        status: 'payment_required',
+        result: {
+          redirectUrl: 'https://example.com/pay',
+          status: 'payment_required',
+        },
+        selection,
       })
     })
     expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
@@ -496,8 +512,11 @@ describe('useBookingSheetController', () => {
     expect(releaseReservationMock).toHaveBeenCalledTimes(1)
     await waitFor(() => {
       expect(onBookingFinalized).toHaveBeenCalledWith({
-        redirectUrl: 'https://example.com/pay',
-        status: 'payment_required',
+        result: {
+          redirectUrl: 'https://example.com/pay',
+          status: 'payment_required',
+        },
+        selection,
       })
     })
   })
@@ -560,6 +579,9 @@ describe('useBookingSheetController', () => {
 function mockBookingFlow() {
   bookingFlowMocks.useBookingFlow.mockReturnValue({
     isBookingReady: true,
-    submitBooking: bookingFlowMocks.submitBooking,
+    submitBooking: vi.fn(async (selection) => ({
+      ...(await bookingFlowMocks.submitBooking(selection)),
+      selection,
+    })),
   })
 }

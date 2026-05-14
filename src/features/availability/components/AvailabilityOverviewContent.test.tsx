@@ -1,8 +1,15 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers'
 import { UserSettingsProvider } from '../../settings/use-user-settings'
+import type { AvailabilityDayGroup } from '../availability-service'
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 
@@ -13,11 +20,21 @@ type AvailabilityOverviewProps = Parameters<
 describe('AvailabilityOverviewContent', () => {
   afterEach(() => {
     cleanup()
+    intersectionObserverController.reset()
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 0,
+    })
     vi.unstubAllGlobals()
+    vi.stubGlobal(
+      'IntersectionObserver',
+      intersectionObserverController.factory,
+    )
   })
 
   it('renders the loading state', () => {
     renderContent({
+      isLoadingMore: false,
       status: 'loading',
     })
 
@@ -29,6 +46,7 @@ describe('AvailabilityOverviewContent', () => {
 
     renderContent(
       {
+        isLoadingMore: false,
         status: 'loading',
       },
       undefined,
@@ -45,62 +63,19 @@ describe('AvailabilityOverviewContent', () => {
   })
 
   it('keeps rendered slots visible while refreshing availability', () => {
-    renderContent({
-      dayGroups: [
-        {
-          date: '2026-05-14',
-          displayDate: 'Thu 14 May',
-          slots: [
-            {
-              endTime: '16:00',
-              freeCapacity: 3,
-              id: '2026-05-14-900',
-              selection: {
-                cableId: 'pro',
-                date: '2026-05-14',
-                endTime: '16:00',
-                startTime: '15:00',
-              },
-              startTime: '15:00',
-              totalCapacity: 4,
-            },
-          ],
-        },
-      ],
-      status: 'refreshing',
-    })
+    renderContent(createLoadedState('refreshing'))
 
     expect(screen.getByText('Refreshing availability…')).toBeInTheDocument()
     expect(screen.getByText('3/4')).toBeInTheDocument()
     expect(screen.queryByText('Loading availability…')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Load next week' }),
+    ).not.toBeInTheDocument()
   })
 
   it('renders weekly matrix tables when the saved view is calendar', () => {
     renderContent(
-      {
-        dayGroups: [
-          {
-            date: '2026-05-14',
-            displayDate: 'Thu 14 May',
-            slots: [
-              {
-                endTime: '16:00',
-                freeCapacity: 3,
-                id: '2026-05-14-900',
-                selection: {
-                  cableId: 'pro',
-                  date: '2026-05-14',
-                  endTime: '16:00',
-                  startTime: '15:00',
-                },
-                startTime: '15:00',
-                totalCapacity: 4,
-              },
-            ],
-          },
-        ],
-        status: 'ready',
-      },
+      createLoadedState('ready'),
       {
         bookingActionMode: 'enabled',
         onBookSelection: vi.fn(),
@@ -126,6 +101,7 @@ describe('AvailabilityOverviewContent', () => {
 
   it('renders API errors as alerts', () => {
     renderContent({
+      isLoadingMore: false,
       message: 'Fixture outage',
       status: 'error',
     })
@@ -133,45 +109,49 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Fixture outage')
   })
 
-  it('renders a cable-specific empty state', () => {
-    renderContent({
-      dayGroups: [],
-      status: 'ready',
-    })
+  it('renders a cable-specific empty state in card view', () => {
+    renderContent(createLoadedState('ready', createEmptyDayGroups()))
 
     expect(
       screen.getByText(/No bookable one-hour slots are available for Pro/),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Load next week' }),
+    ).toBeInTheDocument()
+  })
+
+  it('renders a cable-specific empty state in calendar view when all weeks are empty', () => {
+    renderContent(
+      createLoadedState('ready', createEmptyDayGroups()),
+      { bookingActionMode: 'hidden' },
+      { availabilityView: 'calendar' },
+    )
+
+    expect(screen.getByText('No bookable slots in range')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Load next week' }),
+    ).toBeInTheDocument()
+  })
+
+  it('loads more from the empty state', async () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    renderContent(
+      createLoadedState('ready', createEmptyDayGroups()),
+      undefined,
+      undefined,
+      onLoadMore,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Load next week' }))
+
+    await waitFor(() => {
+      expect(onLoadMore).toHaveBeenCalledTimes(1)
+    })
   })
 
   it('hides booking actions in read-only mode', () => {
-    renderContent(
-      {
-        dayGroups: [
-          {
-            date: '2026-05-14',
-            displayDate: 'Thu 14 May',
-            slots: [
-              {
-                endTime: '16:00',
-                freeCapacity: 3,
-                id: '2026-05-14-900',
-                selection: {
-                  cableId: 'pro',
-                  date: '2026-05-14',
-                  endTime: '16:00',
-                  startTime: '15:00',
-                },
-                startTime: '15:00',
-                totalCapacity: 4,
-              },
-            ],
-          },
-        ],
-        status: 'ready',
-      },
-      { bookingActionMode: 'hidden' },
-    )
+    renderContent(createLoadedState('ready'), { bookingActionMode: 'hidden' })
 
     expect(
       screen.queryByRole('button', { name: 'Book' }),
@@ -181,70 +161,156 @@ describe('AvailabilityOverviewContent', () => {
   it('renders bookable slot groups and wires the book action', () => {
     const onBookSelection = vi.fn()
 
-    renderContent(
-      {
-        dayGroups: [
-          {
-            date: '2026-05-14',
-            displayDate: 'Thu 14 May',
-            slots: [
-              {
-                endTime: '16:00',
-                freeCapacity: 3,
-                id: '2026-05-14-900',
-                selection: {
-                  cableId: 'pro',
-                  date: '2026-05-14',
-                  endTime: '16:00',
-                  startTime: '15:00',
-                },
-                startTime: '15:00',
-                totalCapacity: 4,
-              },
-            ],
-          },
-        ],
-        status: 'ready',
-      },
-      {
-        bookingActionMode: 'enabled',
-        onBookSelection,
-      },
-    )
+    renderContent(createLoadedState('ready'), {
+      bookingActionMode: 'enabled',
+      onBookSelection,
+    })
 
     expect(screen.getByRole('button', { name: 'Book' })).toBeEnabled()
   })
 
   it('disables booking actions while a booking is already in progress', () => {
-    renderContent(
-      {
-        dayGroups: [
-          {
-            date: '2026-05-14',
-            displayDate: 'Thu 14 May',
-            slots: [
-              {
-                endTime: '16:00',
-                freeCapacity: 3,
-                id: '2026-05-14-900',
-                selection: {
-                  cableId: 'pro',
-                  date: '2026-05-14',
-                  endTime: '16:00',
-                  startTime: '15:00',
-                },
-                startTime: '15:00',
-                totalCapacity: 4,
-              },
-            ],
-          },
-        ],
-        status: 'ready',
-      },
-      { bookingActionMode: 'disabled', onBookSelection: vi.fn() },
-    )
+    renderContent(createLoadedState('ready'), {
+      bookingActionMode: 'disabled',
+      onBookSelection: vi.fn(),
+    })
 
     expect(screen.getByRole('button', { name: 'Book' })).toBeDisabled()
+  })
+
+  it('shows a bottom loading state while appending another week', () => {
+    renderContent(
+      createLoadedState('ready', undefined, { isLoadingMore: true }),
+    )
+
+    expect(screen.getByText('Loading another week…')).toHaveClass('sr-only')
+    expect(screen.getByLabelText('Loading')).toBeInTheDocument()
+  })
+
+  it('renders a manual load-next-week action when not currently appending', () => {
+    renderContent(createLoadedState('ready'))
+
+    expect(
+      screen.getByRole('button', { name: 'Load next week' }),
+    ).toBeInTheDocument()
+  })
+
+  it('loads more when the manual action is pressed', async () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    renderContent(createLoadedState('ready'), undefined, undefined, onLoadMore)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Load next week' }))
+
+    await waitFor(() => {
+      expect(onLoadMore).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('triggers loading more when the sentinel enters the viewport', async () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 128,
+    })
+
+    renderContent(
+      createLoadedState('ready'),
+      {
+        bookingActionMode: 'enabled',
+        onBookSelection: vi.fn(),
+      },
+      undefined,
+      onLoadMore,
+    )
+
+    fireEvent.scroll(window)
+    intersectionObserverController.triggerLastObserved(true)
+
+    await waitFor(() => {
+      expect(onLoadMore).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('does not auto-load before the user has scrolled', () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 0,
+    })
+
+    renderContent(createLoadedState('ready'), undefined, undefined, onLoadMore)
+
+    intersectionObserverController.triggerLastObserved(true)
+
+    expect(onLoadMore).toHaveBeenCalledTimes(0)
+  })
+
+  it('does not auto-load repeatedly without additional scrolling', () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 128,
+    })
+
+    renderContent(createLoadedState('ready'), undefined, undefined, onLoadMore)
+
+    fireEvent.scroll(window)
+    intersectionObserverController.triggerLastObserved(true)
+    intersectionObserverController.triggerLastObserved(true)
+
+    expect(onLoadMore).toHaveBeenCalledTimes(1)
+  })
+
+  it('auto-loads again after the user scrolls farther', () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 128,
+    })
+
+    renderContent(createLoadedState('ready'), undefined, undefined, onLoadMore)
+
+    fireEvent.scroll(window)
+    intersectionObserverController.triggerLastObserved(true)
+
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 256,
+    })
+
+    fireEvent.scroll(window)
+    intersectionObserverController.triggerLastObserved(true)
+
+    expect(onLoadMore).toHaveBeenCalledTimes(2)
+  })
+
+  it('renders an inline retry alert when loading the next week fails', async () => {
+    const onLoadMore = vi.fn(async () => {})
+    const onClearAppendError = vi.fn()
+
+    renderContent(
+      createLoadedState('ready', undefined, {
+        appendErrorMessage: 'Append failed',
+      }),
+      undefined,
+      undefined,
+      onLoadMore,
+      onClearAppendError,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Append failed')
+
+    await waitFor(() => {
+      expect(onClearAppendError).toHaveBeenCalledTimes(1)
+      expect(onLoadMore).toHaveBeenCalledTimes(1)
+    })
   })
 })
 
@@ -257,6 +323,8 @@ function renderContent(
   settingsOverrides?: {
     availabilityView?: 'cards' | 'calendar'
   },
+  onLoadMore: () => Promise<void> = async () => {},
+  onClearAppendError: () => void = () => {},
 ) {
   window.localStorage.setItem(
     'laguuni.quickbook.settings',
@@ -278,6 +346,8 @@ function renderContent(
           activeCableLabel="Pro"
           availabilityState={availabilityState}
           bookingActionMode="hidden"
+          onClearAppendError={onClearAppendError}
+          onLoadMore={onLoadMore}
         />
       </TestProviders>,
     )
@@ -292,10 +362,100 @@ function renderContent(
         activeCableLabel="Pro"
         availabilityState={availabilityState}
         bookingActionMode={bookingActionMode}
+        onClearAppendError={onClearAppendError}
+        onLoadMore={onLoadMore}
         onBookSelection={bookingProps?.onBookSelection ?? vi.fn()}
       />
     </TestProviders>,
   )
+}
+
+function createLoadedState(
+  status: 'ready' | 'refreshing',
+  dayGroups: readonly AvailabilityDayGroup[] = [createBookableDayGroup()],
+  overrides: Partial<
+    Extract<AvailabilityState, { status: 'ready' | 'refreshing' }>
+  > = {},
+): AvailabilityState {
+  return {
+    appendErrorMessage: null,
+    dayGroups,
+    isLoadingMore: false,
+    status,
+    weekPages: [createWeekPage(dayGroups)],
+    ...overrides,
+  }
+}
+
+function createBookableDayGroup() {
+  return {
+    date: '2026-05-14',
+    displayDate: 'Thu 14 May',
+    slots: [
+      {
+        endTime: '16:00',
+        freeCapacity: 3,
+        id: '2026-05-14-900',
+        selection: {
+          cableId: 'pro' as const,
+          date: '2026-05-14',
+          endTime: '16:00',
+          startTime: '15:00',
+        },
+        startTime: '15:00',
+        totalCapacity: 4,
+      },
+    ],
+  }
+}
+
+function createEmptyDayGroups(): readonly AvailabilityDayGroup[] {
+  return [
+    {
+      date: '2026-05-11',
+      displayDate: 'Mon 11 May',
+      slots: [],
+    },
+    {
+      date: '2026-05-12',
+      displayDate: 'Tue 12 May',
+      slots: [],
+    },
+    {
+      date: '2026-05-13',
+      displayDate: 'Wed 13 May',
+      slots: [],
+    },
+    {
+      date: '2026-05-14',
+      displayDate: 'Thu 14 May',
+      slots: [],
+    },
+    {
+      date: '2026-05-15',
+      displayDate: 'Fri 15 May',
+      slots: [],
+    },
+    {
+      date: '2026-05-16',
+      displayDate: 'Sat 16 May',
+      slots: [],
+    },
+    {
+      date: '2026-05-17',
+      displayDate: 'Sun 17 May',
+      slots: [],
+    },
+  ]
+}
+
+function createWeekPage(dayGroups: readonly AvailabilityDayGroup[]) {
+  return {
+    dayGroups,
+    hasBookableSlots: dayGroups.some((dayGroup) => dayGroup.slots.length > 0),
+    weekId: '2026-05-11',
+    weekStartDate: new Date('2026-05-11T00:00:00'),
+  }
 }
 
 function stubMatchMedia(matches: boolean) {
@@ -315,8 +475,73 @@ function TestProviders({ children }: { children: React.ReactNode }) {
     <AppProviders
       apiBaseUrl="https://shop.laguuniin.fi"
       appVersion="test-version"
+      availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
     >
       <UserSettingsProvider>{children}</UserSettingsProvider>
     </AppProviders>
   )
+}
+
+const intersectionObserverController = createIntersectionObserverController()
+
+vi.stubGlobal('IntersectionObserver', intersectionObserverController.factory)
+
+function createIntersectionObserverController() {
+  const observedElements: Element[] = []
+  let callback: IntersectionObserverCallback | null = null
+
+  class MockIntersectionObserver implements IntersectionObserver {
+    readonly root = null
+    readonly rootMargin = '0px'
+    readonly scrollMargin = '0px'
+    readonly thresholds = [0]
+
+    constructor(nextCallback: IntersectionObserverCallback) {
+      callback = nextCallback
+    }
+
+    disconnect() {
+      observedElements.splice(0)
+    }
+
+    observe(element: Element) {
+      observedElements.push(element)
+    }
+
+    takeRecords(): IntersectionObserverEntry[] {
+      return []
+    }
+
+    unobserve() {}
+  }
+
+  return {
+    factory: MockIntersectionObserver,
+    reset() {
+      observedElements.splice(0)
+      callback = null
+    },
+    triggerLastObserved(isIntersecting: boolean) {
+      const target = observedElements.at(-1)
+
+      if (!(target instanceof Element) || callback === null) {
+        throw new Error('Expected an observed element')
+      }
+
+      callback(
+        [
+          {
+            boundingClientRect: target.getBoundingClientRect(),
+            intersectionRatio: isIntersecting ? 1 : 0,
+            intersectionRect: target.getBoundingClientRect(),
+            isIntersecting,
+            rootBounds: null,
+            target,
+            time: 0,
+          } satisfies IntersectionObserverEntry,
+        ],
+        {} as IntersectionObserver,
+      )
+    },
+  }
 }
