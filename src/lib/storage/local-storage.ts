@@ -10,6 +10,7 @@ export const SETTINGS_STORAGE_KEY = 'laguuni.quickbook.settings'
 const USER_SETTINGS_STORAGE_VERSION = 1
 
 type StoredUserSettingsFields = {
+  availabilityView?: UserSettings['availabilityView'] | undefined
   defaultCable?: CableId | null | undefined
   email?: string | undefined
   name?: string | undefined
@@ -86,6 +87,7 @@ export class LocalSettingsStore implements UserSettingsStore {
 
 function createStoredSettings(settings: UserSettings): StoredUserSettingsV1 {
   return {
+    availabilityView: settings.availabilityView,
     defaultCable: settings.defaultCable,
     email: settings.email,
     name: settings.name,
@@ -122,6 +124,11 @@ function decodeStoredSettings(value: unknown): UserSettingsLoadResult {
   }
 
   const settings: UserSettings = {
+    availabilityView:
+      value.availabilityView === 'calendar' ||
+      value.availabilityView === 'cards'
+        ? value.availabilityView
+        : DEFAULT_USER_SETTINGS.availabilityView,
     defaultCable:
       value.defaultCable === null
         ? null
@@ -146,6 +153,9 @@ function decodeStoredSettings(value: unknown): UserSettingsLoadResult {
   }
 
   const hasInvalidFields =
+    ('availabilityView' in value &&
+      value.availabilityView !== 'cards' &&
+      value.availabilityView !== 'calendar') ||
     ('defaultCable' in value &&
       value.defaultCable !== null &&
       (typeof value.defaultCable !== 'string' ||

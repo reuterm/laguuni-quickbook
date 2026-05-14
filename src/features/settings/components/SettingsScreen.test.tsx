@@ -29,6 +29,7 @@ describe('Settings screen integration', () => {
     setInputValue('Phone', '+358401234567')
     setInputValue('Email', 'test@example.com')
     setInputValue('Season pass code', 'FIXTURE-CODE')
+    await user.click(screen.getByRole('tab', { name: 'Calendar' }))
     await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
 
@@ -52,6 +53,10 @@ describe('Settings screen integration', () => {
     expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument()
     expect(screen.getByDisplayValue('FIXTURE-CODE')).toBeInTheDocument()
     expect(screen.getByLabelText('Default cable')).toHaveValue('easy')
+    expect(screen.getByRole('tab', { name: 'Calendar' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
   })
 
   it('does not override the current cable after changing the saved default in-session', async () => {

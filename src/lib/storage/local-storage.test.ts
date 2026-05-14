@@ -8,6 +8,7 @@ import {
 } from './local-storage'
 
 const FIXTURE_SETTINGS: UserSettings = {
+  availabilityView: 'calendar',
   defaultCable: 'easy',
   email: 'test@example.com',
   name: 'Test User',
@@ -22,6 +23,7 @@ describe('LocalSettingsStore', () => {
     })
 
     expect(store.load()).toEqual({
+      availabilityView: 'cards',
       defaultCable: null,
       email: '',
       name: '',
@@ -31,6 +33,7 @@ describe('LocalSettingsStore', () => {
     expect(store.loadState()).toEqual({
       recoveryIssue: null,
       settings: {
+        availabilityView: 'cards',
         defaultCable: null,
         email: '',
         name: '',
@@ -81,6 +84,7 @@ describe('LocalSettingsStore', () => {
     })
 
     expect(invalidJsonStore.load()).toEqual({
+      availabilityView: 'cards',
       defaultCable: null,
       email: '',
       name: '',
@@ -90,6 +94,7 @@ describe('LocalSettingsStore', () => {
     expect(invalidJsonStore.loadState()).toEqual({
       recoveryIssue: 'invalid-format',
       settings: {
+        availabilityView: 'cards',
         defaultCable: null,
         email: '',
         name: '',
@@ -98,6 +103,7 @@ describe('LocalSettingsStore', () => {
       },
     })
     expect(unsupportedVersionStore.load()).toEqual({
+      availabilityView: 'cards',
       defaultCable: null,
       email: '',
       name: '',
@@ -107,6 +113,7 @@ describe('LocalSettingsStore', () => {
     expect(unsupportedVersionStore.loadState()).toEqual({
       recoveryIssue: 'unsupported-version',
       settings: {
+        availabilityView: 'cards',
         defaultCable: null,
         email: '',
         name: '',
@@ -121,6 +128,7 @@ describe('LocalSettingsStore', () => {
       storage: createMemoryStorage({
         [SETTINGS_STORAGE_KEY]: JSON.stringify({
           defaultCable: 'hietsu',
+          availabilityView: 'grid',
           email: 123,
           name: 'Test User',
           phone: ['invalid'],
@@ -131,6 +139,7 @@ describe('LocalSettingsStore', () => {
     })
 
     expect(store.load()).toEqual({
+      availabilityView: 'cards',
       defaultCable: null,
       email: '',
       name: 'Test User',
@@ -140,6 +149,7 @@ describe('LocalSettingsStore', () => {
     expect(store.loadState()).toEqual({
       recoveryIssue: 'invalid-fields',
       settings: {
+        availabilityView: 'cards',
         defaultCable: null,
         email: '',
         name: 'Test User',

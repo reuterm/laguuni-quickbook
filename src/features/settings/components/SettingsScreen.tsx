@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
 import { Input } from '@/components/ui/input'
+import { SegmentedControl } from '@/components/ui/segmented-control'
 import { NativeSelect } from '@/components/ui/select'
 import {
   Sheet,
@@ -29,7 +30,10 @@ type SettingsScreenProps = {
   open: boolean
 }
 
-type EditableField = Exclude<keyof UserSettings, 'defaultCable'>
+type EditableField = Exclude<
+  keyof UserSettings,
+  'availabilityView' | 'defaultCable'
+>
 const NO_DEFAULT_CABLE_VALUE = '__none__'
 
 const settingsFieldDefinitions = [
@@ -131,6 +135,16 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
     setIsSaved(false)
   }
 
+  function handleAvailabilityViewChange(
+    nextView: UserSettings['availabilityView'],
+  ) {
+    setDraftSettings((currentSettings) => ({
+      ...currentSettings,
+      availabilityView: nextView,
+    }))
+    setIsSaved(false)
+  }
+
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     saveSettings(draftSettings)
@@ -191,6 +205,27 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                   ))}
                 </NativeSelect>
               </FormField>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-foreground">
+                  Availability view
+                </p>
+                <SegmentedControl
+                  ariaLabel="Availability view"
+                  className="w-full"
+                  itemClassName="min-h-11"
+                  items={[
+                    { label: 'Cards', value: 'cards' },
+                    { label: 'Calendar', value: 'calendar' },
+                  ]}
+                  onValueChange={handleAvailabilityViewChange}
+                  value={draftSettings.availabilityView}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Cards keep the existing layout. Calendar shows a denser
+                  day-by-time matrix.
+                </p>
+              </div>
 
               <div className="space-y-3">
                 <Button type="submit" className="w-full sm:w-auto">
