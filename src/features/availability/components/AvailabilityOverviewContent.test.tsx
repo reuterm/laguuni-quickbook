@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { AppProviders } from '@/app/providers'
+import { UserSettingsProvider } from '../../settings/use-user-settings'
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 
@@ -15,6 +17,22 @@ describe('AvailabilityOverviewContent', () => {
     })
 
     expect(screen.getByText('Loading availability…')).toBeInTheDocument()
+  })
+
+  it('renders a calendar-shaped loading state when calendar view is enabled', () => {
+    renderContent(
+      {
+        status: 'loading',
+      },
+      undefined,
+      { availabilityView: 'calendar' },
+    )
+
+    expect(screen.getByText('Loading availability…')).toBeInTheDocument()
+    expect(
+      screen.queryByText('Refreshing availability…'),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 
   it('keeps rendered slots visible while refreshing availability', () => {
@@ -46,6 +64,55 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.getByText('Refreshing availability…')).toBeInTheDocument()
     expect(screen.getByText('3/4')).toBeInTheDocument()
     expect(screen.queryByText('Loading availability…')).not.toBeInTheDocument()
+  })
+
+  it('renders weekly matrix tables when the saved view is calendar', () => {
+    renderContent(
+      {
+        dayGroups: [
+          {
+            date: '2026-05-14',
+            displayDate: 'Thu 14 May',
+            slots: [
+              {
+                endTime: '16:00',
+                freeCapacity: 3,
+                id: '2026-05-14-900',
+                selection: {
+                  cableId: 'pro',
+                  date: '2026-05-14',
+                  endTime: '16:00',
+                  startTime: '15:00',
+                },
+                startTime: '15:00',
+                totalCapacity: 4,
+              },
+            ],
+          },
+        ],
+        status: 'ready',
+      },
+      {
+        bookingActionMode: 'enabled',
+        onBookSelection: vi.fn(),
+      },
+      { availabilityView: 'calendar' },
+    )
+
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByText('11 May - 17 May')).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: /Thu 14 May 1 slot/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('columnheader', { name: /Mon/i }),
+    ).not.toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: '15:00' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: 'Book 15:00-16:00, 3/4 spots free',
+      }),
+    ).toBeInTheDocument()
   })
 
   it('renders API errors as alerts', () => {
@@ -178,26 +245,57 @@ function renderContent(
     Parameters<typeof AvailabilityOverviewContent>[0],
     'bookingActionMode' | 'onBookSelection'
   >,
+  settingsOverrides?: {
+    availabilityView?: 'cards' | 'calendar'
+  },
 ) {
+  window.localStorage.setItem(
+    'laguuni.quickbook.settings',
+    JSON.stringify({
+      availabilityView: settingsOverrides?.availabilityView ?? 'cards',
+      defaultCable: null,
+      email: '',
+      name: '',
+      phone: '',
+      seasonPassCode: '',
+      version: 1,
+    }),
+  )
+
   if (
     bookingProps === undefined ||
     bookingProps.bookingActionMode === 'enabled'
   ) {
     return render(
-      <AvailabilityOverviewContent
-        activeCableLabel="Pro"
-        availabilityState={availabilityState}
-        bookingActionMode="enabled"
-        onBookSelection={bookingProps?.onBookSelection ?? vi.fn()}
-      />,
+      <TestProviders>
+        <AvailabilityOverviewContent
+          activeCableLabel="Pro"
+          availabilityState={availabilityState}
+          bookingActionMode="enabled"
+          onBookSelection={bookingProps?.onBookSelection ?? vi.fn()}
+        />
+      </TestProviders>,
     )
   }
 
   return render(
-    <AvailabilityOverviewContent
-      activeCableLabel="Pro"
-      availabilityState={availabilityState}
-      bookingActionMode={bookingProps.bookingActionMode}
-    />,
+    <TestProviders>
+      <AvailabilityOverviewContent
+        activeCableLabel="Pro"
+        availabilityState={availabilityState}
+        bookingActionMode={bookingProps.bookingActionMode}
+      />
+    </TestProviders>,
+  )
+}
+
+function TestProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <AppProviders
+      apiBaseUrl="https://shop.laguuniin.fi"
+      appVersion="test-version"
+    >
+      <UserSettingsProvider>{children}</UserSettingsProvider>
+    </AppProviders>
   )
 }

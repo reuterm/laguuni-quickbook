@@ -148,6 +148,42 @@ describe('App', () => {
     ).toBeInTheDocument()
     expect(screen.queryByText(/Trace ID:/)).not.toBeInTheDocument()
   })
+
+  it('opens the existing booking sheet from a calendar availability badge', async () => {
+    const user = userEvent.setup()
+
+    saveUserSettings({
+      availabilityView: 'calendar',
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+    })
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+    })
+
+    expect(await screen.findByText('18 May - 24 May')).toBeInTheDocument()
+
+    const calendarButtons = await screen.findAllByRole('button', {
+      name: 'Book 15:00-16:00, 4/4 spots free',
+    })
+
+    const firstCalendarButton = calendarButtons[0]
+
+    if (!firstCalendarButton) {
+      throw new Error('Expected at least one calendar booking badge')
+    }
+
+    await user.click(firstCalendarButton)
+
+    expect(
+      await screen.findByRole('heading', { name: 'Booking details' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Confirm booking' }),
+    ).toBeInTheDocument()
+  })
 })
 
 async function openFirstBookingSheet(user: ReturnType<typeof userEvent.setup>) {

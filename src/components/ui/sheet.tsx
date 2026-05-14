@@ -37,6 +37,7 @@ function SheetCloseButton({
 }: React.ComponentProps<typeof DialogPrimitive.Close>) {
   return (
     <SheetClose
+      type="button"
       className={cn(
         'absolute top-4 right-4 rounded-full p-2 text-muted-foreground transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none sm:top-5 sm:right-5',
         interactiveGhostSurfaceClassName,
