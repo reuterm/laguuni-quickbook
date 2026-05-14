@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 import type { AvailabilitySlot } from '../availability-model'
@@ -10,17 +9,11 @@ const availabilityToneClassNames = {
   low: 'border-transparent bg-[#9b5c49]/20 text-[#d69580]',
 } as const
 
-type AvailabilityBadgeProps = {
-  className?: string
-  slot: AvailabilitySlot
-}
+const availabilityChipBaseClassName =
+  'min-w-11 rounded-full border px-2.5 py-1 text-sm font-medium tabular-nums'
 
-type AvailabilityBadgeButtonProps = {
-  className?: string
-  disabled?: boolean
-  onClick?: () => void
-  slot: AvailabilitySlot
-}
+const availabilityChipInteractiveClassName =
+  'inline-flex h-auto items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50'
 
 type AvailabilityCapacityChipProps =
   | {
@@ -34,29 +27,27 @@ type AvailabilityCapacityChipProps =
       disabled?: never
       onClick?: never
       slot: AvailabilitySlot
-    }
+     }
 
-export function AvailabilityBadge({ className, slot }: AvailabilityBadgeProps) {
-  return (
-    <Badge className={cn(getAvailabilityBadgeClassName(slot), className)}>
-      {getAvailabilityBadgeLabel(slot)}
-    </Badge>
-  )
-}
-
-export function AvailabilityBadgeButton({
+export function AvailabilityCapacityChip({
   className,
-  disabled = false,
+  disabled,
   onClick,
   slot,
-}: AvailabilityBadgeButtonProps) {
+}: AvailabilityCapacityChipProps) {
+  const chipClassName = cn(
+    getAvailabilityChipClassName(slot),
+    onClick !== undefined && availabilityChipInteractiveClassName,
+    className,
+  )
+
+  if (onClick === undefined) {
+    return <span className={chipClassName}>{getAvailabilityBadgeLabel(slot)}</span>
+  }
+
   return (
     <button
-      className={cn(
-        'inline-flex min-w-11 items-center justify-center rounded-full border px-2.5 py-1 text-sm font-medium tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50',
-        getAvailabilityToneClassName(slot.freeCapacity, slot.totalCapacity),
-        className,
-      )}
+      className={chipClassName}
       disabled={disabled}
       onClick={onClick}
       aria-label={`Book ${slot.startTime}-${slot.endTime}, ${getAvailabilityBadgeLabel(slot)} spots free`}
@@ -67,35 +58,13 @@ export function AvailabilityBadgeButton({
   )
 }
 
-export function AvailabilityCapacityChip({
-  className,
-  disabled,
-  onClick,
-  slot,
-}: AvailabilityCapacityChipProps) {
-  if (onClick === undefined) {
-    return (
-      <AvailabilityBadge {...(className ? { className } : {})} slot={slot} />
-    )
-  }
-
-  return (
-    <AvailabilityBadgeButton
-      slot={slot}
-      {...(disabled !== undefined ? { disabled } : {})}
-      {...(className ? { className } : {})}
-      onClick={onClick}
-    />
-  )
-}
-
 function getAvailabilityBadgeLabel(slot: AvailabilitySlot) {
   return `${slot.freeCapacity}/${slot.totalCapacity}`
 }
 
-function getAvailabilityBadgeClassName(slot: AvailabilitySlot) {
+function getAvailabilityChipClassName(slot: AvailabilitySlot) {
   return cn(
-    'px-2 py-0.5 font-medium tabular-nums transition-colors',
+    availabilityChipBaseClassName,
     getAvailabilityToneClassName(slot.freeCapacity, slot.totalCapacity),
   )
 }
