@@ -1,5 +1,6 @@
 import type { BookingSlotSelection } from '../../domain/booking'
 import { getCableById } from '../../domain/cable'
+import { parseLocalDate } from '../../lib/date'
 
 export type BookingSelectionPresentation = {
   label: string
@@ -46,5 +47,5 @@ export function formatBookingSelectionLabel(
 }
 
 export function formatBookingSelectionDate(date: string): string {
-  return bookingSelectionDateFormatter.format(new Date(`${date}T00:00:00`))
+  return bookingSelectionDateFormatter.format(parseLocalDate(date))
 }

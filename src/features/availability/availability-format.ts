@@ -1,3 +1,5 @@
+import { parseLocalDate } from '../../lib/date'
+
 export function createAnchorDate(referenceDate: Date): string {
   const year = referenceDate.getFullYear()
   const month = String(referenceDate.getMonth() + 1).padStart(2, '0')
@@ -11,7 +13,7 @@ export function formatDisplayDate(date: string): string {
     day: 'numeric',
     month: 'short',
     weekday: 'short',
-  }).format(new Date(`${date}T00:00:00`))
+  }).format(parseLocalDate(date))
 }
 
 export function formatMinuteOfDay(minuteOfDay: number): string {

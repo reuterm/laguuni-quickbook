@@ -1,3 +1,4 @@
+import { parseLocalDate } from '../../lib/date'
 import type {
   AvailabilityDayGroup,
   AvailabilitySlot,
@@ -137,7 +138,7 @@ export function formatAvailabilityDayLabel(date: string) {
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'short',
-  }).format(new Date(`${date}T00:00:00`))
+  }).format(parseLocalDate(date))
 }
 
 export function formatAvailabilityWeekLabel(weekStartDate: Date) {
@@ -172,7 +173,7 @@ export function getWeekdayLabel(dayIndex: number) {
 }
 
 function getWeekStartDate(date: string) {
-  const currentDate = new Date(`${date}T00:00:00`)
+  const currentDate = parseLocalDate(date)
   const weekday = currentDate.getDay()
   const mondayOffset = weekday === 0 ? -6 : 1 - weekday
   currentDate.setDate(currentDate.getDate() + mondayOffset)
@@ -181,7 +182,7 @@ function getWeekStartDate(date: string) {
 }
 
 function getWeekdayIndex(date: string) {
-  const weekday = new Date(`${date}T00:00:00`).getDay()
+  const weekday = parseLocalDate(date).getDay()
 
   return weekday === 0 ? 6 : weekday - 1
 }
