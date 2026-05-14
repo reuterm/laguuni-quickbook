@@ -1,5 +1,4 @@
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 import type { AvailabilitySlot } from '../availability-model'
@@ -52,14 +51,10 @@ export function AvailabilityBadgeButton({
   slot,
 }: AvailabilityBadgeButtonProps) {
   return (
-    <Button
-      variant="ghost"
-      size="sm"
+    <button
       className={cn(
-        'h-auto min-w-11 rounded-full border px-2.5 py-1 font-medium tabular-nums focus-visible:ring-offset-0',
+        'inline-flex min-w-11 items-center justify-center rounded-full border px-2.5 py-1 text-sm font-medium tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50',
         getAvailabilityToneClassName(slot.freeCapacity, slot.totalCapacity),
-        !disabled &&
-          'hover:brightness-110 hover:saturate-125 active:brightness-95',
         className,
       )}
       disabled={disabled}
@@ -68,7 +63,7 @@ export function AvailabilityBadgeButton({
       type="button"
     >
       {getAvailabilityBadgeLabel(slot)}
-    </Button>
+    </button>
   )
 }
 

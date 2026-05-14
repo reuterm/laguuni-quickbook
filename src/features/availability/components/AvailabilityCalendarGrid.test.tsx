@@ -180,6 +180,27 @@ describe('AvailabilityCalendarGrid', () => {
     expect(screen.getAllByText(/\d\/4/).length).toBeGreaterThan(0)
   })
 
+  it('renders a simple dash for unavailable calendar cells', () => {
+    stubMatchMedia(false)
+
+    render(
+      <AvailabilityCalendarGrid
+        availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+        dayGroups={FIXTURE_DAY_GROUPS}
+        bookingActionMode="hidden"
+      />,
+    )
+
+    const twelveRow = screen.getByRole('rowheader', { name: '12:00' }).closest('tr')
+
+    if (!(twelveRow instanceof HTMLTableRowElement)) {
+      throw new Error('Expected 12:00 row')
+    }
+
+    expect(within(twelveRow).getByText('4/4')).toBeInTheDocument()
+    expect(within(twelveRow).getAllByText('-').length).toBeGreaterThan(0)
+  })
+
   it('uses the real media query branch for wider layouts', () => {
     stubMatchMedia(true)
 
