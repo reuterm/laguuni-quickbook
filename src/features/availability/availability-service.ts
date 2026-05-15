@@ -11,6 +11,7 @@ import { createAvailabilitySlots } from './availability-slots'
 
 export const AVAILABILITY_WEEK_DAY_COUNT = 7
 export const AVAILABILITY_INITIAL_WEEK_COUNT = 2
+export const AVAILABILITY_MAX_WEEK_COUNT = 4
 export const AVAILABILITY_INITIAL_RANGE_DAY_COUNT =
   AVAILABILITY_WEEK_DAY_COUNT * AVAILABILITY_INITIAL_WEEK_COUNT
 

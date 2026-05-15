@@ -8,6 +8,7 @@ import {
 } from './availability-calendar'
 import {
   AVAILABILITY_INITIAL_WEEK_COUNT,
+  AVAILABILITY_MAX_WEEK_COUNT,
   AVAILABILITY_WEEK_DAY_COUNT,
   type AvailabilityDayGroup,
   type AvailabilityWeekPage,
@@ -17,6 +18,7 @@ import {
 
 type LoadedAvailabilityData = {
   appendErrorMessage: string | null
+  canLoadMore: boolean
   dayGroups: readonly AvailabilityDayGroup[]
   weekPages: readonly AvailabilityWeekPage[]
 }
@@ -107,6 +109,7 @@ export function useAvailabilityOverview(
     (weekPages: readonly AvailabilityWeekPage[]) => {
       setAvailabilityState({
         appendErrorMessage: null,
+        canLoadMore: weekPages.length < AVAILABILITY_MAX_WEEK_COUNT,
         dayGroups: flattenWeekPages(weekPages),
         isLoadingMore: false,
         status: 'ready',
@@ -268,7 +271,12 @@ export function useAvailabilityOverview(
   const loadMoreAvailability = useCallback(async () => {
     const currentState = availabilityStateRef.current
 
-    if (currentState.status !== 'ready' || isLoadingMoreRef.current) {
+    if (
+      currentState.status !== 'ready' ||
+      isLoadingMoreRef.current ||
+      !currentState.canLoadMore ||
+      loadedRangeRef.current.weekCount >= AVAILABILITY_MAX_WEEK_COUNT
+    ) {
       return
     }
 

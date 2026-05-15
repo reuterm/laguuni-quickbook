@@ -195,6 +195,14 @@ describe('AvailabilityOverviewContent', () => {
     ).toBeInTheDocument()
   })
 
+  it('hides the manual load-next-week action when the hard stop is reached', () => {
+    renderContent(createLoadedState('ready', undefined, { canLoadMore: false }))
+
+    expect(
+      screen.queryByRole('button', { name: 'Load next week' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('loads more when the manual action is pressed', async () => {
     const onLoadMore = vi.fn(async () => {})
 
@@ -287,6 +295,27 @@ describe('AvailabilityOverviewContent', () => {
     intersectionObserverController.triggerLastObserved(true)
 
     expect(onLoadMore).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not auto-load when the hard stop is reached', () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 128,
+    })
+
+    renderContent(
+      createLoadedState('ready', undefined, { canLoadMore: false }),
+      undefined,
+      undefined,
+      onLoadMore,
+    )
+
+    fireEvent.scroll(window)
+
+    expect(intersectionObserverController.getObservedElementCount()).toBe(0)
+    expect(onLoadMore).toHaveBeenCalledTimes(0)
   })
 
   it('renders an inline retry alert when loading the next week fails', async () => {
@@ -397,6 +426,7 @@ function createLoadedState(
 ): AvailabilityState {
   return {
     appendErrorMessage: null,
+    canLoadMore: true,
     dayGroups,
     isLoadingMore: false,
     status,
@@ -535,6 +565,9 @@ function createIntersectionObserverController() {
 
   return {
     factory: MockIntersectionObserver,
+    getObservedElementCount() {
+      return observedElements.length
+    },
     reset() {
       observedElements.splice(0)
       callback = null

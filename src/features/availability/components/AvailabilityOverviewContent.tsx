@@ -43,7 +43,8 @@ export function AvailabilityOverviewContent({
   const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null)
   const isRefreshing = availabilityState.status === 'refreshing'
   const isCalendarView = settings.availabilityView === 'calendar'
-  const canLoadMore = availabilityState.status === 'ready'
+  const canLoadMore =
+    availabilityState.status === 'ready' && availabilityState.canLoadMore
   const hasLoadedDayGroups =
     availabilityState.status === 'ready' ||
     availabilityState.status === 'refreshing'

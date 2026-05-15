@@ -70,8 +70,52 @@ describe('useAvailabilityOverview', () => {
     }
 
     expect(result.current.availabilityState.isLoadingMore).toBe(false)
+    expect(result.current.availabilityState.canLoadMore).toBe(true)
     expect(result.current.availabilityState.dayGroups).toHaveLength(21)
     expect(result.current.availabilityState.weekPages).toHaveLength(3)
+  })
+
+  it('stops loading more availability after four calendar weeks', async () => {
+    const { api, getDailyAvailabilityWindow } = createApi()
+
+    const { result } = renderHook(() =>
+      useAvailabilityOverview(api, 'pro', new Date('2026-05-14T12:00:00')),
+    )
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    await act(async () => {
+      await result.current.loadMoreAvailability()
+    })
+
+    await waitFor(() => {
+      expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(21)
+    })
+
+    await act(async () => {
+      await result.current.loadMoreAvailability()
+    })
+
+    await waitFor(() => {
+      expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(28)
+    })
+
+    await act(async () => {
+      await result.current.loadMoreAvailability()
+    })
+
+    expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(28)
+
+    if (result.current.availabilityState.status !== 'ready') {
+      throw new Error('Expected ready availability state')
+    }
+
+    expect(result.current.availabilityState.canLoadMore).toBe(false)
+    expect(result.current.availabilityState.dayGroups).toHaveLength(28)
+    expect(result.current.availabilityState.weekPages).toHaveLength(4)
+    expect(result.current.availabilityState.isLoadingMore).toBe(false)
   })
 
   it('refreshes only the already loaded weeks instead of rebuilding a larger range', async () => {
