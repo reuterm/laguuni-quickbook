@@ -509,11 +509,7 @@ function availabilityOverviewReducer(
       }
 
       if (
-        !hasMatchingDayRefreshToken(
-          state,
-          action.date,
-          action.dayRefreshToken,
-        )
+        !hasMatchingDayRefreshToken(state, action.date, action.dayRefreshToken)
       ) {
         return {
           ...state,
