@@ -231,6 +231,191 @@ describe('useAvailabilityOverview', () => {
     expect(result.current.availabilityState.weekPages).toHaveLength(2)
   })
 
+  it('ignores a stale same-day refresh after a newer refresh succeeds', async () => {
+    let resolveFirstRefresh!: () => void
+    let resolveSecondRefresh!: () => void
+    let refreshCallCount = 0
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: string) => {
+        if (date === '2026-05-14') {
+          refreshCallCount += 1
+
+          if (refreshCallCount === 2) {
+            await new Promise<void>((resolve) => {
+              resolveFirstRefresh = resolve
+            })
+
+            return createDailyAvailabilityWindow(date, {
+              freeCapacity: 3,
+            })
+          }
+
+          if (refreshCallCount === 3) {
+            await new Promise<void>((resolve) => {
+              resolveSecondRefresh = resolve
+            })
+
+            return createDailyAvailabilityWindow(date, {
+              freeCapacity: 1,
+            })
+          }
+        }
+
+        return createDailyAvailabilityWindow(date)
+      },
+    )
+    const api = createApi(getDailyAvailabilityWindow)
+
+    const { result } = renderHook(() =>
+      useAvailabilityOverview(api.api, 'pro', new Date('2026-05-14T12:00:00')),
+    )
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    let firstRefreshPromise: Promise<void>
+    let secondRefreshPromise: Promise<void>
+
+    await act(async () => {
+      firstRefreshPromise = result.current.refreshAvailabilityDay('2026-05-14')
+      secondRefreshPromise = result.current.refreshAvailabilityDay('2026-05-14')
+    })
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('refreshing')
+    })
+
+    resolveSecondRefresh()
+
+    await waitFor(() => {
+      if (
+        result.current.availabilityState.status !== 'ready' &&
+        result.current.availabilityState.status !== 'refreshing'
+      ) {
+        throw new Error('Expected loaded availability state')
+      }
+
+      const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
+        (dayGroup) => dayGroup.date === '2026-05-14',
+      )
+
+      expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
+    })
+
+    resolveFirstRefresh()
+
+    await act(async () => {
+      await firstRefreshPromise
+      await secondRefreshPromise
+    })
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    if (result.current.availabilityState.status !== 'ready') {
+      throw new Error('Expected ready availability state')
+    }
+
+    const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
+      (dayGroup) => dayGroup.date === '2026-05-14',
+    )
+
+    expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
+  })
+
+  it('ignores a stale same-day refresh failure after a newer refresh succeeds', async () => {
+    let rejectFirstRefresh!: (error: Error) => void
+    let resolveSecondRefresh!: () => void
+    let refreshCallCount = 0
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: string) => {
+        if (date === '2026-05-14') {
+          refreshCallCount += 1
+
+          if (refreshCallCount === 2) {
+            await new Promise<never>((_resolve, reject) => {
+              rejectFirstRefresh = reject
+            })
+          }
+
+          if (refreshCallCount === 3) {
+            await new Promise<void>((resolve) => {
+              resolveSecondRefresh = resolve
+            })
+
+            return createDailyAvailabilityWindow(date, {
+              freeCapacity: 1,
+            })
+          }
+        }
+
+        return createDailyAvailabilityWindow(date)
+      },
+    )
+    const api = createApi(getDailyAvailabilityWindow)
+
+    const { result } = renderHook(() =>
+      useAvailabilityOverview(api.api, 'pro', new Date('2026-05-14T12:00:00')),
+    )
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    let firstRefreshPromise: Promise<void>
+    let secondRefreshPromise: Promise<void>
+
+    await act(async () => {
+      firstRefreshPromise = result.current.refreshAvailabilityDay('2026-05-14')
+      secondRefreshPromise = result.current.refreshAvailabilityDay('2026-05-14')
+    })
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('refreshing')
+    })
+
+    resolveSecondRefresh()
+
+    await waitFor(() => {
+      if (
+        result.current.availabilityState.status !== 'ready' &&
+        result.current.availabilityState.status !== 'refreshing'
+      ) {
+        throw new Error('Expected loaded availability state')
+      }
+
+      const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
+        (dayGroup) => dayGroup.date === '2026-05-14',
+      )
+
+      expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
+    })
+
+    rejectFirstRefresh(new Error('Day refresh failed'))
+
+    await act(async () => {
+      await firstRefreshPromise
+      await secondRefreshPromise
+    })
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    if (result.current.availabilityState.status !== 'ready') {
+      throw new Error('Expected ready availability state')
+    }
+
+    const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
+      (dayGroup) => dayGroup.date === '2026-05-14',
+    )
+
+    expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
+    expect(result.current.availabilityState.appendErrorMessage).toBeNull()
+  })
+
   it('resets the loaded range when the reference date changes', async () => {
     const { api, getDailyAvailabilityWindow } = createApi()
 
@@ -407,6 +592,201 @@ describe('useAvailabilityOverview', () => {
     expect(result.current.availabilityState.isLoadingMore).toBe(false)
   })
 
+  it('keeps an appended week when it resolves during a day refresh', async () => {
+    let resolveAppendWeek!: () => void
+    let resolveDayRefresh!: () => void
+    let shouldBlockDayRefresh = false
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: string) => {
+        if (date === '2026-05-25') {
+          await new Promise<void>((resolve) => {
+            resolveAppendWeek = resolve
+          })
+        }
+
+        if (date === '2026-05-14' && shouldBlockDayRefresh) {
+          shouldBlockDayRefresh = false
+          await new Promise<void>((resolve) => {
+            resolveDayRefresh = resolve
+          })
+        }
+
+        return createDailyAvailabilityWindow(date)
+      },
+    )
+    const api = createApi(getDailyAvailabilityWindow)
+
+    const { result } = renderHook(() =>
+      useAvailabilityOverview(api.api, 'pro', new Date('2026-05-14T12:00:00')),
+    )
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    let appendPromise: Promise<void>
+    let refreshDayPromise: Promise<void>
+
+    await act(async () => {
+      appendPromise = result.current.loadMoreAvailability()
+    })
+
+    await waitFor(() => {
+      if (result.current.availabilityState.status !== 'ready') {
+        throw new Error('Expected ready availability state')
+      }
+
+      expect(result.current.availabilityState.isLoadingMore).toBe(true)
+    })
+
+    shouldBlockDayRefresh = true
+
+    await act(async () => {
+      refreshDayPromise = result.current.refreshAvailabilityDay('2026-05-14')
+    })
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('refreshing')
+    })
+
+    resolveAppendWeek()
+
+    await waitFor(() => {
+      if (
+        result.current.availabilityState.status !== 'ready' &&
+        result.current.availabilityState.status !== 'refreshing'
+      ) {
+        throw new Error('Expected loaded availability state')
+      }
+
+      expect(result.current.availabilityState.weekPages).toHaveLength(3)
+    })
+
+    resolveDayRefresh()
+
+    await act(async () => {
+      await appendPromise
+      await refreshDayPromise
+    })
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    if (result.current.availabilityState.status !== 'ready') {
+      throw new Error('Expected ready availability state')
+    }
+
+    expect(result.current.availabilityState.weekPages).toHaveLength(3)
+    expect(result.current.availabilityState.dayGroups).toHaveLength(21)
+    expect(result.current.availabilityState.isLoadingMore).toBe(false)
+  })
+
+  it('keeps a day refresh update when it resolves during an append', async () => {
+    let resolveAppendWeek!: () => void
+    let resolveDayRefresh!: () => void
+    let shouldBlockDayRefresh = false
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: string) => {
+        if (date === '2026-05-25') {
+          await new Promise<void>((resolve) => {
+            resolveAppendWeek = resolve
+          })
+        }
+
+        if (date === '2026-05-14' && shouldBlockDayRefresh) {
+          shouldBlockDayRefresh = false
+          await new Promise<void>((resolve) => {
+            resolveDayRefresh = resolve
+          })
+        }
+
+        if (date === '2026-05-14') {
+          return createDailyAvailabilityWindow(date, {
+            cableId: 'pro',
+            freeCapacity: 1,
+          })
+        }
+
+        return createDailyAvailabilityWindow(date)
+      },
+    )
+    const api = createApi(getDailyAvailabilityWindow)
+
+    const { result } = renderHook(() =>
+      useAvailabilityOverview(api.api, 'pro', new Date('2026-05-14T12:00:00')),
+    )
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    let appendPromise: Promise<void>
+    let refreshDayPromise: Promise<void>
+
+    await act(async () => {
+      appendPromise = result.current.loadMoreAvailability()
+    })
+
+    await waitFor(() => {
+      if (result.current.availabilityState.status !== 'ready') {
+        throw new Error('Expected ready availability state')
+      }
+
+      expect(result.current.availabilityState.isLoadingMore).toBe(true)
+    })
+
+    shouldBlockDayRefresh = true
+
+    await act(async () => {
+      refreshDayPromise = result.current.refreshAvailabilityDay('2026-05-14')
+    })
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('refreshing')
+    })
+
+    resolveDayRefresh()
+
+    await waitFor(() => {
+      if (
+        result.current.availabilityState.status !== 'ready' &&
+        result.current.availabilityState.status !== 'refreshing'
+      ) {
+        throw new Error('Expected loaded availability state')
+      }
+
+      const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
+        (dayGroup) => dayGroup.date === '2026-05-14',
+      )
+
+      expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
+    })
+
+    resolveAppendWeek()
+
+    await act(async () => {
+      await appendPromise
+      await refreshDayPromise
+    })
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    if (result.current.availabilityState.status !== 'ready') {
+      throw new Error('Expected ready availability state')
+    }
+
+    const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
+      (dayGroup) => dayGroup.date === '2026-05-14',
+    )
+
+    expect(result.current.availabilityState.weekPages).toHaveLength(3)
+    expect(result.current.availabilityState.dayGroups).toHaveLength(21)
+    expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
+  })
+
   it('ignores append requests while availability is refreshing', async () => {
     let resolveRefresh!: () => void
     let shouldBlockRefresh = false
@@ -565,7 +945,13 @@ function createApi(
   }
 }
 
-function createDailyAvailabilityWindow(date: string): DailyAvailabilityWindow {
+function createDailyAvailabilityWindow(
+  date: string,
+  overrides?: {
+    cableId?: CableId
+    freeCapacity?: number
+  },
+): DailyAvailabilityWindow {
   return {
     bookingSegments: [
       {
@@ -574,11 +960,11 @@ function createDailyAvailabilityWindow(date: string): DailyAvailabilityWindow {
         startMinute: 780,
       },
     ],
-    cableId: 'pro',
+    cableId: overrides?.cableId ?? 'pro',
     capacitySegments: [
       {
         endMinute: 900,
-        freeCapacity: 4,
+        freeCapacity: overrides?.freeCapacity ?? 4,
         startMinute: 780,
       },
     ],

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 
 import type { CableId } from '../../domain/cable'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
@@ -55,6 +55,96 @@ type LoadedRange = {
   weekCount: number
 }
 
+type RangeLoadMode = 'refresh' | 'replace'
+
+const DEFAULT_AVAILABILITY_ERROR_MESSAGE =
+  'The availability feed could not be loaded.'
+
+type AvailabilityOverviewStore = {
+  activeDayRefreshCount: number
+  appendErrorMessage: string | null
+  errorMessage: string | null
+  isAppending: boolean
+  isRefreshingRange: boolean
+  latestDayRefreshTokens: Readonly<Record<string, number>>
+  loadedRange: LoadedRange
+  phase: 'error' | 'loading' | 'ready'
+  rangeVersion: number
+  weekPages: readonly AvailabilityWeekPage[]
+}
+
+type AvailabilityOverviewAction =
+  | {
+      range: LoadedRange
+      rangeVersion: number
+      type: 'replaceStarted'
+    }
+  | {
+      errorMessage: string
+      range: LoadedRange
+      rangeVersion: number
+      type: 'replaceFailed'
+    }
+  | {
+      range: LoadedRange
+      rangeVersion: number
+      type: 'replaceSucceeded'
+      weekPages: readonly AvailabilityWeekPage[]
+    }
+  | {
+      range: LoadedRange
+      rangeVersion: number
+      type: 'refreshRangeStarted'
+    }
+  | {
+      errorMessage: string
+      range: LoadedRange
+      rangeVersion: number
+      type: 'refreshRangeFailed'
+    }
+  | {
+      range: LoadedRange
+      rangeVersion: number
+      type: 'refreshRangeSucceeded'
+      weekPages: readonly AvailabilityWeekPage[]
+    }
+  | {
+      rangeVersion: number
+      type: 'appendStarted'
+    }
+  | {
+      errorMessage: string
+      rangeVersion: number
+      type: 'appendFailed'
+    }
+  | {
+      rangeVersion: number
+      type: 'appendSucceeded'
+      weekPage: AvailabilityWeekPage
+    }
+  | {
+      date: string
+      dayRefreshToken: number
+      rangeVersion: number
+      type: 'refreshDayStarted'
+    }
+  | {
+      date: string
+      dayRefreshToken: number
+      rangeVersion: number
+      type: 'refreshDayFailed'
+    }
+  | {
+      date: string
+      dayGroup: AvailabilityDayGroup
+      dayRefreshToken: number
+      rangeVersion: number
+      type: 'refreshDaySucceeded'
+    }
+  | {
+      type: 'clearAppendError'
+    }
+
 export function useAvailabilityOverview(
   api: LaguuniApi,
   selectedCable: CableId,
@@ -70,34 +160,24 @@ export function useAvailabilityOverview(
       ),
     [referenceDateValue],
   )
-  const [availabilityState, setAvailabilityState] = useState<AvailabilityState>(
-    {
-      isLoadingMore: false,
-      status: 'loading',
-    },
+  const [store, dispatch] = useReducer(
+    availabilityOverviewReducer,
+    initialRange,
+    createInitialAvailabilityOverviewStore,
   )
   const isMountedRef = useRef(true)
-  const isLoadingMoreRef = useRef(false)
-  const latestDayRefreshIdRef = useRef(0)
-  const latestRequestIdRef = useRef(0)
-  const loadedRangeRef = useRef<LoadedRange>(initialRange)
-  const availabilityStateRef = useRef<AvailabilityState>(availabilityState)
+  const dayRefreshTokenRef = useRef(0)
+  const pendingAppendRef = useRef(false)
+  const rangeVersionRef = useRef(store.rangeVersion)
+  const storeRef = useRef(store)
 
-  availabilityStateRef.current = availabilityState
+  rangeVersionRef.current = store.rangeVersion
+  storeRef.current = store
 
   const loadWeeks = useCallback(
     async (range: LoadedRange) => {
-      const weekStartDates = Array.from(
-        { length: range.weekCount },
-        (_, index) =>
-          addCalendarDays(
-            range.startWeekDate,
-            index * AVAILABILITY_WEEK_DAY_COUNT,
-          ),
-      )
-
       return Promise.all(
-        weekStartDates.map((weekStartDate) =>
+        listRangeWeekStartDates(range).map((weekStartDate) =>
           loadAvailabilityWeek(api, selectedCable, weekStartDate),
         ),
       )
@@ -105,103 +185,68 @@ export function useAvailabilityOverview(
     [api, selectedCable],
   )
 
-  const applyLoadedWeeks = useCallback(
-    (weekPages: readonly AvailabilityWeekPage[]) => {
-      setAvailabilityState({
-        appendErrorMessage: null,
-        canLoadMore: weekPages.length < AVAILABILITY_MAX_WEEK_COUNT,
-        dayGroups: flattenWeekPages(weekPages),
-        isLoadingMore: false,
-        status: 'ready',
-        weekPages,
-      })
-    },
-    [],
-  )
-
   const loadRange = useCallback(
-    async (nextRange: LoadedRange, mode: 'refresh' | 'replace') => {
-      const requestId = latestRequestIdRef.current + 1
-      latestRequestIdRef.current = requestId
+    async (nextRange: LoadedRange, mode: RangeLoadMode) => {
+      const nextRangeVersion = rangeVersionRef.current + 1
+      rangeVersionRef.current = nextRangeVersion
+      pendingAppendRef.current = false
 
-      if (mode === 'replace') {
-        setAvailabilityState({
-          isLoadingMore: false,
-          status: 'loading',
-        })
-      }
-
-      if (mode === 'refresh') {
-        setAvailabilityState((currentState) => {
-          if (
-            currentState.status === 'ready' ||
-            currentState.status === 'refreshing'
-          ) {
-            return {
-              ...currentState,
-              appendErrorMessage: null,
-              isLoadingMore: false,
-              status: 'refreshing',
-            }
-          }
-
-          return {
-            isLoadingMore: false,
-            status: 'loading',
-          }
-        })
-      }
+      dispatch(createRangeLoadStartedAction(mode, nextRange, nextRangeVersion))
 
       try {
         const weekPages = await loadWeeks(nextRange)
 
-        if (!isMountedRef.current || latestRequestIdRef.current !== requestId) {
+        if (!isMountedRef.current) {
           return
         }
 
-        loadedRangeRef.current = nextRange
-        isLoadingMoreRef.current = false
-        applyLoadedWeeks(weekPages)
+        dispatch(
+          createRangeLoadSucceededAction(
+            mode,
+            nextRange,
+            nextRangeVersion,
+            weekPages,
+          ),
+        )
       } catch (error) {
-        if (!isMountedRef.current || latestRequestIdRef.current !== requestId) {
+        if (!isMountedRef.current) {
           return
         }
 
-        isLoadingMoreRef.current = false
-        setAvailabilityState({
-          isLoadingMore: false,
-          message: getErrorMessage(error),
-          status: 'error',
-        })
+        dispatch(
+          createRangeLoadFailedAction(
+            mode,
+            nextRange,
+            nextRangeVersion,
+            getErrorMessage(error),
+          ),
+        )
       }
     },
-    [applyLoadedWeeks, loadWeeks],
+    [loadWeeks],
   )
 
   const refreshAvailability = useCallback(async () => {
-    await loadRange(loadedRangeRef.current, 'refresh')
+    await loadRange(storeRef.current.loadedRange, 'refresh')
   }, [loadRange])
 
   const refreshAvailabilityDay = useCallback(
     async (date: string) => {
-      const currentState = availabilityStateRef.current
+      const currentStore = storeRef.current
 
-      if (
-        currentState.status !== 'ready' &&
-        currentState.status !== 'refreshing'
-      ) {
+      if (!canRefreshDay(currentStore)) {
         return
       }
 
-      const requestId = latestDayRefreshIdRef.current + 1
-      latestDayRefreshIdRef.current = requestId
-      const rangeRequestId = latestRequestIdRef.current
+      const rangeVersion = currentStore.rangeVersion
+      const dayRefreshToken = dayRefreshTokenRef.current + 1
+      dayRefreshTokenRef.current = dayRefreshToken
 
-      setAvailabilityState({
-        ...currentState,
-        appendErrorMessage: null,
-        isLoadingMore: false,
-        status: 'refreshing',
+      dispatch({
+        date,
+        dayRefreshToken,
+        rangeVersion,
+        type: 'refreshDayStarted',
       })
 
       try {
@@ -211,93 +256,52 @@ export function useAvailabilityOverview(
           date,
         )
 
-        if (
-          !isMountedRef.current ||
-          latestDayRefreshIdRef.current !== requestId ||
-          latestRequestIdRef.current !== rangeRequestId
-        ) {
+        if (!isMountedRef.current) {
           return
         }
 
-        const latestState = availabilityStateRef.current
-
-        if (
-          latestState.status !== 'ready' &&
-          latestState.status !== 'refreshing'
-        ) {
-          return
-        }
-
-        const mergedWeekPages = replaceDayGroupInWeekPages(
-          latestState.weekPages,
-          refreshedDayGroup,
-        )
-
-        loadedRangeRef.current = {
-          startWeekDate: loadedRangeRef.current.startWeekDate,
-          weekCount: mergedWeekPages.length,
-        }
-        isLoadingMoreRef.current = false
-        applyLoadedWeeks(mergedWeekPages)
+        dispatch({
+          date,
+          dayGroup: refreshedDayGroup,
+          dayRefreshToken,
+          rangeVersion,
+          type: 'refreshDaySucceeded',
+        })
       } catch {
-        if (
-          !isMountedRef.current ||
-          latestDayRefreshIdRef.current !== requestId ||
-          latestRequestIdRef.current !== rangeRequestId
-        ) {
+        if (!isMountedRef.current) {
           return
         }
 
-        isLoadingMoreRef.current = false
-        setAvailabilityState((latestState) => {
-          if (
-            latestState.status !== 'ready' &&
-            latestState.status !== 'refreshing'
-          ) {
-            return latestState
-          }
-
-          return {
-            ...latestState,
-            isLoadingMore: false,
-            status: 'ready',
-          }
+        dispatch({
+          date,
+          dayRefreshToken,
+          rangeVersion,
+          type: 'refreshDayFailed',
         })
       }
     },
-    [api, applyLoadedWeeks, selectedCable],
+    [api, selectedCable],
   )
 
   const loadMoreAvailability = useCallback(async () => {
-    const currentState = availabilityStateRef.current
+    const currentStore = storeRef.current
 
-    if (
-      currentState.status !== 'ready' ||
-      isLoadingMoreRef.current ||
-      !currentState.canLoadMore ||
-      loadedRangeRef.current.weekCount >= AVAILABILITY_MAX_WEEK_COUNT
-    ) {
+    if (!canAppendWeek(currentStore, pendingAppendRef.current)) {
       return
     }
 
-    const lastLoadedWeek = currentState.weekPages.at(-1)
+    const nextWeekStartDate = getNextWeekStartDate(currentStore.weekPages)
 
-    if (!lastLoadedWeek) {
+    if (!nextWeekStartDate) {
       return
     }
 
-    const nextWeekStartDate = addCalendarDays(
-      lastLoadedWeek.weekStartDate,
-      AVAILABILITY_WEEK_DAY_COUNT,
-    )
-    const requestId = latestRequestIdRef.current
+    const rangeVersion = currentStore.rangeVersion
 
-    isLoadingMoreRef.current = true
-    setAvailabilityState({
-      ...currentState,
-      appendErrorMessage: null,
-      isLoadingMore: true,
-      status: 'ready',
+    pendingAppendRef.current = true
+    dispatch({
+      rangeVersion,
+      type: 'appendStarted',
     })
 
     try {
@@ -307,71 +311,35 @@ export function useAvailabilityOverview(
         nextWeekStartDate,
       )
 
-      if (!isMountedRef.current || latestRequestIdRef.current !== requestId) {
+      if (!isMountedRef.current) {
+        pendingAppendRef.current = false
         return
       }
 
-      const latestState = availabilityStateRef.current
-
-      if (latestState.status !== 'ready') {
-        return
-      }
-
-      const mergedWeekPages = mergeWeekPages(
-        latestState.weekPages,
-        nextWeekPage,
-      )
-
-      loadedRangeRef.current = {
-        startWeekDate: loadedRangeRef.current.startWeekDate,
-        weekCount: mergedWeekPages.length,
-      }
-      isLoadingMoreRef.current = false
-      applyLoadedWeeks(mergedWeekPages)
+      pendingAppendRef.current = false
+      dispatch({
+        rangeVersion,
+        type: 'appendSucceeded',
+        weekPage: nextWeekPage,
+      })
     } catch (error) {
-      if (!isMountedRef.current || latestRequestIdRef.current !== requestId) {
+      if (!isMountedRef.current) {
+        pendingAppendRef.current = false
         return
       }
 
-      isLoadingMoreRef.current = false
-      setAvailabilityState((latestState) => {
-        if (latestState.status !== 'ready') {
-          return latestState
-        }
-
-        return {
-          ...latestState,
-          appendErrorMessage: getErrorMessage(error),
-          isLoadingMore: false,
-          status: 'ready',
-        }
+      pendingAppendRef.current = false
+      dispatch({
+        errorMessage: getErrorMessage(error),
+        rangeVersion,
+        type: 'appendFailed',
       })
     }
-  }, [api, applyLoadedWeeks, selectedCable])
+  }, [api, selectedCable])
 
   const clearAppendError = useCallback(() => {
-    setAvailabilityState((currentState) => {
-      if (
-        currentState.status !== 'ready' &&
-        currentState.status !== 'refreshing'
-      ) {
-        return currentState
-      }
-
-      if (currentState.appendErrorMessage === null) {
-        return currentState
-      }
-
-      return {
-        ...currentState,
-        appendErrorMessage: null,
-      }
-    })
+    dispatch({ type: 'clearAppendError' })
   }, [])
-
-  useEffect(() => {
-    loadedRangeRef.current = initialRange
-  }, [initialRange])
 
   useEffect(() => {
     isMountedRef.current = true
@@ -386,6 +354,11 @@ export function useAvailabilityOverview(
     }
   }, [])
 
+  const availabilityState = useMemo(
+    () => deriveAvailabilityState(store),
+    [store],
+  )
+
   return {
     availabilityState,
     clearAppendError,
@@ -395,10 +368,240 @@ export function useAvailabilityOverview(
   }
 }
 
+function createInitialAvailabilityOverviewStore(
+  initialRange: LoadedRange,
+): AvailabilityOverviewStore {
+  return createRangeStore(initialRange, 0, 'loading')
+}
+
+function availabilityOverviewReducer(
+  state: AvailabilityOverviewStore,
+  action: AvailabilityOverviewAction,
+): AvailabilityOverviewStore {
+  switch (action.type) {
+    case 'replaceStarted': {
+      return createRangeStore(action.range, action.rangeVersion, 'loading')
+    }
+
+    case 'replaceSucceeded': {
+      if (!hasMatchingRangeVersion(state, action.rangeVersion)) {
+        return state
+      }
+
+      return createReadyRangeStore(
+        action.range,
+        action.rangeVersion,
+        action.weekPages,
+      )
+    }
+
+    case 'replaceFailed': {
+      if (!hasMatchingRangeVersion(state, action.rangeVersion)) {
+        return state
+      }
+
+      return createRangeStore(
+        action.range,
+        action.rangeVersion,
+        'error',
+        action.errorMessage,
+      )
+    }
+
+    case 'refreshRangeStarted': {
+      if (state.phase !== 'ready') {
+        return createRangeStore(action.range, action.rangeVersion, 'loading')
+      }
+
+      return {
+        ...state,
+        activeDayRefreshCount: 0,
+        appendErrorMessage: null,
+        errorMessage: null,
+        isAppending: false,
+        isRefreshingRange: true,
+        loadedRange: action.range,
+        rangeVersion: action.rangeVersion,
+      }
+    }
+
+    case 'refreshRangeSucceeded': {
+      if (!hasMatchingRangeVersion(state, action.rangeVersion)) {
+        return state
+      }
+
+      return createReadyRangeStore(
+        action.range,
+        action.rangeVersion,
+        action.weekPages,
+      )
+    }
+
+    case 'refreshRangeFailed': {
+      if (!hasMatchingRangeVersion(state, action.rangeVersion)) {
+        return state
+      }
+
+      return createRangeStore(
+        action.range,
+        action.rangeVersion,
+        'error',
+        action.errorMessage,
+      )
+    }
+
+    case 'appendStarted': {
+      if (!isActiveReadyRange(state, action.rangeVersion)) {
+        return state
+      }
+
+      return {
+        ...state,
+        appendErrorMessage: null,
+        isAppending: true,
+      }
+    }
+
+    case 'appendSucceeded': {
+      if (!isActiveReadyRange(state, action.rangeVersion)) {
+        return state
+      }
+
+      const weekPages = mergeWeekPages(state.weekPages, action.weekPage)
+
+      return updateLoadedWeekPages(state, weekPages, {
+        appendErrorMessage: null,
+        isAppending: false,
+      })
+    }
+
+    case 'appendFailed': {
+      if (!isActiveReadyRange(state, action.rangeVersion)) {
+        return state
+      }
+
+      return {
+        ...state,
+        appendErrorMessage: action.errorMessage,
+        isAppending: false,
+      }
+    }
+
+    case 'refreshDayStarted': {
+      if (!isActiveReadyRange(state, action.rangeVersion)) {
+        return state
+      }
+
+      return {
+        ...state,
+        activeDayRefreshCount: state.activeDayRefreshCount + 1,
+        appendErrorMessage: null,
+        latestDayRefreshTokens: {
+          ...state.latestDayRefreshTokens,
+          [action.date]: action.dayRefreshToken,
+        },
+      }
+    }
+
+    case 'refreshDaySucceeded': {
+      if (!isActiveReadyRange(state, action.rangeVersion)) {
+        return state
+      }
+
+      if (
+        !hasMatchingDayRefreshToken(
+          state,
+          action.date,
+          action.dayRefreshToken,
+        )
+      ) {
+        return {
+          ...state,
+          activeDayRefreshCount: decrementActiveDayRefreshCount(
+            state.activeDayRefreshCount,
+          ),
+        }
+      }
+
+      const weekPages = replaceDayGroupInWeekPages(
+        state.weekPages,
+        action.dayGroup,
+      )
+
+      return updateLoadedWeekPages(state, weekPages, {
+        activeDayRefreshCount: decrementActiveDayRefreshCount(
+          state.activeDayRefreshCount,
+        ),
+      })
+    }
+
+    case 'refreshDayFailed': {
+      if (!isActiveReadyRange(state, action.rangeVersion)) {
+        return state
+      }
+
+      return {
+        ...state,
+        activeDayRefreshCount: decrementActiveDayRefreshCount(
+          state.activeDayRefreshCount,
+        ),
+      }
+    }
+
+    case 'clearAppendError': {
+      if (state.phase !== 'ready' || state.appendErrorMessage === null) {
+        return state
+      }
+
+      return {
+        ...state,
+        appendErrorMessage: null,
+      }
+    }
+  }
+}
+
 function getInitialAvailabilityRange(referenceDate?: Date): LoadedRange {
   return {
     startWeekDate: getAvailabilityWeekStartDate(referenceDate ?? new Date()),
     weekCount: AVAILABILITY_INITIAL_WEEK_COUNT,
+  }
+}
+
+function listRangeWeekStartDates(range: LoadedRange) {
+  return Array.from({ length: range.weekCount }, (_, index) =>
+    addCalendarDays(range.startWeekDate, index * AVAILABILITY_WEEK_DAY_COUNT),
+  )
+}
+
+function deriveAvailabilityState(
+  store: AvailabilityOverviewStore,
+): AvailabilityState {
+  if (store.phase === 'loading') {
+    return {
+      isLoadingMore: false,
+      status: 'loading',
+    }
+  }
+
+  if (store.phase === 'error') {
+    return {
+      isLoadingMore: false,
+      message: store.errorMessage ?? DEFAULT_AVAILABILITY_ERROR_MESSAGE,
+      status: 'error',
+    }
+  }
+
+  return {
+    appendErrorMessage: store.appendErrorMessage,
+    canLoadMore: store.weekPages.length < AVAILABILITY_MAX_WEEK_COUNT,
+    dayGroups: flattenWeekPages(store.weekPages),
+    isLoadingMore: store.isAppending,
+    status:
+      store.isRefreshingRange || store.activeDayRefreshCount > 0
+        ? 'refreshing'
+        : 'ready',
+    weekPages: store.weekPages,
   }
 }
 
@@ -453,5 +656,167 @@ function getErrorMessage(error: unknown) {
     return error.message
   }
 
-  return 'The availability feed could not be loaded.'
+  return DEFAULT_AVAILABILITY_ERROR_MESSAGE
+}
+
+function createRangeLoadStartedAction(
+  mode: RangeLoadMode,
+  range: LoadedRange,
+  rangeVersion: number,
+): AvailabilityOverviewAction {
+  return mode === 'replace'
+    ? {
+        range,
+        rangeVersion,
+        type: 'replaceStarted',
+      }
+    : {
+        range,
+        rangeVersion,
+        type: 'refreshRangeStarted',
+      }
+}
+
+function createRangeLoadSucceededAction(
+  mode: RangeLoadMode,
+  range: LoadedRange,
+  rangeVersion: number,
+  weekPages: readonly AvailabilityWeekPage[],
+): AvailabilityOverviewAction {
+  return mode === 'replace'
+    ? {
+        range,
+        rangeVersion,
+        type: 'replaceSucceeded',
+        weekPages,
+      }
+    : {
+        range,
+        rangeVersion,
+        type: 'refreshRangeSucceeded',
+        weekPages,
+      }
+}
+
+function createRangeLoadFailedAction(
+  mode: RangeLoadMode,
+  range: LoadedRange,
+  rangeVersion: number,
+  errorMessage: string,
+): AvailabilityOverviewAction {
+  return mode === 'replace'
+    ? {
+        errorMessage,
+        range,
+        rangeVersion,
+        type: 'replaceFailed',
+      }
+    : {
+        errorMessage,
+        range,
+        rangeVersion,
+        type: 'refreshRangeFailed',
+      }
+}
+
+function createRangeStore(
+  loadedRange: LoadedRange,
+  rangeVersion: number,
+  phase: AvailabilityOverviewStore['phase'],
+  errorMessage: string | null = null,
+): AvailabilityOverviewStore {
+  return {
+    activeDayRefreshCount: 0,
+    appendErrorMessage: null,
+    errorMessage,
+    isAppending: false,
+    isRefreshingRange: false,
+    latestDayRefreshTokens: {},
+    loadedRange,
+    phase,
+    rangeVersion,
+    weekPages: [],
+  }
+}
+
+function createReadyRangeStore(
+  loadedRange: LoadedRange,
+  rangeVersion: number,
+  weekPages: readonly AvailabilityWeekPage[],
+): AvailabilityOverviewStore {
+  return {
+    ...createRangeStore(loadedRange, rangeVersion, 'ready'),
+    weekPages,
+  }
+}
+
+function hasMatchingRangeVersion(
+  state: AvailabilityOverviewStore,
+  rangeVersion: number,
+) {
+  return state.rangeVersion === rangeVersion
+}
+
+function isActiveReadyRange(
+  state: AvailabilityOverviewStore,
+  rangeVersion: number,
+) {
+  return state.phase === 'ready' && hasMatchingRangeVersion(state, rangeVersion)
+}
+
+function hasMatchingDayRefreshToken(
+  state: AvailabilityOverviewStore,
+  date: string,
+  dayRefreshToken: number,
+) {
+  return state.latestDayRefreshTokens[date] === dayRefreshToken
+}
+
+function updateLoadedWeekPages(
+  state: AvailabilityOverviewStore,
+  weekPages: readonly AvailabilityWeekPage[],
+  overrides: Partial<AvailabilityOverviewStore> = {},
+): AvailabilityOverviewStore {
+  return {
+    ...state,
+    ...overrides,
+    loadedRange: {
+      ...state.loadedRange,
+      weekCount: weekPages.length,
+    },
+    weekPages,
+  }
+}
+
+function decrementActiveDayRefreshCount(activeDayRefreshCount: number) {
+  return Math.max(0, activeDayRefreshCount - 1)
+}
+
+function canRefreshDay(store: AvailabilityOverviewStore) {
+  return store.phase === 'ready' && !store.isRefreshingRange
+}
+
+function canAppendWeek(
+  store: AvailabilityOverviewStore,
+  hasPendingAppend: boolean,
+) {
+  return (
+    store.phase === 'ready' &&
+    !store.isRefreshingRange &&
+    !hasPendingAppend &&
+    store.weekPages.length < AVAILABILITY_MAX_WEEK_COUNT
+  )
+}
+
+function getNextWeekStartDate(weekPages: readonly AvailabilityWeekPage[]) {
+  const lastLoadedWeek = weekPages.at(-1)
+
+  if (!lastLoadedWeek) {
+    return null
+  }
+
+  return addCalendarDays(
+    lastLoadedWeek.weekStartDate,
+    AVAILABILITY_WEEK_DAY_COUNT,
+  )
 }
