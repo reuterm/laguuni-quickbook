@@ -1,30 +1,111 @@
-import { describe, expect, it } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { getBalancedDayColumnCount } from './AvailabilityDayGroups'
+import { localDate } from '../../../../tests/local-date'
+import { AvailabilityDayGroups } from './AvailabilityDayGroups'
 
-describe('getBalancedDayColumnCount', () => {
-  it('returns one column before any width measurement is available', () => {
-    expect(getBalancedDayColumnCount(5, 0)).toBe(1)
+describe('AvailabilityDayGroups', () => {
+  afterEach(() => {
+    cleanup()
   })
 
-  it('switches to two columns once two minimum cards fit', () => {
-    expect(getBalancedDayColumnCount(5, 632)).toBe(2)
+  it('renders each loaded day group as its own stacked section', () => {
+    render(
+      <AvailabilityDayGroups
+        bookingActionMode="hidden"
+        dayGroups={[
+          createDayGroup({
+            date: localDate('2026-05-14'),
+            displayDate: 'Thu 14 May',
+            slots: [createSlot('2026-05-14-900', '15:00', '16:00')],
+          }),
+          createDayGroup({
+            date: localDate('2026-05-15'),
+            displayDate: 'Fri 15 May',
+            slots: [createSlot('2026-05-15-780', '13:00', '14:00')],
+          }),
+        ]}
+      />,
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Thu 14 May', level: 3 }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Fri 15 May', level: 3 }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText('Read only')).toHaveLength(2)
   })
 
-  it('steps down from four columns to three when four would leave one orphan card', () => {
-    expect(getBalancedDayColumnCount(5, 1272)).toBe(3)
+  it('renders booking actions when booking is enabled', () => {
+    render(
+      <AvailabilityDayGroups
+        bookingActionMode="enabled"
+        dayGroups={[
+          createDayGroup({
+            date: localDate('2026-05-14'),
+            displayDate: 'Thu 14 May',
+            slots: [createSlot('2026-05-14-900', '15:00', '16:00')],
+          }),
+        ]}
+        onBookSelection={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Book' })).toBeEnabled()
   })
 
-  it('keeps four columns when the last row would not orphan a single card', () => {
-    expect(getBalancedDayColumnCount(8, 1272)).toBe(4)
-  })
+  it('disables booking actions when booking is disabled', () => {
+    render(
+      <AvailabilityDayGroups
+        bookingActionMode="disabled"
+        dayGroups={[
+          createDayGroup({
+            date: localDate('2026-05-14'),
+            displayDate: 'Thu 14 May',
+            slots: [createSlot('2026-05-14-900', '15:00', '16:00')],
+          }),
+        ]}
+        onBookSelection={vi.fn()}
+      />,
+    )
 
-  it('keeps three columns when three columns already balance the rows', () => {
-    expect(getBalancedDayColumnCount(5, 960)).toBe(3)
-  })
+    expect(screen.getAllByRole('button', { name: 'Book' })).not.toHaveLength(0)
 
-  it('uses the actual root font size when converting rem-based layout tokens', () => {
-    expect(getBalancedDayColumnCount(5, 700, 20)).toBe(1)
-    expect(getBalancedDayColumnCount(5, 768, 20)).toBe(2)
+    for (const button of screen.getAllByRole('button', { name: 'Book' })) {
+      expect(button).toBeDisabled()
+    }
   })
 })
+
+function createDayGroup({
+  date,
+  displayDate,
+  slots,
+}: {
+  date: ReturnType<typeof localDate>
+  displayDate: string
+  slots: Array<ReturnType<typeof createSlot>>
+}) {
+  return {
+    date,
+    displayDate,
+    slots,
+  }
+}
+
+function createSlot(id: string, startTime: string, endTime: string) {
+  return {
+    endTime,
+    freeCapacity: 3,
+    id,
+    selection: {
+      cableId: 'pro' as const,
+      date: localDate('2026-05-14'),
+      endTime,
+      startTime,
+    },
+    startTime,
+    totalCapacity: 4,
+  }
+}
