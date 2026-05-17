@@ -83,13 +83,12 @@ export function normalizeAvailableDates(
 export function normalizeDailyAvailabilityWindow(
   cableId: CableId,
   date: LocalDateString,
-  countResponse: RawAvailableTimesResponse,
-  capacityResponse: RawAvailableTimesResponse,
+  response: RawAvailableTimesResponse,
 ): DailyAvailabilityWindow {
   return {
-    bookingSegments: normalizeBookingSegments(countResponse),
+    bookingSegments: normalizeBookingSegments(response),
     cableId,
-    capacitySegments: normalizeCapacitySegments(capacityResponse.tuples),
+    capacitySegments: normalizeCapacitySegments(response.tuples),
     date,
   }
 }

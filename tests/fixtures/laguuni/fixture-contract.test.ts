@@ -29,7 +29,7 @@ describe('Laguuni fixture contracts', () => {
 
   it('stores availability range fixtures as tuple lists', () => {
     expect(
-      proAvailabilityFixture.availableTimesCount.tuples.every(
+      proAvailabilityFixture.availableTimesCapacity.tuples.every(
         (entry) =>
           Array.isArray(entry) &&
           entry.length === 3 &&
