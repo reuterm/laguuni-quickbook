@@ -1,11 +1,11 @@
-import type { CableId } from '../../domain/cable'
-import type { LaguuniApi } from '../../lib/api/laguuni-api'
+import type { CableId } from '@/domain/cable'
+import type { LaguuniApi } from '@/lib/api/laguuni-api'
 import {
   addCalendarDays,
   formatLocalDate,
   type LocalDateString,
   startOfWeek,
-} from '../../lib/date'
+} from '@/lib/date'
 import { formatDisplayDate } from './availability-format'
 import type { AvailabilityDayGroup } from './availability-model'
 import { createAvailabilitySlots } from './availability-slots'

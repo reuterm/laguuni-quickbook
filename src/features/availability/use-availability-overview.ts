@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 
-import type { CableId } from '../../domain/cable'
-import type { LaguuniApi } from '../../lib/api/laguuni-api'
-import type { LocalDateString } from '../../lib/date'
-import { addCalendarDays, startOfWeek } from '../../lib/date'
+import type { CableId } from '@/domain/cable'
+import type { LaguuniApi } from '@/lib/api/laguuni-api'
+import type { LocalDateString } from '@/lib/date'
+import { addCalendarDays, startOfWeek } from '@/lib/date'
 import {
   AVAILABILITY_INITIAL_WEEK_COUNT,
   AVAILABILITY_MAX_WEEK_COUNT,

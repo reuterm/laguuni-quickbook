@@ -6,7 +6,7 @@ import {
   parseLocalDate,
   startOfDay,
   startOfWeek,
-} from '../../lib/date'
+} from '@/lib/date'
 import type {
   AvailabilityDayGroup,
   AvailabilitySlot,
