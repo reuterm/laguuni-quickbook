@@ -1,10 +1,7 @@
 import type { CableId } from '../../domain/cable'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
-import {
-  addCalendarDays,
-  formatDateKey,
-  getAvailabilityWeekStartDate,
-} from './availability-calendar'
+import { addDays, startOfWeek } from '../../lib/date'
+import { addCalendarDays, formatDateKey } from './availability-calendar'
 import { createAnchorDate, formatDisplayDate } from './availability-format'
 import type { AvailabilityDayGroup } from './availability-model'
 import { createAvailabilitySlots } from './availability-slots'
@@ -47,7 +44,7 @@ export async function loadAvailabilityWeek(
   cableId: CableId,
   weekStartDate: Date = new Date(),
 ): Promise<AvailabilityWeekPage> {
-  const normalizedWeekStartDate = getAvailabilityWeekStartDate(weekStartDate)
+  const normalizedWeekStartDate = startOfWeek(weekStartDate)
   const dayGroups = await loadAvailabilityRange(
     api,
     cableId,
@@ -69,7 +66,7 @@ export async function loadAvailabilityOverview(
   rangeStartDate: Date = new Date(),
   weekCount: number = AVAILABILITY_INITIAL_WEEK_COUNT,
 ): Promise<readonly AvailabilityDayGroup[]> {
-  const normalizedStartDate = getAvailabilityWeekStartDate(rangeStartDate)
+  const normalizedStartDate = startOfWeek(rangeStartDate)
   const weekPages = await Promise.all(
     Array.from({ length: weekCount }, (_, index) =>
       loadAvailabilityWeek(
@@ -115,11 +112,4 @@ function listDatesInRange(
   return Array.from({ length: dayCount }, (_, index) =>
     createAnchorDate(addDays(rangeStartDate, index)),
   )
-}
-
-function addDays(date: Date, days: number): Date {
-  const nextDate = new Date(date)
-  nextDate.setDate(nextDate.getDate() + days)
-
-  return nextDate
 }

@@ -3,6 +3,7 @@ import {
   subtleDividerClassName,
   subtleSurfaceBackgroundClassName,
 } from '@/components/ui/styles'
+import { startOfWeek } from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
 
@@ -10,7 +11,6 @@ import {
   AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   formatAvailabilityWeekLabel,
   formatDateKey,
-  getAvailabilityWeekStartDate,
   listCalendarSkeletonWeeks,
   listVisibleWeekdayIndices,
 } from '../availability-calendar'
@@ -25,9 +25,7 @@ type AvailabilityCalendarLoadingGridProps = {
 export function AvailabilityCalendarLoadingGrid({
   availabilityReferenceDate,
 }: AvailabilityCalendarLoadingGridProps) {
-  const rangeStartDate = getAvailabilityWeekStartDate(
-    availabilityReferenceDate ?? new Date(),
-  )
+  const rangeStartDate = startOfWeek(availabilityReferenceDate ?? new Date())
   const showFullWeekColumns = useMediaQuery(
     AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   )

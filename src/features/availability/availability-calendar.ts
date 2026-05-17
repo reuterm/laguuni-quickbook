@@ -1,4 +1,11 @@
-import { parseLocalDate } from '../../lib/date'
+import {
+  addDays,
+  addWeeks,
+  format,
+  parseLocalDate,
+  startOfDay,
+  startOfWeek,
+} from '../../lib/date'
 import type {
   AvailabilityDayGroup,
   AvailabilitySlot,
@@ -21,7 +28,7 @@ export function groupAvailabilityWeeks(
   const dayGroupsByWeek = new Map<string, AvailabilityWeek>()
 
   for (const dayGroup of dayGroups) {
-    const weekStartDate = getWeekStartDate(dayGroup.date)
+    const weekStartDate = startOfWeek(parseLocalDate(dayGroup.date))
     const weekId = formatDateKey(weekStartDate)
     const weekdayIndex = getWeekdayIndex(dayGroup.date)
     const existingWeek = dayGroupsByWeek.get(weekId)
@@ -58,8 +65,7 @@ export function listVisibleWeekdayIndices(
   }
 
   const rangeStart = startOfDay(rangeStartDate)
-  const rangeEnd = startOfDay(rangeStartDate)
-  rangeEnd.setDate(rangeEnd.getDate() + rangeDayCount - 1)
+  const rangeEnd = addDays(startOfDay(rangeStartDate), rangeDayCount - 1)
 
   const visibleDayIndices: number[] = []
 
@@ -74,37 +80,22 @@ export function listVisibleWeekdayIndices(
   return visibleDayIndices
 }
 
-export function getAvailabilityWeekStartDate(date: Date) {
-  const currentDate = startOfDay(date)
-  const weekday = currentDate.getDay()
-  const mondayOffset = weekday === 0 ? -6 : 1 - weekday
-  currentDate.setDate(currentDate.getDate() + mondayOffset)
-
-  return currentDate
-}
-
 export function addCalendarDays(date: Date, dayCount: number) {
-  const nextDate = startOfDay(date)
-  nextDate.setDate(nextDate.getDate() + dayCount)
-
-  return nextDate
+  return addDays(startOfDay(date), dayCount)
 }
 
 export function listCalendarSkeletonWeeks(
   rangeStartDate: Date,
   rangeDayCount: number,
 ) {
-  const rangeEndDate = startOfDay(rangeStartDate)
-  rangeEndDate.setDate(rangeEndDate.getDate() + rangeDayCount - 1)
+  const rangeEndDate = addDays(startOfDay(rangeStartDate), rangeDayCount - 1)
 
   const weeks: Date[] = []
-  let currentWeekStartDate = getAvailabilityWeekStartDate(rangeStartDate)
+  let currentWeekStartDate = startOfWeek(rangeStartDate)
 
   while (currentWeekStartDate <= rangeEndDate) {
     weeks.push(currentWeekStartDate)
-    const nextWeekStartDate = new Date(currentWeekStartDate)
-    nextWeekStartDate.setDate(nextWeekStartDate.getDate() + 7)
-    currentWeekStartDate = nextWeekStartDate
+    currentWeekStartDate = addWeeks(new Date(currentWeekStartDate), 1)
   }
 
   return weeks
@@ -158,8 +149,7 @@ export function formatAvailabilityDayLabel(date: string) {
 }
 
 export function formatAvailabilityWeekLabel(weekStartDate: Date) {
-  const weekEndDate = new Date(weekStartDate)
-  weekEndDate.setDate(weekEndDate.getDate() + 6)
+  const weekEndDate = addDays(new Date(weekStartDate), 6)
 
   const formatter = new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
@@ -170,37 +160,19 @@ export function formatAvailabilityWeekLabel(weekStartDate: Date) {
 }
 
 export function formatDateKey(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
+  return format(date, 'yyyy-MM-dd')
 }
 
 export function getWeekdayDate(weekStartDate: Date, dayIndex: number) {
-  const dayDate = new Date(weekStartDate)
-  dayDate.setDate(dayDate.getDate() + dayIndex)
-
-  return dayDate
+  return addDays(new Date(weekStartDate), dayIndex)
 }
 
 export function getWeekdayLabel(dayIndex: number) {
   return weekdayLabels[dayIndex]
 }
 
-function getWeekStartDate(date: string) {
-  return getAvailabilityWeekStartDate(parseLocalDate(date))
-}
-
 function getWeekdayIndex(date: string) {
   const weekday = parseLocalDate(date).getDay()
 
   return weekday === 0 ? 6 : weekday - 1
-}
-
-function startOfDay(date: Date) {
-  const day = new Date(date)
-  day.setHours(0, 0, 0, 0)
-
-  return day
 }

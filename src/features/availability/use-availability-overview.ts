@@ -2,10 +2,8 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 
 import type { CableId } from '../../domain/cable'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
-import {
-  addCalendarDays,
-  getAvailabilityWeekStartDate,
-} from './availability-calendar'
+import { startOfWeek } from '../../lib/date'
+import { addCalendarDays } from './availability-calendar'
 import {
   AVAILABILITY_INITIAL_WEEK_COUNT,
   AVAILABILITY_MAX_WEEK_COUNT,
@@ -559,7 +557,7 @@ function availabilityOverviewReducer(
 
 function getInitialAvailabilityRange(referenceDate?: Date): LoadedRange {
   return {
-    startWeekDate: getAvailabilityWeekStartDate(referenceDate ?? new Date()),
+    startWeekDate: startOfWeek(referenceDate ?? new Date()),
     weekCount: AVAILABILITY_INITIAL_WEEK_COUNT,
   }
 }

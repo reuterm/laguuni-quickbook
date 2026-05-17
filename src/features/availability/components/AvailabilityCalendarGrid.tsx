@@ -1,4 +1,5 @@
 import { SectionHeader } from '@/components/ui/section-header'
+import { addDays, startOfDay } from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 
 import {
@@ -87,20 +88,8 @@ function getRangeEndDate(
   const lastDayGroup = dayGroups.at(-1)
 
   if (lastDayGroup === undefined) {
-    const rangeEndDate = new Date(fallbackStartDate)
-    rangeEndDate.setDate(
-      rangeEndDate.getDate() + AVAILABILITY_WEEK_DAY_COUNT - 1,
-    )
-
-    return rangeEndDate
+    return addDays(fallbackStartDate, AVAILABILITY_WEEK_DAY_COUNT)
   }
 
-  return new Date(`${lastDayGroup.date}T00:00:00`)
-}
-
-function startOfDay(date: Date) {
-  const day = new Date(date)
-  day.setHours(0, 0, 0, 0)
-
-  return day
+  return startOfDay(lastDayGroup.date)
 }
