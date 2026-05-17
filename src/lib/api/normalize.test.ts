@@ -28,7 +28,6 @@ describe('normalizeDailyAvailabilityWindow', () => {
     const availabilityWindow = normalizeDailyAvailabilityWindow(
       'easy',
       localDate('2026-05-03'),
-      decodeAvailableTimesResponse(easyAvailabilityFixture.availableTimesCount),
       decodeAvailableTimesResponse(
         easyAvailabilityFixture.availableTimesCapacity,
       ),

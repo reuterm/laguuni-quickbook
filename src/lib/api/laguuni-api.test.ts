@@ -26,12 +26,12 @@ describe('LaguuniApiClient', () => {
     )
   })
 
-  it('loads a daily availability window from count and capacity fixtures', async () => {
+  it('loads a daily availability window from the capacity fixture', async () => {
     const api = new LaguuniApiClient({
-      client: createSequentialHttpClient(
-        { data: easyAvailabilityFixture.availableTimesCount, status: 200 },
-        { data: easyAvailabilityFixture.availableTimesCapacity, status: 200 },
-      ),
+      client: createSequentialHttpClient({
+        data: easyAvailabilityFixture.availableTimesCapacity,
+        status: 200,
+      }),
     })
     const availabilityWindow = await api.getDailyAvailabilityWindow(
       'easy',

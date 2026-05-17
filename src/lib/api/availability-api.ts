@@ -42,27 +42,17 @@ export async function getDailyAvailabilityWindow(
   date: LocalDateString,
 ): Promise<DailyAvailabilityWindow> {
   const productId = getCableById(cableId).productId
-  const [countResponse, capacityResponse] = await Promise.all([
-    client.request({
-      decoder: decodeAvailableTimesResponse,
-      path: `/api/laguuni/fi_FI/products/${productId}/availabletimes/${date}.json`,
-      query: {
-        count: 1,
-      },
-    }),
-    client.request({
-      decoder: decodeAvailableTimesResponse,
-      path: `/api/laguuni/fi_FI/products/${productId}/availabletimes/${date}.json`,
-      query: {
-        capacity: true,
-      },
-    }),
-  ])
+  const capacityResponse = await client.request({
+    decoder: decodeAvailableTimesResponse,
+    path: `/api/laguuni/fi_FI/products/${productId}/availabletimes/${date}.json`,
+    query: {
+      capacity: true,
+    },
+  })
 
   return normalizeDailyAvailabilityWindow(
     cableId,
     date,
-    expectResponse(countResponse, [200], 'load availability times'),
     expectResponse(capacityResponse, [200], 'load availability capacities'),
   )
 }
