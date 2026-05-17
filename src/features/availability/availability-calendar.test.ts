@@ -122,6 +122,50 @@ describe('availability-calendar', () => {
     ).toEqual([0, 1, 2, 3, 4, 5, 6])
   })
 
+  it('trims leading visible days that have no bookable slots', () => {
+    expect(
+      listVisibleWeekdayIndices(
+        new Date('2026-05-18T00:00:00'),
+        new Date('2026-05-18T12:00:00'),
+        false,
+        7,
+        [
+          null,
+          null,
+          {
+            ...FIXTURE_DAY_GROUPS[2],
+            date: localDate('2026-05-20'),
+            displayDate: 'Wed 20 May',
+          },
+          null,
+          null,
+          null,
+          null,
+        ],
+      ),
+    ).toEqual([2, 3, 4, 5, 6])
+  })
+
+  it('keeps visible days intact when the first visible day is already bookable', () => {
+    expect(
+      listVisibleWeekdayIndices(
+        new Date('2026-05-11T00:00:00'),
+        new Date('2026-05-14T12:00:00'),
+        false,
+        7,
+        [
+          null,
+          null,
+          null,
+          FIXTURE_DAY_GROUPS[0],
+          FIXTURE_DAY_GROUPS[1],
+          null,
+          null,
+        ],
+      ),
+    ).toEqual([3, 4, 5, 6])
+  })
+
   it('lists the loading skeleton weeks from the same loaded range', () => {
     expect(
       listCalendarSkeletonWeeks(new Date('2026-05-14T12:00:00'), 7).map(

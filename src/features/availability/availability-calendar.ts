@@ -60,6 +60,7 @@ export function listVisibleWeekdayIndices(
   rangeStartDate: Date,
   showFullWeekColumns: boolean,
   rangeDayCount: number,
+  dayGroups?: readonly (AvailabilityDayGroup | null)[],
 ) {
   if (showFullWeekColumns) {
     return weekdayLabels.map((_, dayIndex) => dayIndex)
@@ -78,7 +79,19 @@ export function listVisibleWeekdayIndices(
     }
   }
 
-  return visibleDayIndices
+  if (dayGroups === undefined) {
+    return visibleDayIndices
+  }
+
+  const firstBookableVisibleIndex = visibleDayIndices.findIndex((dayIndex) => {
+    const dayGroup = dayGroups[dayIndex]
+
+    return dayGroup !== null && dayGroup.slots.length > 0
+  })
+
+  return firstBookableVisibleIndex > 0
+    ? visibleDayIndices.slice(firstBookableVisibleIndex)
+    : visibleDayIndices
 }
 
 export function listCalendarSkeletonWeeks(

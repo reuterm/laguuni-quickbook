@@ -131,10 +131,10 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.getByRole('table')).toBeInTheDocument()
     expect(screen.getByText('11 May - 17 May')).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: /Mon 11 May 0 slots/i }),
+      screen.getByRole('columnheader', { name: /Thu 14 May 1 slot/i }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('columnheader', { name: /Thu 14 May 1 slot/i }),
+      screen.getByRole('columnheader', { name: /Mon 11 May 0 slots/i }),
     ).toBeInTheDocument()
     expect(screen.getByRole('rowheader', { name: '15:00' })).toBeInTheDocument()
   })
