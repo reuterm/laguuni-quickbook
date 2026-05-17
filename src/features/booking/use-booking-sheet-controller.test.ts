@@ -1,11 +1,12 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { localDate } from '../../../tests/local-date'
 import { useBookingSheetController } from './use-booking-sheet-controller'
 
 const selection = {
   cableId: 'pro' as const,
-  date: '2026-05-20',
+  date: localDate('2026-05-20'),
   endTime: '16:00',
   startTime: '15:00',
 }
@@ -125,7 +126,7 @@ describe('useBookingSheetController', () => {
     await act(async () => {
       result.current.requestBooking({
         cableId: 'easy',
-        date: '2026-05-21',
+        date: localDate('2026-05-21'),
         endTime: '17:00',
         startTime: '16:00',
       })
@@ -169,6 +170,13 @@ describe('useBookingSheetController', () => {
     })
 
     expect(onBookingFinalized).toHaveBeenCalledOnce()
+    expect(onBookingFinalized).toHaveBeenCalledWith({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+      selection,
+    })
   })
 
   it('does not call onBookingFinalized for payment-required bookings before dismiss', async () => {
@@ -366,10 +374,13 @@ describe('useBookingSheetController', () => {
     expect(releaseReservationMock).toHaveBeenCalledTimes(1)
     await waitFor(() => {
       expect(onBookingFinalized).toHaveBeenCalledWith({
-        errorCode: 'GENERAL_ERROR',
-        message: 'Fixture checkout failed.',
-        status: 'failed',
-        step: 'checkout',
+        result: {
+          errorCode: 'GENERAL_ERROR',
+          message: 'Fixture checkout failed.',
+          status: 'failed',
+          step: 'checkout',
+        },
+        selection,
       })
     })
   })
@@ -417,8 +428,11 @@ describe('useBookingSheetController', () => {
 
     await waitFor(() => {
       expect(onBookingFinalized).toHaveBeenCalledWith({
-        redirectUrl: 'https://example.com/pay',
-        status: 'payment_required',
+        result: {
+          redirectUrl: 'https://example.com/pay',
+          status: 'payment_required',
+        },
+        selection,
       })
     })
   })
@@ -457,8 +471,11 @@ describe('useBookingSheetController', () => {
     await waitFor(() => {
       expect(releaseReservationMock).toHaveBeenCalledTimes(1)
       expect(onBookingFinalized).toHaveBeenCalledWith({
-        redirectUrl: 'https://example.com/pay',
-        status: 'payment_required',
+        result: {
+          redirectUrl: 'https://example.com/pay',
+          status: 'payment_required',
+        },
+        selection,
       })
     })
     expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
@@ -496,8 +513,11 @@ describe('useBookingSheetController', () => {
     expect(releaseReservationMock).toHaveBeenCalledTimes(1)
     await waitFor(() => {
       expect(onBookingFinalized).toHaveBeenCalledWith({
-        redirectUrl: 'https://example.com/pay',
-        status: 'payment_required',
+        result: {
+          redirectUrl: 'https://example.com/pay',
+          status: 'payment_required',
+        },
+        selection,
       })
     })
   })
@@ -560,6 +580,9 @@ describe('useBookingSheetController', () => {
 function mockBookingFlow() {
   bookingFlowMocks.useBookingFlow.mockReturnValue({
     isBookingReady: true,
-    submitBooking: bookingFlowMocks.submitBooking,
+    submitBooking: vi.fn(async (selection) => ({
+      ...(await bookingFlowMocks.submitBooking(selection)),
+      selection,
+    })),
   })
 }

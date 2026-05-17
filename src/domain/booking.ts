@@ -1,8 +1,9 @@
+import type { LocalDateString } from '../lib/date'
 import type { CableId } from './cable'
 
 export type BookingSlotSelection = {
   cableId: CableId
-  date: string
+  date: LocalDateString
   endTime: string
   startTime: string
 }

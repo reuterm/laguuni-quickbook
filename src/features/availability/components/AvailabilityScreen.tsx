@@ -43,11 +43,8 @@ export function AvailabilityScreen({
   )
   const { selectedCable, selectCable } = useAvailabilityScope()
   const activeCable = getCableById(selectedCable)
-  const { availabilityState, refreshAvailability } = useAvailabilityOverview(
-    api,
-    selectedCable,
-    availabilityReferenceDate,
-  )
+  const { availabilityState, loadMoreAvailability, refreshAvailabilityDay } =
+    useAvailabilityOverview(api, selectedCable, availabilityReferenceDate)
   const handleExportTrace = useCallback(
     async (traceId: string) => {
       await exportDiagnosticsForTrace(
@@ -65,7 +62,9 @@ export function AvailabilityScreen({
     isBookingReady,
     requestBooking,
   } = useBookingSheetController({
-    onBookingFinalized: refreshAvailability,
+    onBookingFinalized: async ({ selection }) => {
+      await refreshAvailabilityDay(selection.date)
+    },
   })
 
   const handleDismissReadOnlyNotice = useCallback(() => {
@@ -150,6 +149,7 @@ export function AvailabilityScreen({
         <AvailabilityOverviewContent
           activeCableLabel={activeCable.label}
           availabilityState={availabilityState}
+          onLoadMore={loadMoreAvailability}
           {...bookingActionProps}
         />
       </div>

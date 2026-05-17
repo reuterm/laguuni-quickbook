@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import easyAvailabilityFixture from '../../../tests/fixtures/laguuni/availability/easy.json'
 import proAvailabilityFixture from '../../../tests/fixtures/laguuni/availability/pro.json'
+import { localDate } from '../../../tests/local-date'
 import {
   decodeAvailableDatesResponse,
   decodeAvailableTimesResponse,
@@ -12,7 +13,7 @@ describe('normalizeAvailableDates', () => {
   it('maps monthly day tuples into ISO dates', () => {
     const normalizedDates = normalizeAvailableDates(
       'pro',
-      '2026-05-03',
+      localDate('2026-05-03'),
       decodeAvailableDatesResponse(proAvailabilityFixture.availableDates),
     )
 
@@ -26,7 +27,7 @@ describe('normalizeDailyAvailabilityWindow', () => {
   it('uses storefront start times for bookable one-hour slots', () => {
     const availabilityWindow = normalizeDailyAvailabilityWindow(
       'easy',
-      '2026-05-03',
+      localDate('2026-05-03'),
       decodeAvailableTimesResponse(easyAvailabilityFixture.availableTimesCount),
       decodeAvailableTimesResponse(
         easyAvailabilityFixture.availableTimesCapacity,

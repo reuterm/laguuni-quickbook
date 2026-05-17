@@ -1,5 +1,9 @@
 import { SectionHeader } from '@/components/ui/section-header'
-import { eyebrowClassName } from '@/components/ui/styles'
+import {
+  addCalendarDays,
+  differenceInCalendarDays,
+  parseLocalDate,
+} from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 
 import {
@@ -8,7 +12,7 @@ import {
   listVisibleWeekdayIndices,
 } from '../availability-calendar'
 import type { AvailabilityDayGroup } from '../availability-service'
-import { AVAILABILITY_RANGE_DAY_COUNT } from '../availability-service'
+import { AVAILABILITY_WEEK_DAY_COUNT } from '../availability-service'
 import { AvailabilityCalendarWeek } from './AvailabilityCalendarWeek'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 
@@ -23,11 +27,20 @@ export function AvailabilityCalendarGrid({
   dayGroups,
   onBookSelection,
 }: AvailabilityCalendarGridProps) {
-  const weeks = groupAvailabilityWeeks(dayGroups)
+  const weeks = groupAvailabilityWeeks(dayGroups).filter((week) =>
+    week.days.some(
+      (dayGroup) => dayGroup !== null && dayGroup.slots.length > 0,
+    ),
+  )
   const rangeStartDate = availabilityReferenceDate ?? new Date()
+  const rangeEndDate = getRangeEndDate(dayGroups, rangeStartDate)
   const showFullWeekColumns = useMediaQuery(
     AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   )
+
+  if (weeks.length === 0) {
+    return null
+  }
 
   return (
     <section className="space-y-4" aria-label="Availability calendar">
@@ -37,12 +50,6 @@ export function AvailabilityCalendarGrid({
         title="Calendar"
         titleAs="h3"
         titleClassName="text-lg"
-        actions={
-          <p className={eyebrowClassName}>
-            {dayGroups.length} {dayGroups.length === 1 ? 'day' : 'days'} in
-            range
-          </p>
-        }
       />
 
       <div className="space-y-4">
@@ -53,7 +60,7 @@ export function AvailabilityCalendarGrid({
               week.weekStartDate,
               rangeStartDate,
               showFullWeekColumns,
-              AVAILABILITY_RANGE_DAY_COUNT,
+              getRangeDayCount(rangeStartDate, rangeEndDate),
             )}
             week={week}
             {...(bookingActionMode === 'hidden'
@@ -64,4 +71,21 @@ export function AvailabilityCalendarGrid({
       </div>
     </section>
   )
+}
+
+function getRangeDayCount(rangeStartDate: Date, rangeEndDate: Date) {
+  return differenceInCalendarDays(rangeStartDate, rangeEndDate) + 1
+}
+
+function getRangeEndDate(
+  dayGroups: readonly AvailabilityDayGroup[],
+  fallbackStartDate: Date,
+) {
+  const lastDayGroup = dayGroups.at(-1)
+
+  if (lastDayGroup === undefined) {
+    return addCalendarDays(fallbackStartDate, AVAILABILITY_WEEK_DAY_COUNT)
+  }
+
+  return parseLocalDate(lastDayGroup.date)
 }

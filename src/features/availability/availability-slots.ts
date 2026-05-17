@@ -1,9 +1,9 @@
+import { formatMinuteOfDay } from '@/lib/date'
 import type {
   BookingSegment,
   CapacitySegment,
   DailyAvailabilityWindow,
 } from '../../domain/slot'
-import { formatMinuteOfDay } from './availability-format'
 import type { AvailabilitySlot } from './availability-model'
 
 const SLOT_DURATION_MINUTES = 60

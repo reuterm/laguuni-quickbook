@@ -1,6 +1,7 @@
 import type { CableId } from '../../domain/cable'
 import { getCableById } from '../../domain/cable'
 import type { AvailableDate, DailyAvailabilityWindow } from '../../domain/slot'
+import type { LocalDateString } from '../date'
 import type { HttpClient } from './client'
 import {
   decodeAvailableDatesResponse,
@@ -13,7 +14,7 @@ import { expectResponse } from './response'
 export async function getAvailableDates(
   client: HttpClient,
   cableId: CableId,
-  anchorDate: string,
+  anchorDate: LocalDateString,
 ): Promise<readonly AvailableDate[]> {
   const productId = getCableById(cableId).productId
   const response = await client.request({
@@ -38,7 +39,7 @@ export async function getAvailableDates(
 export async function getDailyAvailabilityWindow(
   client: HttpClient,
   cableId: CableId,
-  date: string,
+  date: LocalDateString,
 ): Promise<DailyAvailabilityWindow> {
   const productId = getCableById(cableId).productId
   const [countResponse, capacityResponse] = await Promise.all([

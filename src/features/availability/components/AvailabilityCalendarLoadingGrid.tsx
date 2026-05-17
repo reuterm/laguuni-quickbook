@@ -3,17 +3,16 @@ import {
   subtleDividerClassName,
   subtleSurfaceBackgroundClassName,
 } from '@/components/ui/styles'
+import { formatLocalDate, startOfWeek } from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
-
 import {
   AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   formatAvailabilityWeekLabel,
-  formatDateKey,
   listCalendarSkeletonWeeks,
   listVisibleWeekdayIndices,
 } from '../availability-calendar'
-import { AVAILABILITY_RANGE_DAY_COUNT } from '../availability-service'
+import { AVAILABILITY_INITIAL_RANGE_DAY_COUNT } from '../availability-service'
 import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame'
 import { availabilityCalendarColumnClassNames } from './availability-calendar-ui'
 
@@ -24,13 +23,13 @@ type AvailabilityCalendarLoadingGridProps = {
 export function AvailabilityCalendarLoadingGrid({
   availabilityReferenceDate,
 }: AvailabilityCalendarLoadingGridProps) {
-  const rangeStartDate = availabilityReferenceDate ?? new Date()
+  const rangeStartDate = startOfWeek(availabilityReferenceDate ?? new Date())
   const showFullWeekColumns = useMediaQuery(
     AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   )
   const loadingWeekStartDates = listCalendarSkeletonWeeks(
     rangeStartDate,
-    AVAILABILITY_RANGE_DAY_COUNT,
+    AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
   )
 
   return (
@@ -39,7 +38,7 @@ export function AvailabilityCalendarLoadingGrid({
 
       {loadingWeekStartDates.map((weekStartDate) => (
         <AvailabilityCalendarLoadingWeek
-          key={formatDateKey(weekStartDate)}
+          key={formatLocalDate(weekStartDate)}
           rangeStartDate={rangeStartDate}
           showFullWeekColumns={showFullWeekColumns}
           weekStartDate={weekStartDate}
@@ -60,12 +59,12 @@ function AvailabilityCalendarLoadingWeek({
   showFullWeekColumns,
   weekStartDate,
 }: AvailabilityCalendarLoadingWeekProps) {
-  const weekKey = formatDateKey(weekStartDate)
+  const weekKey = formatLocalDate(weekStartDate)
   const visibleDayIndices = listVisibleWeekdayIndices(
     weekStartDate,
     rangeStartDate,
     showFullWeekColumns,
-    AVAILABILITY_RANGE_DAY_COUNT,
+    AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
   )
   const loadingTimeKeys = ['time-1', 'time-2', 'time-3', 'time-4', 'time-5']
   const dayHeaders = visibleDayIndices.map((dayIndex) => (

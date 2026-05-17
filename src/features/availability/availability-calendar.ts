@@ -1,4 +1,12 @@
-import { parseLocalDate } from '../../lib/date'
+import {
+  addCalendarDays,
+  addWeeks,
+  formatLocalDate,
+  type LocalDateString,
+  parseLocalDate,
+  startOfDay,
+  startOfWeek,
+} from '@/lib/date'
 import type {
   AvailabilityDayGroup,
   AvailabilitySlot,
@@ -21,8 +29,8 @@ export function groupAvailabilityWeeks(
   const dayGroupsByWeek = new Map<string, AvailabilityWeek>()
 
   for (const dayGroup of dayGroups) {
-    const weekStartDate = getWeekStartDate(dayGroup.date)
-    const weekId = formatDateKey(weekStartDate)
+    const weekStartDate = startOfWeek(parseLocalDate(dayGroup.date))
+    const weekId = formatLocalDate(weekStartDate)
     const weekdayIndex = getWeekdayIndex(dayGroup.date)
     const existingWeek = dayGroupsByWeek.get(weekId)
 
@@ -58,8 +66,7 @@ export function listVisibleWeekdayIndices(
   }
 
   const rangeStart = startOfDay(rangeStartDate)
-  const rangeEnd = startOfDay(rangeStartDate)
-  rangeEnd.setDate(rangeEnd.getDate() + rangeDayCount - 1)
+  const rangeEnd = addCalendarDays(rangeStartDate, rangeDayCount - 1)
 
   const visibleDayIndices: number[] = []
 
@@ -78,17 +85,14 @@ export function listCalendarSkeletonWeeks(
   rangeStartDate: Date,
   rangeDayCount: number,
 ) {
-  const rangeEndDate = startOfDay(rangeStartDate)
-  rangeEndDate.setDate(rangeEndDate.getDate() + rangeDayCount - 1)
+  const rangeEndDate = addCalendarDays(rangeStartDate, rangeDayCount - 1)
 
   const weeks: Date[] = []
-  let currentWeekStartDate = getWeekStartDate(formatDateKey(rangeStartDate))
+  let currentWeekStartDate = startOfWeek(rangeStartDate)
 
   while (currentWeekStartDate <= rangeEndDate) {
     weeks.push(currentWeekStartDate)
-    const nextWeekStartDate = new Date(currentWeekStartDate)
-    nextWeekStartDate.setDate(nextWeekStartDate.getDate() + 7)
-    currentWeekStartDate = nextWeekStartDate
+    currentWeekStartDate = addWeeks(new Date(currentWeekStartDate), 1)
   }
 
   return weeks
@@ -130,11 +134,11 @@ export function createSlotLookup(
   return slotLookup
 }
 
-export function createSlotLookupKey(date: string, startTime: string) {
+export function createSlotLookupKey(date: LocalDateString, startTime: string) {
   return `${date}:${startTime}`
 }
 
-export function formatAvailabilityDayLabel(date: string) {
+export function formatAvailabilityDayLabel(date: LocalDateString) {
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'short',
@@ -142,8 +146,7 @@ export function formatAvailabilityDayLabel(date: string) {
 }
 
 export function formatAvailabilityWeekLabel(weekStartDate: Date) {
-  const weekEndDate = new Date(weekStartDate)
-  weekEndDate.setDate(weekEndDate.getDate() + 6)
+  const weekEndDate = addCalendarDays(weekStartDate, 6)
 
   const formatter = new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
@@ -153,43 +156,16 @@ export function formatAvailabilityWeekLabel(weekStartDate: Date) {
   return `${formatter.format(weekStartDate)} - ${formatter.format(weekEndDate)}`
 }
 
-export function formatDateKey(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
 export function getWeekdayDate(weekStartDate: Date, dayIndex: number) {
-  const dayDate = new Date(weekStartDate)
-  dayDate.setDate(dayDate.getDate() + dayIndex)
-
-  return dayDate
+  return addCalendarDays(weekStartDate, dayIndex)
 }
 
 export function getWeekdayLabel(dayIndex: number) {
   return weekdayLabels[dayIndex]
 }
 
-function getWeekStartDate(date: string) {
-  const currentDate = parseLocalDate(date)
-  const weekday = currentDate.getDay()
-  const mondayOffset = weekday === 0 ? -6 : 1 - weekday
-  currentDate.setDate(currentDate.getDate() + mondayOffset)
-
-  return startOfDay(currentDate)
-}
-
-function getWeekdayIndex(date: string) {
+function getWeekdayIndex(date: LocalDateString) {
   const weekday = parseLocalDate(date).getDay()
 
   return weekday === 0 ? 6 : weekday - 1
-}
-
-function startOfDay(date: Date) {
-  const day = new Date(date)
-  day.setHours(0, 0, 0, 0)
-
-  return day
 }

@@ -1,5 +1,6 @@
 import type { BookingProfile, BookingSlotSelection } from '../../domain/booking'
 import { getCableById } from '../../domain/cable'
+import type { LocalDateString } from '../date'
 import type { CheckoutPaymentMethod } from './booking-contracts'
 
 export function createAddReservationRequestBody(
@@ -43,7 +44,7 @@ export function createApplyCodeRequestBody(code: string) {
   return { code }
 }
 
-function formatStorefrontDate(date: string): string {
+function formatStorefrontDate(date: LocalDateString): string {
   const [year, month, day] = date.split('-')
 
   if (!year || !month || !day) {

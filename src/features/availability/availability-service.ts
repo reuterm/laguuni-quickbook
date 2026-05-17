@@ -1,10 +1,27 @@
-import type { CableId } from '../../domain/cable'
-import type { LaguuniApi } from '../../lib/api/laguuni-api'
-import { createAnchorDate, formatDisplayDate } from './availability-format'
+import type { CableId } from '@/domain/cable'
+import type { LaguuniApi } from '@/lib/api/laguuni-api'
+import {
+  addCalendarDays,
+  formatDisplayDate,
+  formatLocalDate,
+  type LocalDateString,
+  startOfWeek,
+} from '@/lib/date'
 import type { AvailabilityDayGroup } from './availability-model'
 import { createAvailabilitySlots } from './availability-slots'
 
-export const AVAILABILITY_RANGE_DAY_COUNT = 7
+export const AVAILABILITY_WEEK_DAY_COUNT = 7
+export const AVAILABILITY_INITIAL_WEEK_COUNT = 2
+export const AVAILABILITY_MAX_WEEK_COUNT = 4
+export const AVAILABILITY_INITIAL_RANGE_DAY_COUNT =
+  AVAILABILITY_WEEK_DAY_COUNT * AVAILABILITY_INITIAL_WEEK_COUNT
+
+export type AvailabilityWeekPage = {
+  dayGroups: readonly AvailabilityDayGroup[]
+  hasBookableSlots: boolean
+  weekId: string
+  weekStartDate: Date
+}
 
 export type {
   AvailabilityDayGroup,
@@ -12,44 +29,91 @@ export type {
 } from './availability-model'
 export { createAvailabilitySlots } from './availability-slots'
 
+export async function loadAvailabilityDay(
+  api: LaguuniApi,
+  cableId: CableId,
+  date: LocalDateString,
+): Promise<AvailabilityDayGroup> {
+  const dailyWindow = await api.getDailyAvailabilityWindow(cableId, date)
+
+  return {
+    date: dailyWindow.date,
+    displayDate: formatDisplayDate(dailyWindow.date),
+    slots: createAvailabilitySlots(dailyWindow),
+  }
+}
+
+export async function loadAvailabilityWeek(
+  api: LaguuniApi,
+  cableId: CableId,
+  weekStartDate: Date = new Date(),
+): Promise<AvailabilityWeekPage> {
+  const normalizedWeekStartDate = startOfWeek(weekStartDate)
+  const dayGroups = await loadAvailabilityRange(
+    api,
+    cableId,
+    normalizedWeekStartDate,
+    AVAILABILITY_WEEK_DAY_COUNT,
+  )
+
+  return {
+    dayGroups,
+    hasBookableSlots: dayGroups.some((dayGroup) => dayGroup.slots.length > 0),
+    weekId: formatLocalDate(normalizedWeekStartDate),
+    weekStartDate: normalizedWeekStartDate,
+  }
+}
+
 export async function loadAvailabilityOverview(
   api: LaguuniApi,
   cableId: CableId,
-  referenceDate: Date = new Date(),
+  rangeStartDate: Date = new Date(),
+  weekCount: number = AVAILABILITY_INITIAL_WEEK_COUNT,
 ): Promise<readonly AvailabilityDayGroup[]> {
-  const datesInRange = listDatesInRange(
-    referenceDate,
-    AVAILABILITY_RANGE_DAY_COUNT,
+  const normalizedStartDate = startOfWeek(rangeStartDate)
+  const weekPages = await Promise.all(
+    Array.from({ length: weekCount }, (_, index) =>
+      loadAvailabilityWeek(
+        api,
+        cableId,
+        addCalendarDays(
+          normalizedStartDate,
+          index * AVAILABILITY_WEEK_DAY_COUNT,
+        ),
+      ),
+    ),
   )
+
+  return weekPages.flatMap((weekPage) => weekPage.dayGroups)
+}
+
+async function loadAvailabilityRange(
+  api: LaguuniApi,
+  cableId: CableId,
+  rangeStartDate: Date,
+  dayCount: number,
+) {
+  const datesInRange = listDatesInRange(rangeStartDate, dayCount)
   const dailyWindows = await Promise.all(
     datesInRange.map((date) => api.getDailyAvailabilityWindow(cableId, date)),
   )
 
-  return dailyWindows
-    .map((dailyWindow) => {
-      const dayGroup = {
-        date: dailyWindow.date,
-        displayDate: formatDisplayDate(dailyWindow.date),
-        slots: createAvailabilitySlots(dailyWindow),
-      } satisfies AvailabilityDayGroup
+  return dailyWindows.map((dailyWindow) => {
+    const dayGroup = {
+      date: dailyWindow.date,
+      displayDate: formatDisplayDate(dailyWindow.date),
+      slots: createAvailabilitySlots(dailyWindow),
+    } satisfies AvailabilityDayGroup
 
-      return dayGroup
-    })
-    .filter((dayGroup) => dayGroup.slots.length > 0)
+    return dayGroup
+  })
 }
 
 function listDatesInRange(
   rangeStartDate: Date,
   dayCount: number,
-): readonly string[] {
+): readonly LocalDateString[] {
   return Array.from({ length: dayCount }, (_, index) =>
-    createAnchorDate(addDays(rangeStartDate, index)),
+    formatLocalDate(addCalendarDays(rangeStartDate, index)),
   )
-}
-
-function addDays(date: Date, days: number): Date {
-  const nextDate = new Date(date)
-  nextDate.setDate(nextDate.getDate() + days)
-
-  return nextDate
 }

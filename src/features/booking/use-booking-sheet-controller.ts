@@ -31,7 +31,10 @@ export type BookingSheetState =
 type UseBookingSheetControllerOptions = {
   successDismissDelayMs?: number
   onBookingFinalized?:
-    | ((result: BookingFlowResult) => void | Promise<void>)
+    | ((finalizedBooking: {
+        result: BookingFlowResult
+        selection: BookingSlotSelection
+      }) => void | Promise<void>)
     | undefined
 }
 
@@ -52,7 +55,10 @@ export function useBookingSheetController({
         await submission.releaseReservation()
       }
 
-      await onBookingFinalized?.(submission.result)
+      await onBookingFinalized?.({
+        result: submission.result,
+        selection: submission.selection,
+      })
     },
     [onBookingFinalized],
   )

@@ -8,6 +8,7 @@ import type { BookingSubmission } from './booking-service'
 import { validateBookingProfile } from './booking-validation'
 
 export type BookingFlowSubmission = BookingSubmission & {
+  selection: BookingSlotSelection
   traceId: string
 }
 
@@ -31,6 +32,7 @@ export function useBookingFlow() {
       )
 
       return {
+        selection,
         ...submission,
         traceId: trace.traceId,
       }

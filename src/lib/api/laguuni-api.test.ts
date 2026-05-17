@@ -4,6 +4,7 @@ import easyAvailabilityFixture from '../../../tests/fixtures/laguuni/availabilit
 import proAvailabilityFixture from '../../../tests/fixtures/laguuni/availability/pro.json'
 import checkoutFailureFixture from '../../../tests/fixtures/laguuni/booking/checkout-failure.json'
 import discountAcceptedFixture from '../../../tests/fixtures/laguuni/booking/discount-accepted.json'
+import { localDate } from '../../../tests/local-date'
 import type { HttpClient, HttpRequest, HttpResponse } from './client'
 import { LaguuniApiClient } from './laguuni-api'
 
@@ -15,7 +16,10 @@ describe('LaguuniApiClient', () => {
         status: 200,
       }),
     })
-    const availableDates = await api.getAvailableDates('pro', '2026-05-03')
+    const availableDates = await api.getAvailableDates(
+      'pro',
+      localDate('2026-05-03'),
+    )
 
     expect(availableDates.map((availableDate) => availableDate.date)).toContain(
       '2026-05-08',
@@ -31,7 +35,7 @@ describe('LaguuniApiClient', () => {
     })
     const availabilityWindow = await api.getDailyAvailabilityWindow(
       'easy',
-      '2026-05-03',
+      localDate('2026-05-03'),
     )
 
     expect(availabilityWindow).toMatchObject({
