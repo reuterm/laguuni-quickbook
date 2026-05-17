@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useRef } from 'react'
-
 import { useAvailabilityReferenceDate } from '@/app/providers'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -21,9 +19,8 @@ import {
   availabilityDayAutoFitGridStyle,
 } from './AvailabilityDayGroups'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
-
-const LOAD_MORE_TRIGGER_ROOT_MARGIN_PX = 320
-type AutoLoadSource = 'intersection' | 'no-scroll' | 'scroll'
+import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
+import { useAvailabilityAutoLoad } from './use-availability-auto-load'
 
 type AvailabilityOverviewContentProps = {
   activeCableLabel: string
@@ -39,166 +36,24 @@ export function AvailabilityOverviewContent({
 }: AvailabilityOverviewContentProps) {
   const { settings } = useUserSettings()
   const availabilityReferenceDate = useAvailabilityReferenceDate()
-  const hasUserScrolledRef = useRef(false)
-  const lastAutoLoadScrollYRef = useRef(-1)
-  const lastNoScrollAttemptKeyRef = useRef('')
-  const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null)
-  const isRefreshing = availabilityState.status === 'refreshing'
-  const isCalendarView = settings.availabilityView === 'calendar'
+  const contentModel = getAvailabilityOverviewContentModel(
+    availabilityState,
+    settings.availabilityView,
+  )
   const canLoadMore =
     availabilityState.status === 'ready' && availabilityState.canLoadMore
-  const hasLoadedDayGroups =
-    availabilityState.status === 'ready' ||
-    availabilityState.status === 'refreshing'
-  const hasAppendError =
-    hasLoadedDayGroups && availabilityState.appendErrorMessage !== null
-  const canAutoLoadMore = canLoadMore && !hasAppendError
-  const renderedDayGroups = hasLoadedDayGroups
-    ? availabilityState.dayGroups
-    : []
-  const renderedCardDayGroups = renderedDayGroups.filter(
-    (dayGroup) => dayGroup.slots.length > 0,
-  )
-  const hasRenderedAvailability = renderedDayGroups.some(
-    (dayGroup) => dayGroup.slots.length > 0,
-  )
+  const canAutoLoadMore = canLoadMore && !contentModel.hasAppendError
 
-  const canAttemptAutoLoad =
-    hasLoadedDayGroups && canAutoLoadMore && !availabilityState.isLoadingMore
-
-  const attemptAutoLoad = useCallback(
-    (source: AutoLoadSource) => {
-      if (!canAttemptAutoLoad) {
-        return
-      }
-
-      if (source === 'no-scroll') {
-        if (hasScrolled(hasUserScrolledRef.current) || isPageScrollable()) {
-          return
-        }
-
-        const autoLoadKey = `${renderedDayGroups.length}:${window.innerHeight}`
-
-        if (lastNoScrollAttemptKeyRef.current === autoLoadKey) {
-          return
-        }
-
-        lastNoScrollAttemptKeyRef.current = autoLoadKey
-        void onLoadMore()
-        return
-      }
-
-      if (
-        !hasScrolled(hasUserScrolledRef.current) ||
-        !isTriggerWithinLoadRange(loadMoreTriggerRef.current)
-      ) {
-        return
-      }
-
-      if (window.scrollY <= lastAutoLoadScrollYRef.current) {
-        return
-      }
-
-      lastAutoLoadScrollYRef.current = window.scrollY
-      void onLoadMore()
-    },
-    [canAttemptAutoLoad, onLoadMore, renderedDayGroups.length],
-  )
-
-  useEffect(() => {
-    if (!hasLoadedDayGroups) {
-      hasUserScrolledRef.current = false
-      lastAutoLoadScrollYRef.current = -1
-      lastNoScrollAttemptKeyRef.current = ''
-      return undefined
-    }
-
-    if (!canAttemptAutoLoad) {
-      return undefined
-    }
-
-    const handleScroll = () => {
-      if (window.scrollY > 0) {
-        hasUserScrolledRef.current = true
-      }
-
-      attemptAutoLoad('scroll')
-    }
-
-    handleScroll()
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    if (typeof IntersectionObserver !== 'function') {
-      return () => {
-        window.removeEventListener('scroll', handleScroll)
-      }
-    }
-
-    const loadMoreTrigger = loadMoreTriggerRef.current
-
-    if (!(loadMoreTrigger instanceof HTMLDivElement)) {
-      return () => {
-        window.removeEventListener('scroll', handleScroll)
-      }
-    }
-
-    const intersectionObserver = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) {
-          return
-        }
-
-        attemptAutoLoad('intersection')
-      },
-      {
-        root: null,
-        rootMargin: `0px 0px ${LOAD_MORE_TRIGGER_ROOT_MARGIN_PX}px 0px`,
-      },
-    )
-
-    intersectionObserver.observe(loadMoreTrigger)
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-      intersectionObserver.disconnect()
-    }
-  }, [attemptAutoLoad, canAttemptAutoLoad, hasLoadedDayGroups])
-
-  useEffect(() => {
-    if (!hasLoadedDayGroups) {
-      lastNoScrollAttemptKeyRef.current = ''
-      return undefined
-    }
-
-    if (!canAttemptAutoLoad) {
-      return undefined
-    }
-
-    if (hasScrolled(hasUserScrolledRef.current)) {
-      return undefined
-    }
-
-    let timeoutId = 0
-
-    const scheduleAutoLoadWithoutScroll = () => {
-      window.clearTimeout(timeoutId)
-      // Re-check after layout settles so tall viewports can bootstrap into a scrollable page.
-      timeoutId = window.setTimeout(() => {
-        attemptAutoLoad('no-scroll')
-      }, 0)
-    }
-
-    scheduleAutoLoadWithoutScroll()
-    window.addEventListener('resize', scheduleAutoLoadWithoutScroll)
-
-    return () => {
-      window.removeEventListener('resize', scheduleAutoLoadWithoutScroll)
-      window.clearTimeout(timeoutId)
-    }
-  }, [attemptAutoLoad, canAttemptAutoLoad, hasLoadedDayGroups])
+  const { loadMoreTriggerRef } = useAvailabilityAutoLoad({
+    canAutoLoadMore,
+    hasLoadedDayGroups: contentModel.hasLoadedDayGroups,
+    isLoadingMore: availabilityState.isLoadingMore,
+    loadedDayGroupCount: contentModel.renderedDayGroups.length,
+    onLoadMore,
+  })
 
   if (availabilityState.status === 'loading') {
-    if (isCalendarView) {
+    if (contentModel.isCalendarView) {
       return (
         <AvailabilityCalendarLoadingGrid
           availabilityReferenceDate={availabilityReferenceDate}
@@ -242,22 +97,22 @@ export function AvailabilityOverviewContent({
 
   return (
     <div className="space-y-3">
-      {isRefreshing ? (
+      {contentModel.isRefreshing ? (
         <p className={eyebrowClassName} role="status" aria-live="polite">
           Refreshing availability…
         </p>
       ) : null}
 
-      {hasRenderedAvailability ? (
-        isCalendarView ? (
+      {contentModel.hasRenderedAvailability ? (
+        contentModel.isCalendarView ? (
           <AvailabilityCalendarGrid
             availabilityReferenceDate={availabilityReferenceDate}
-            dayGroups={renderedDayGroups}
+            dayGroups={contentModel.renderedDayGroups}
             {...bookingActionProps}
           />
         ) : (
           <AvailabilityDayGroups
-            dayGroups={renderedCardDayGroups}
+            dayGroups={contentModel.renderedCardDayGroups}
             {...bookingActionProps}
           />
         )
@@ -305,31 +160,5 @@ export function AvailabilityOverviewContent({
 
       <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-1 w-full" />
     </div>
-  )
-}
-
-function getPageScrollHeight() {
-  return Math.max(
-    document.documentElement.scrollHeight,
-    document.body?.scrollHeight ?? 0,
-  )
-}
-
-function hasScrolled(hasUserScrolled: boolean) {
-  return hasUserScrolled || window.scrollY > 0
-}
-
-function isPageScrollable() {
-  return getPageScrollHeight() > window.innerHeight
-}
-
-function isTriggerWithinLoadRange(loadMoreTrigger: HTMLDivElement | null) {
-  if (!(loadMoreTrigger instanceof HTMLDivElement)) {
-    return false
-  }
-
-  return (
-    loadMoreTrigger.getBoundingClientRect().top <=
-    window.innerHeight + LOAD_MORE_TRIGGER_ROOT_MARGIN_PX
   )
 }
