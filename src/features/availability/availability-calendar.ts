@@ -12,7 +12,7 @@ import type {
   AvailabilitySlot,
 } from './availability-model'
 
-export const AVAILABILITY_CALENDAR_BREAKPOINT_QUERY = '(min-width: 768px)'
+export const AVAILABILITY_CALENDAR_BREAKPOINT_QUERY = '(min-width: 758px)'
 
 const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 
