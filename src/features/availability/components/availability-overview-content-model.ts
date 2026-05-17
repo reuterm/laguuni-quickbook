@@ -24,8 +24,7 @@ export function getAvailabilityOverviewContentModel(
   const renderedDayGroups = hasLoadedDayGroups
     ? availabilityState.dayGroups
     : []
-  const isCalendarView =
-    availabilityView === 'calendar' || isCalendarBreakpoint
+  const isCalendarView = availabilityView === 'calendar' || isCalendarBreakpoint
 
   return {
     hasAppendError:
