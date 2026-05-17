@@ -3,36 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { localDate } from '../../../../tests/local-date'
 import type { AvailabilityDayGroup } from '../availability-service'
 import type { AvailabilityState } from '../use-availability-overview'
-import {
-  getAvailabilityOverviewContentModel,
-  getEffectiveAvailabilityOverviewViewMode,
-} from './availability-overview-content-model'
-
-describe('getEffectiveAvailabilityOverviewViewMode', () => {
-  it('keeps cards below the calendar breakpoint when cards are preferred', () => {
-    expect(getEffectiveAvailabilityOverviewViewMode('cards', false)).toBe(
-      'cards',
-    )
-  })
-
-  it('switches cards to calendar at the calendar breakpoint', () => {
-    expect(getEffectiveAvailabilityOverviewViewMode('cards', true)).toBe(
-      'calendar',
-    )
-  })
-
-  it('keeps calendar below the calendar breakpoint when calendar is preferred', () => {
-    expect(getEffectiveAvailabilityOverviewViewMode('calendar', false)).toBe(
-      'calendar',
-    )
-  })
-
-  it('keeps calendar at the calendar breakpoint when calendar is preferred', () => {
-    expect(getEffectiveAvailabilityOverviewViewMode('calendar', true)).toBe(
-      'calendar',
-    )
-  })
-})
+import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
 
 describe('getAvailabilityOverviewContentModel', () => {
   it('returns an empty render model while availability is loading', () => {
@@ -42,6 +13,7 @@ describe('getAvailabilityOverviewContentModel', () => {
         status: 'loading',
       },
       'cards',
+      false,
     )
 
     expect(model).toMatchObject({
@@ -61,6 +33,7 @@ describe('getAvailabilityOverviewContentModel', () => {
     const model = getAvailabilityOverviewContentModel(
       createLoadedState('refreshing', dayGroups),
       'calendar',
+      false,
     )
 
     expect(model.isRefreshing).toBe(true)
@@ -80,6 +53,7 @@ describe('getAvailabilityOverviewContentModel', () => {
     const model = getAvailabilityOverviewContentModel(
       createLoadedState('ready', emptyDayGroups),
       'cards',
+      false,
     )
 
     expect(model.hasAppendError).toBe(false)
@@ -100,6 +74,7 @@ describe('getAvailabilityOverviewContentModel', () => {
         appendErrorMessage: 'Append failed',
       }),
       'cards',
+      false,
     )
 
     expect(model.hasAppendError).toBe(true)
@@ -107,6 +82,26 @@ describe('getAvailabilityOverviewContentModel', () => {
     expect(model.hasRenderedAvailability).toBe(true)
     expect(model.renderedDayGroups).toEqual([emptyDayGroup, bookableDayGroup])
     expect(model.renderedCardDayGroups).toEqual([bookableDayGroup])
+  })
+
+  it('switches cards to calendar at the calendar breakpoint', () => {
+    const model = getAvailabilityOverviewContentModel(
+      createLoadedState('ready'),
+      'cards',
+      true,
+    )
+
+    expect(model.isCalendarView).toBe(true)
+  })
+
+  it('keeps cards below the calendar breakpoint when cards are preferred', () => {
+    const model = getAvailabilityOverviewContentModel(
+      createLoadedState('ready'),
+      'cards',
+      false,
+    )
+
+    expect(model.isCalendarView).toBe(false)
   })
 })
 

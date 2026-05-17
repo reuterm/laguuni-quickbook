@@ -16,6 +16,7 @@ type AvailabilityOverviewContentModel = {
 export function getAvailabilityOverviewContentModel(
   availabilityState: AvailabilityState,
   availabilityView: AvailabilityOverviewViewMode,
+  isCalendarBreakpoint: boolean,
 ): AvailabilityOverviewContentModel {
   const hasLoadedDayGroups =
     availabilityState.status === 'ready' ||
@@ -23,6 +24,8 @@ export function getAvailabilityOverviewContentModel(
   const renderedDayGroups = hasLoadedDayGroups
     ? availabilityState.dayGroups
     : []
+  const isCalendarView =
+    availabilityView === 'calendar' || isCalendarBreakpoint
 
   return {
     hasAppendError:
@@ -31,24 +34,13 @@ export function getAvailabilityOverviewContentModel(
     hasRenderedAvailability: renderedDayGroups.some(
       (dayGroup) => dayGroup.slots.length > 0,
     ),
-    isCalendarView: availabilityView === 'calendar',
+    isCalendarView,
     isRefreshing: availabilityState.status === 'refreshing',
     renderedCardDayGroups: renderedDayGroups.filter(
       (dayGroup) => dayGroup.slots.length > 0,
     ),
     renderedDayGroups,
   }
-}
-
-export function getEffectiveAvailabilityOverviewViewMode(
-  availabilityView: AvailabilityOverviewViewMode,
-  isCalendarBreakpoint: boolean,
-): AvailabilityOverviewViewMode {
-  if (availabilityView === 'calendar') {
-    return 'calendar'
-  }
-
-  return isCalendarBreakpoint ? 'calendar' : 'cards'
 }
 
 export type { AvailabilityOverviewContentModel, AvailabilityOverviewViewMode }

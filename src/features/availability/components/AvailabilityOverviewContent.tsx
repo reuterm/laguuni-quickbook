@@ -20,10 +20,7 @@ import {
   availabilityDayAutoFitGridStyle,
 } from './AvailabilityDayGroups'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
-import {
-  getAvailabilityOverviewContentModel,
-  getEffectiveAvailabilityOverviewViewMode,
-} from './availability-overview-content-model'
+import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
 import { useAvailabilityAutoLoad } from './use-availability-auto-load'
 
 type AvailabilityOverviewContentProps = {
@@ -43,13 +40,10 @@ export function AvailabilityOverviewContent({
   const isCalendarBreakpoint = useMediaQuery(
     AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   )
-  const effectiveAvailabilityView = getEffectiveAvailabilityOverviewViewMode(
-    settings.availabilityView,
-    isCalendarBreakpoint,
-  )
   const contentModel = getAvailabilityOverviewContentModel(
     availabilityState,
-    effectiveAvailabilityView,
+    settings.availabilityView,
+    isCalendarBreakpoint,
   )
   const canLoadMore =
     availabilityState.status === 'ready' && availabilityState.canLoadMore
