@@ -141,7 +141,7 @@ export function useAvailabilityOverview(
         )
       }
     },
-    [loadWeeks],
+    [beginNextRangeRequest, loadWeeks],
   )
 
   const refreshAvailability = useCallback(async () => {
