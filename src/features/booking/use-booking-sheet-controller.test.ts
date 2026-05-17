@@ -1,11 +1,12 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { localDate } from '../../../tests/local-date'
 import { useBookingSheetController } from './use-booking-sheet-controller'
 
 const selection = {
   cableId: 'pro' as const,
-  date: '2026-05-20',
+  date: localDate('2026-05-20'),
   endTime: '16:00',
   startTime: '15:00',
 }
@@ -125,7 +126,7 @@ describe('useBookingSheetController', () => {
     await act(async () => {
       result.current.requestBooking({
         cableId: 'easy',
-        date: '2026-05-21',
+        date: localDate('2026-05-21'),
         endTime: '17:00',
         startTime: '16:00',
       })

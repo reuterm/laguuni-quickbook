@@ -2,6 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { localDate } from '../../../../tests/local-date'
 import { getBookingSelectionPresentation } from '../booking-selection-label'
 import { BookingConfirmPanel } from './BookingConfirmPanel'
 import { BookingSheet } from './BookingSheet'
@@ -9,7 +10,7 @@ import { BookingSubmittingPanel } from './BookingSubmittingPanel'
 
 const selectionSummary = getBookingSelectionPresentation({
   cableId: 'pro',
-  date: '2026-05-20',
+  date: localDate('2026-05-20'),
   endTime: '16:00',
   startTime: '15:00',
 })

@@ -4,13 +4,12 @@ import {
   subtleSurfaceBackgroundClassName,
 } from '@/components/ui/styles'
 import { cn } from '@/lib/utils'
-
+import { formatLocalDate } from '../../../lib/date'
 import {
   type AvailabilityWeek,
   createSlotLookup,
   createSlotLookupKey,
   formatAvailabilityDayLabel,
-  formatDateKey,
   getWeekdayDate,
   getWeekdayLabel,
   listCalendarTimes,
@@ -53,7 +52,7 @@ export function AvailabilityCalendarWeek({
           <p className={eyebrowClassName}>{weekdayLabel}</p>
           <p className="text-sm font-semibold text-foreground">
             {formatAvailabilityDayLabel(
-              dayGroup?.date ?? formatDateKey(dayDate),
+              dayGroup?.date ?? formatLocalDate(dayDate),
             )}
           </p>
           <p className="text-xs text-muted-foreground">

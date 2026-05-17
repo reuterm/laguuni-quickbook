@@ -5,6 +5,7 @@ import type {
   CapacitySegment,
   DailyAvailabilityWindow,
 } from '../../domain/slot'
+import { type LocalDateString, setDate } from '../date'
 import { isRecord, isStringArray } from '../type-guards'
 
 export type RawAvailableDateTuple = readonly [
@@ -69,25 +70,19 @@ export function decodeAvailableTimesResponse(
 
 export function normalizeAvailableDates(
   cableId: CableId,
-  anchorDate: string,
+  anchorDate: LocalDateString,
   rawResponse: RawAvailableDatesResponse,
 ): AvailableDate[] {
-  const [year, month] = anchorDate.split('-')
-
-  if (!year || !month) {
-    throw new Error(`Anchor date must be YYYY-MM-DD, received "${anchorDate}"`)
-  }
-
   return rawResponse.map(([dayOfMonth, hasBookableSlots]) => ({
     cableId,
-    date: `${year}-${month}-${String(dayOfMonth).padStart(2, '0')}`,
+    date: setDate(anchorDate, dayOfMonth),
     hasBookableSlots: hasBookableSlots === 1,
   }))
 }
 
 export function normalizeDailyAvailabilityWindow(
   cableId: CableId,
-  date: string,
+  date: LocalDateString,
   countResponse: RawAvailableTimesResponse,
   capacityResponse: RawAvailableTimesResponse,
 ): DailyAvailabilityWindow {

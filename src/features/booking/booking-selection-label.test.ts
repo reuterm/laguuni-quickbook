@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { localDate } from '../../../tests/local-date'
 
 import {
   formatBookingSelectionDate,
@@ -8,14 +9,16 @@ import {
 
 const selection = {
   cableId: 'pro' as const,
-  date: '2026-05-20',
+  date: localDate('2026-05-20'),
   endTime: '16:00',
   startTime: '15:00',
 }
 
 describe('booking-selection-label', () => {
   it('formats the selection date for display', () => {
-    expect(formatBookingSelectionDate('2026-05-20')).toBe('Wed 20 May')
+    expect(formatBookingSelectionDate(localDate('2026-05-20'))).toBe(
+      'Wed 20 May',
+    )
   })
 
   it('formats the full booking selection label', () => {

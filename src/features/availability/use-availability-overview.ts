@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 
 import type { CableId } from '../../domain/cable'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
+import type { LocalDateString } from '../../lib/date'
 import { startOfWeek } from '../../lib/date'
 import { addCalendarDays } from './availability-calendar'
 import {
@@ -44,7 +45,7 @@ type UseAvailabilityOverviewResult = {
   availabilityState: AvailabilityState
   clearAppendError: () => void
   loadMoreAvailability: () => Promise<void>
-  refreshAvailabilityDay: (date: string) => Promise<void>
+  refreshAvailabilityDay: (date: LocalDateString) => Promise<void>
   refreshAvailability: () => Promise<void>
 }
 
@@ -121,19 +122,19 @@ type AvailabilityOverviewAction =
       weekPage: AvailabilityWeekPage
     }
   | {
-      date: string
+      date: LocalDateString
       dayRefreshToken: number
       rangeVersion: number
       type: 'refreshDayStarted'
     }
   | {
-      date: string
+      date: LocalDateString
       dayRefreshToken: number
       rangeVersion: number
       type: 'refreshDayFailed'
     }
   | {
-      date: string
+      date: LocalDateString
       dayGroup: AvailabilityDayGroup
       dayRefreshToken: number
       rangeVersion: number
@@ -229,7 +230,7 @@ export function useAvailabilityOverview(
   }, [loadRange])
 
   const refreshAvailabilityDay = useCallback(
-    async (date: string) => {
+    async (date: LocalDateString) => {
       const currentStore = storeRef.current
 
       if (!canRefreshDay(currentStore)) {
@@ -760,7 +761,7 @@ function isActiveReadyRange(
 
 function hasMatchingDayRefreshToken(
   state: AvailabilityOverviewStore,
-  date: string,
+  date: LocalDateString,
   dayRefreshToken: number,
 ) {
   return state.latestDayRefreshTokens[date] === dayRefreshToken

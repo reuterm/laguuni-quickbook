@@ -1,14 +1,7 @@
+import type { LocalDateString } from '../../lib/date'
 import { parseLocalDate } from '../../lib/date'
 
-export function createAnchorDate(referenceDate: Date): string {
-  const year = referenceDate.getFullYear()
-  const month = String(referenceDate.getMonth() + 1).padStart(2, '0')
-  const day = String(referenceDate.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
-export function formatDisplayDate(date: string): string {
+export function formatDisplayDate(date: LocalDateString): string {
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'short',

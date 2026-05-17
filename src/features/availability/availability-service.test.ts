@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-
+import { localDate } from '../../../tests/local-date'
 import type { CableId } from '../../domain/cable'
 import type { DailyAvailabilityWindow } from '../../domain/slot'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
+import type { LocalDateString } from '../../lib/date'
 import {
   AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
   createAvailabilitySlots,
@@ -14,7 +15,7 @@ import {
 describe('loadAvailabilityOverview', () => {
   it('loads whole calendar weeks across month boundaries', async () => {
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) =>
+      async (_cableId: CableId, date: LocalDateString) =>
         dailyAvailabilityByDate[date] ??
         createEmptyDailyAvailabilityWindow(date),
     )
@@ -61,7 +62,7 @@ describe('loadAvailabilityOverview', () => {
 
   it('loads the initial two-week range by default', async () => {
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) =>
+      async (_cableId: CableId, date: LocalDateString) =>
         dailyAvailabilityByDate[date] ??
         createEmptyDailyAvailabilityWindow(date),
     )
@@ -93,7 +94,7 @@ describe('loadAvailabilityOverview', () => {
 describe('loadAvailabilityWeek', () => {
   it('returns full-week metadata and keeps empty days in the result', async () => {
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) =>
+      async (_cableId: CableId, date: LocalDateString) =>
         dailyAvailabilityByDate[date] ??
         createEmptyDailyAvailabilityWindow(date),
     )
@@ -129,7 +130,7 @@ describe('loadAvailabilityWeek', () => {
 describe('loadAvailabilityDay', () => {
   it('loads a single day group without expanding to the surrounding week', async () => {
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) =>
+      async (_cableId: CableId, date: LocalDateString) =>
         dailyAvailabilityByDate[date] ??
         createEmptyDailyAvailabilityWindow(date),
     )
@@ -145,7 +146,11 @@ describe('loadAvailabilityDay', () => {
       submitCheckout: unexpectedApiCall,
     } satisfies LaguuniApi
 
-    const dayGroup = await loadAvailabilityDay(api, 'pro', '2026-05-29')
+    const dayGroup = await loadAvailabilityDay(
+      api,
+      'pro',
+      localDate('2026-05-29'),
+    )
 
     expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(1)
     expect(getDailyAvailabilityWindow).toHaveBeenCalledWith('pro', '2026-05-29')
@@ -171,7 +176,7 @@ describe('createAvailabilitySlots', () => {
           startMinute: 720,
         },
       ],
-      date: '2026-05-03',
+      date: localDate('2026-05-03'),
     }
 
     expect(createAvailabilitySlots(dailyWindow)).toEqual([
@@ -181,7 +186,7 @@ describe('createAvailabilitySlots', () => {
         id: '2026-05-03-720',
         selection: {
           cableId: 'pro',
-          date: '2026-05-03',
+          date: localDate('2026-05-03'),
           endTime: '13:00',
           startTime: '12:00',
         },
@@ -194,7 +199,7 @@ describe('createAvailabilitySlots', () => {
         id: '2026-05-03-780',
         selection: {
           cableId: 'pro',
-          date: '2026-05-03',
+          date: localDate('2026-05-03'),
           endTime: '14:00',
           startTime: '13:00',
         },
@@ -221,7 +226,7 @@ describe('createAvailabilitySlots', () => {
           startMinute: 720,
         },
       ],
-      date: '2026-05-03',
+      date: localDate('2026-05-03'),
     }
 
     expect(createAvailabilitySlots(dailyWindow)).toEqual([
@@ -231,7 +236,7 @@ describe('createAvailabilitySlots', () => {
         id: '2026-05-03-780',
         selection: {
           cableId: 'easy',
-          date: '2026-05-03',
+          date: localDate('2026-05-03'),
           endTime: '14:00',
           startTime: '13:00',
         },
@@ -244,7 +249,7 @@ describe('createAvailabilitySlots', () => {
         id: '2026-05-03-840',
         selection: {
           cableId: 'easy',
-          date: '2026-05-03',
+          date: localDate('2026-05-03'),
           endTime: '15:00',
           startTime: '14:00',
         },
@@ -256,12 +261,14 @@ describe('createAvailabilitySlots', () => {
 })
 
 const dailyAvailabilityByDate: Record<string, DailyAvailabilityWindow> = {
-  '2026-05-29': createDailyAvailabilityWindow('2026-05-29'),
-  '2026-06-01': createDailyAvailabilityWindow('2026-06-01'),
-  '2026-06-04': createDailyAvailabilityWindow('2026-06-04'),
+  '2026-05-29': createDailyAvailabilityWindow(localDate('2026-05-29')),
+  '2026-06-01': createDailyAvailabilityWindow(localDate('2026-06-01')),
+  '2026-06-04': createDailyAvailabilityWindow(localDate('2026-06-04')),
 }
 
-function createDailyAvailabilityWindow(date: string): DailyAvailabilityWindow {
+function createDailyAvailabilityWindow(
+  date: LocalDateString,
+): DailyAvailabilityWindow {
   return {
     bookingSegments: [
       {
@@ -283,7 +290,7 @@ function createDailyAvailabilityWindow(date: string): DailyAvailabilityWindow {
 }
 
 function createEmptyDailyAvailabilityWindow(
-  date: string,
+  date: LocalDateString,
 ): DailyAvailabilityWindow {
   return {
     bookingSegments: [],

@@ -1,9 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-
+import { localDate } from '../../../tests/local-date'
 import type { CableId } from '../../domain/cable'
 import type { DailyAvailabilityWindow } from '../../domain/slot'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
+import type { LocalDateString } from '../../lib/date'
 import { useAvailabilityOverview } from './use-availability-overview'
 
 describe('useAvailabilityOverview', () => {
@@ -177,7 +178,7 @@ describe('useAvailabilityOverview', () => {
     })
 
     await act(async () => {
-      await result.current.refreshAvailabilityDay('2026-05-29')
+      await result.current.refreshAvailabilityDay(localDate('2026-05-29'))
     })
 
     await waitFor(() => {
@@ -193,8 +194,8 @@ describe('useAvailabilityOverview', () => {
 
   it('keeps existing content visible when refreshing a single day fails', async () => {
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) => {
-        if (date === '2026-05-29') {
+      async (_cableId: CableId, date: LocalDateString) => {
+        if (date === localDate('2026-05-29')) {
           throw new Error('Day refresh failed')
         }
 
@@ -212,7 +213,7 @@ describe('useAvailabilityOverview', () => {
     })
 
     await act(async () => {
-      await result.current.refreshAvailabilityDay('2026-05-29')
+      await result.current.refreshAvailabilityDay(localDate('2026-05-29'))
     })
 
     await waitFor(() => {
@@ -236,8 +237,8 @@ describe('useAvailabilityOverview', () => {
     let resolveSecondRefresh!: () => void
     let refreshCallCount = 0
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) => {
-        if (date === '2026-05-14') {
+      async (_cableId: CableId, date: LocalDateString) => {
+        if (date === localDate('2026-05-14')) {
           refreshCallCount += 1
 
           if (refreshCallCount === 2) {
@@ -278,8 +279,12 @@ describe('useAvailabilityOverview', () => {
     let secondRefreshPromise: Promise<void>
 
     await act(async () => {
-      firstRefreshPromise = result.current.refreshAvailabilityDay('2026-05-14')
-      secondRefreshPromise = result.current.refreshAvailabilityDay('2026-05-14')
+      firstRefreshPromise = result.current.refreshAvailabilityDay(
+        localDate('2026-05-14'),
+      )
+      secondRefreshPromise = result.current.refreshAvailabilityDay(
+        localDate('2026-05-14'),
+      )
     })
 
     await waitFor(() => {
@@ -297,7 +302,7 @@ describe('useAvailabilityOverview', () => {
       }
 
       const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
-        (dayGroup) => dayGroup.date === '2026-05-14',
+        (dayGroup) => dayGroup.date === localDate('2026-05-14'),
       )
 
       expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
@@ -319,7 +324,7 @@ describe('useAvailabilityOverview', () => {
     }
 
     const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
-      (dayGroup) => dayGroup.date === '2026-05-14',
+      (dayGroup) => dayGroup.date === localDate('2026-05-14'),
     )
 
     expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
@@ -330,8 +335,8 @@ describe('useAvailabilityOverview', () => {
     let resolveSecondRefresh!: () => void
     let refreshCallCount = 0
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) => {
-        if (date === '2026-05-14') {
+      async (_cableId: CableId, date: LocalDateString) => {
+        if (date === localDate('2026-05-14')) {
           refreshCallCount += 1
 
           if (refreshCallCount === 2) {
@@ -368,8 +373,12 @@ describe('useAvailabilityOverview', () => {
     let secondRefreshPromise: Promise<void>
 
     await act(async () => {
-      firstRefreshPromise = result.current.refreshAvailabilityDay('2026-05-14')
-      secondRefreshPromise = result.current.refreshAvailabilityDay('2026-05-14')
+      firstRefreshPromise = result.current.refreshAvailabilityDay(
+        localDate('2026-05-14'),
+      )
+      secondRefreshPromise = result.current.refreshAvailabilityDay(
+        localDate('2026-05-14'),
+      )
     })
 
     await waitFor(() => {
@@ -387,7 +396,7 @@ describe('useAvailabilityOverview', () => {
       }
 
       const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
-        (dayGroup) => dayGroup.date === '2026-05-14',
+        (dayGroup) => dayGroup.date === localDate('2026-05-14'),
       )
 
       expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
@@ -409,7 +418,7 @@ describe('useAvailabilityOverview', () => {
     }
 
     const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
-      (dayGroup) => dayGroup.date === '2026-05-14',
+      (dayGroup) => dayGroup.date === localDate('2026-05-14'),
     )
 
     expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
@@ -456,7 +465,7 @@ describe('useAvailabilityOverview', () => {
     let resolveReplacement!: () => void
     let hasBlockedReplacement = false
     const getDailyAvailabilityWindow = vi.fn(
-      async (cableId: CableId, date: string) => {
+      async (cableId: CableId, date: LocalDateString) => {
         if (cableId === 'easy' && !hasBlockedReplacement) {
           hasBlockedReplacement = true
           await new Promise<void>((resolve) => {
@@ -505,8 +514,8 @@ describe('useAvailabilityOverview', () => {
   it('ignores duplicate append requests while one is in flight', async () => {
     let resolveAppendRange: (() => void) | null = null
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) => {
-        if (date === '2026-05-25') {
+      async (_cableId: CableId, date: LocalDateString) => {
+        if (date === localDate('2026-05-25')) {
           await new Promise<void>((resolve) => {
             resolveAppendRange = resolve
           })
@@ -551,8 +560,8 @@ describe('useAvailabilityOverview', () => {
 
   it('keeps existing content visible when appending another week fails', async () => {
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) => {
-        if (date === '2026-05-25') {
+      async (_cableId: CableId, date: LocalDateString) => {
+        if (date === localDate('2026-05-25')) {
           throw new Error('Append failed')
         }
 
@@ -597,14 +606,14 @@ describe('useAvailabilityOverview', () => {
     let resolveDayRefresh!: () => void
     let shouldBlockDayRefresh = false
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) => {
-        if (date === '2026-05-25') {
+      async (_cableId: CableId, date: LocalDateString) => {
+        if (date === localDate('2026-05-25')) {
           await new Promise<void>((resolve) => {
             resolveAppendWeek = resolve
           })
         }
 
-        if (date === '2026-05-14' && shouldBlockDayRefresh) {
+        if (date === localDate('2026-05-14') && shouldBlockDayRefresh) {
           shouldBlockDayRefresh = false
           await new Promise<void>((resolve) => {
             resolveDayRefresh = resolve
@@ -642,7 +651,9 @@ describe('useAvailabilityOverview', () => {
     shouldBlockDayRefresh = true
 
     await act(async () => {
-      refreshDayPromise = result.current.refreshAvailabilityDay('2026-05-14')
+      refreshDayPromise = result.current.refreshAvailabilityDay(
+        localDate('2026-05-14'),
+      )
     })
 
     await waitFor(() => {
@@ -687,21 +698,21 @@ describe('useAvailabilityOverview', () => {
     let resolveDayRefresh!: () => void
     let shouldBlockDayRefresh = false
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) => {
-        if (date === '2026-05-25') {
+      async (_cableId: CableId, date: LocalDateString) => {
+        if (date === localDate('2026-05-25')) {
           await new Promise<void>((resolve) => {
             resolveAppendWeek = resolve
           })
         }
 
-        if (date === '2026-05-14' && shouldBlockDayRefresh) {
+        if (date === localDate('2026-05-14') && shouldBlockDayRefresh) {
           shouldBlockDayRefresh = false
           await new Promise<void>((resolve) => {
             resolveDayRefresh = resolve
           })
         }
 
-        if (date === '2026-05-14') {
+        if (date === localDate('2026-05-14')) {
           return createDailyAvailabilityWindow(date, {
             cableId: 'pro',
             freeCapacity: 1,
@@ -739,7 +750,9 @@ describe('useAvailabilityOverview', () => {
     shouldBlockDayRefresh = true
 
     await act(async () => {
-      refreshDayPromise = result.current.refreshAvailabilityDay('2026-05-14')
+      refreshDayPromise = result.current.refreshAvailabilityDay(
+        localDate('2026-05-14'),
+      )
     })
 
     await waitFor(() => {
@@ -757,7 +770,7 @@ describe('useAvailabilityOverview', () => {
       }
 
       const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
-        (dayGroup) => dayGroup.date === '2026-05-14',
+        (dayGroup) => dayGroup.date === localDate('2026-05-14'),
       )
 
       expect(refreshedDayGroup?.slots[0]?.freeCapacity).toBe(1)
@@ -779,7 +792,7 @@ describe('useAvailabilityOverview', () => {
     }
 
     const refreshedDayGroup = result.current.availabilityState.dayGroups.find(
-      (dayGroup) => dayGroup.date === '2026-05-14',
+      (dayGroup) => dayGroup.date === localDate('2026-05-14'),
     )
 
     expect(result.current.availabilityState.weekPages).toHaveLength(3)
@@ -791,8 +804,8 @@ describe('useAvailabilityOverview', () => {
     let resolveRefresh!: () => void
     let shouldBlockRefresh = false
     const getDailyAvailabilityWindow = vi.fn(
-      async (_cableId: CableId, date: string) => {
-        if (date === '2026-05-11' && shouldBlockRefresh) {
+      async (_cableId: CableId, date: LocalDateString) => {
+        if (date === localDate('2026-05-11') && shouldBlockRefresh) {
           shouldBlockRefresh = false
           await new Promise<void>((resolve) => {
             resolveRefresh = resolve
@@ -850,10 +863,10 @@ describe('useAvailabilityOverview', () => {
     let resolveDayRefresh!: () => void
     let shouldBlockDayRefresh = false
     const getDailyAvailabilityWindow = vi.fn(
-      async (cableId: CableId, date: string) => {
+      async (cableId: CableId, date: LocalDateString) => {
         if (
           cableId === 'pro' &&
-          date === '2026-05-29' &&
+          date === localDate('2026-05-29') &&
           shouldBlockDayRefresh
         ) {
           shouldBlockDayRefresh = false
@@ -891,7 +904,7 @@ describe('useAvailabilityOverview', () => {
     shouldBlockDayRefresh = true
 
     await act(async () => {
-      void result.current.refreshAvailabilityDay('2026-05-29')
+      void result.current.refreshAvailabilityDay(localDate('2026-05-29'))
     })
 
     await waitFor(() => {
@@ -946,7 +959,7 @@ function createApi(
 }
 
 function createDailyAvailabilityWindow(
-  date: string,
+  date: LocalDateString,
   overrides?: {
     cableId?: CableId
     freeCapacity?: number

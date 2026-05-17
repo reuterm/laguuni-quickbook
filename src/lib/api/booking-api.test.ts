@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-
+import { localDate } from '../../../tests/local-date'
 import type { BookingProfile, BookingSlotSelection } from '../../domain/booking'
 import {
   addReservationToBasket,
@@ -21,7 +21,7 @@ describe('booking-api transport mapping', () => {
         basketToken: 'fixture-basket-token',
         selection: {
           cableId: 'pro',
-          date: '2026-05-14',
+          date: localDate('2026-05-14'),
           endTime: '16:00',
           startTime: '15:00',
         } satisfies BookingSlotSelection,

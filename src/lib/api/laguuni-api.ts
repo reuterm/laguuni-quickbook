@@ -5,6 +5,7 @@ import type {
 } from '../../domain/booking'
 import type { CableId } from '../../domain/cable'
 import type { AvailableDate, DailyAvailabilityWindow } from '../../domain/slot'
+import type { LocalDateString } from '../date'
 import {
   getAvailableDates as loadAvailableDates,
   getDailyAvailabilityWindow as loadDailyAvailabilityWindow,
@@ -37,11 +38,11 @@ export type LaguuniApi = {
   deleteBasket(basketToken: BasketToken): Promise<void>
   getAvailableDates(
     cableId: CableId,
-    anchorDate: string,
+    anchorDate: LocalDateString,
   ): Promise<readonly AvailableDate[]>
   getDailyAvailabilityWindow(
     cableId: CableId,
-    date: string,
+    date: LocalDateString,
   ): Promise<DailyAvailabilityWindow>
   lookupCode(args: LookupCodeArgs): Promise<BookingCodeValidationResult>
   loadBasketPricingSummary(
@@ -88,14 +89,14 @@ export class LaguuniApiClient implements LaguuniApi {
 
   async getAvailableDates(
     cableId: CableId,
-    anchorDate: string,
+    anchorDate: LocalDateString,
   ): Promise<readonly AvailableDate[]> {
     return loadAvailableDates(this.#client, cableId, anchorDate)
   }
 
   async getDailyAvailabilityWindow(
     cableId: CableId,
-    date: string,
+    date: LocalDateString,
   ): Promise<DailyAvailabilityWindow> {
     return loadDailyAvailabilityWindow(this.#client, cableId, date)
   }

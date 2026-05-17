@@ -7,12 +7,13 @@ import {
 } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { localDate } from '../../../../tests/local-date'
 import type { AvailabilityDayGroup } from '../availability-service'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 
 const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
   {
-    date: '2026-05-14',
+    date: localDate('2026-05-14'),
     displayDate: 'Thu 14 May',
     slots: [
       {
@@ -21,7 +22,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
         id: '2026-05-14-720',
         selection: {
           cableId: 'pro',
-          date: '2026-05-14',
+          date: localDate('2026-05-14'),
           endTime: '13:00',
           startTime: '12:00',
         },
@@ -34,7 +35,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
         id: '2026-05-14-900',
         selection: {
           cableId: 'pro',
-          date: '2026-05-14',
+          date: localDate('2026-05-14'),
           endTime: '16:00',
           startTime: '15:00',
         },
@@ -44,7 +45,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
     ],
   },
   {
-    date: '2026-05-15',
+    date: localDate('2026-05-15'),
     displayDate: 'Fri 15 May',
     slots: [
       {
@@ -53,7 +54,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
         id: '2026-05-15-780',
         selection: {
           cableId: 'pro',
-          date: '2026-05-15',
+          date: localDate('2026-05-15'),
           endTime: '14:00',
           startTime: '13:00',
         },
@@ -63,7 +64,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
     ],
   },
   {
-    date: '2026-05-19',
+    date: localDate('2026-05-19'),
     displayDate: 'Tue 19 May',
     slots: [
       {
@@ -72,7 +73,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
         id: '2026-05-19-1020',
         selection: {
           cableId: 'pro',
-          date: '2026-05-19',
+          date: localDate('2026-05-19'),
           endTime: '18:00',
           startTime: '17:00',
         },
@@ -159,7 +160,7 @@ describe('AvailabilityCalendarGrid', () => {
 
     expect(onBookSelection).toHaveBeenCalledWith({
       cableId: 'pro',
-      date: '2026-05-14',
+      date: localDate('2026-05-14'),
       endTime: '16:00',
       startTime: '15:00',
     })
@@ -243,37 +244,37 @@ describe('AvailabilityCalendarGrid', () => {
         dayGroups={[
           ...FIXTURE_DAY_GROUPS,
           {
-            date: '2026-05-25',
+            date: localDate('2026-05-25'),
             displayDate: 'Mon 25 May',
             slots: [],
           },
           {
-            date: '2026-05-26',
+            date: localDate('2026-05-26'),
             displayDate: 'Tue 26 May',
             slots: [],
           },
           {
-            date: '2026-05-27',
+            date: localDate('2026-05-27'),
             displayDate: 'Wed 27 May',
             slots: [],
           },
           {
-            date: '2026-05-28',
+            date: localDate('2026-05-28'),
             displayDate: 'Thu 28 May',
             slots: [],
           },
           {
-            date: '2026-05-29',
+            date: localDate('2026-05-29'),
             displayDate: 'Fri 29 May',
             slots: [],
           },
           {
-            date: '2026-05-30',
+            date: localDate('2026-05-30'),
             displayDate: 'Sat 30 May',
             slots: [],
           },
           {
-            date: '2026-05-31',
+            date: localDate('2026-05-31'),
             displayDate: 'Sun 31 May',
             slots: [],
           },

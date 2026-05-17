@@ -1,8 +1,13 @@
 import type { CableId } from '../../domain/cable'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
-import { addDays, startOfWeek } from '../../lib/date'
-import { addCalendarDays, formatDateKey } from './availability-calendar'
-import { createAnchorDate, formatDisplayDate } from './availability-format'
+import {
+  addDays,
+  formatLocalDate,
+  type LocalDateString,
+  startOfWeek,
+} from '../../lib/date'
+import { addCalendarDays } from './availability-calendar'
+import { formatDisplayDate } from './availability-format'
 import type { AvailabilityDayGroup } from './availability-model'
 import { createAvailabilitySlots } from './availability-slots'
 
@@ -28,7 +33,7 @@ export { createAvailabilitySlots } from './availability-slots'
 export async function loadAvailabilityDay(
   api: LaguuniApi,
   cableId: CableId,
-  date: string,
+  date: LocalDateString,
 ): Promise<AvailabilityDayGroup> {
   const dailyWindow = await api.getDailyAvailabilityWindow(cableId, date)
 
@@ -55,7 +60,7 @@ export async function loadAvailabilityWeek(
   return {
     dayGroups,
     hasBookableSlots: dayGroups.some((dayGroup) => dayGroup.slots.length > 0),
-    weekId: formatDateKey(normalizedWeekStartDate),
+    weekId: formatLocalDate(normalizedWeekStartDate),
     weekStartDate: normalizedWeekStartDate,
   }
 }
@@ -108,8 +113,8 @@ async function loadAvailabilityRange(
 function listDatesInRange(
   rangeStartDate: Date,
   dayCount: number,
-): readonly string[] {
+): readonly LocalDateString[] {
   return Array.from({ length: dayCount }, (_, index) =>
-    createAnchorDate(addDays(rangeStartDate, index)),
+    formatLocalDate(addDays(rangeStartDate, index)),
   )
 }

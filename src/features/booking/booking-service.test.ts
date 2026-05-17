@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 
+import { localDate } from '../../../tests/local-date'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
 import { LocalDiagnosticsStore } from '../diagnostics/logs'
 import { DefaultBookingService } from './booking-service'
 
 const selection = {
   cableId: 'pro' as const,
-  date: '2026-05-14',
+  date: localDate('2026-05-14'),
   endTime: '16:00',
   startTime: '15:00',
 }

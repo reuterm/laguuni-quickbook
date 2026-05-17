@@ -6,11 +6,10 @@ import {
 import { startOfWeek } from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
-
+import { formatLocalDate } from '../../../lib/date'
 import {
   AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   formatAvailabilityWeekLabel,
-  formatDateKey,
   listCalendarSkeletonWeeks,
   listVisibleWeekdayIndices,
 } from '../availability-calendar'
@@ -40,7 +39,7 @@ export function AvailabilityCalendarLoadingGrid({
 
       {loadingWeekStartDates.map((weekStartDate) => (
         <AvailabilityCalendarLoadingWeek
-          key={formatDateKey(weekStartDate)}
+          key={formatLocalDate(weekStartDate)}
           rangeStartDate={rangeStartDate}
           showFullWeekColumns={showFullWeekColumns}
           weekStartDate={weekStartDate}
@@ -61,7 +60,7 @@ function AvailabilityCalendarLoadingWeek({
   showFullWeekColumns,
   weekStartDate,
 }: AvailabilityCalendarLoadingWeekProps) {
-  const weekKey = formatDateKey(weekStartDate)
+  const weekKey = formatLocalDate(weekStartDate)
   const visibleDayIndices = listVisibleWeekdayIndices(
     weekStartDate,
     rangeStartDate,

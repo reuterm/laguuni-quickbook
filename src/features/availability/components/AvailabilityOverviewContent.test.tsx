@@ -8,6 +8,7 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { AppProviders } from '@/app/providers'
+import { localDate } from '../../../../tests/local-date'
 import { UserSettingsProvider } from '../../settings/use-user-settings'
 import type { AvailabilityDayGroup } from '../availability-service'
 import type { AvailabilityState } from '../use-availability-overview'
@@ -437,7 +438,7 @@ function createLoadedState(
 
 function createBookableDayGroup() {
   return {
-    date: '2026-05-14',
+    date: localDate('2026-05-14'),
     displayDate: 'Thu 14 May',
     slots: [
       {
@@ -446,7 +447,7 @@ function createBookableDayGroup() {
         id: '2026-05-14-900',
         selection: {
           cableId: 'pro' as const,
-          date: '2026-05-14',
+          date: localDate('2026-05-14'),
           endTime: '16:00',
           startTime: '15:00',
         },
@@ -460,37 +461,37 @@ function createBookableDayGroup() {
 function createEmptyDayGroups(): readonly AvailabilityDayGroup[] {
   return [
     {
-      date: '2026-05-11',
+      date: localDate('2026-05-11'),
       displayDate: 'Mon 11 May',
       slots: [],
     },
     {
-      date: '2026-05-12',
+      date: localDate('2026-05-12'),
       displayDate: 'Tue 12 May',
       slots: [],
     },
     {
-      date: '2026-05-13',
+      date: localDate('2026-05-13'),
       displayDate: 'Wed 13 May',
       slots: [],
     },
     {
-      date: '2026-05-14',
+      date: localDate('2026-05-14'),
       displayDate: 'Thu 14 May',
       slots: [],
     },
     {
-      date: '2026-05-15',
+      date: localDate('2026-05-15'),
       displayDate: 'Fri 15 May',
       slots: [],
     },
     {
-      date: '2026-05-16',
+      date: localDate('2026-05-16'),
       displayDate: 'Sat 16 May',
       slots: [],
     },
     {
-      date: '2026-05-17',
+      date: localDate('2026-05-17'),
       displayDate: 'Sun 17 May',
       slots: [],
     },

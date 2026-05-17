@@ -1,4 +1,5 @@
 import type { BookingSlotSelection } from '../../domain/booking'
+import type { LocalDateString } from '../../lib/date'
 
 export type AvailabilitySlot = {
   endTime: string
@@ -10,7 +11,7 @@ export type AvailabilitySlot = {
 }
 
 export type AvailabilityDayGroup = {
-  date: string
+  date: LocalDateString
   displayDate: string
   slots: readonly AvailabilitySlot[]
 }

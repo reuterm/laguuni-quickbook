@@ -16,6 +16,7 @@ import {
 } from '../../../app/providers'
 import type { BookingSlotSelection } from '../../../domain/booking'
 import { getCableById } from '../../../domain/cable'
+import type { LocalDateString } from '../../../lib/date'
 import { BookingSheetFlow } from '../../booking/components/BookingSheetFlow'
 import { useBookingSheetController } from '../../booking/use-booking-sheet-controller'
 import { exportDiagnosticsForTrace } from '../../diagnostics/export'
@@ -165,7 +166,7 @@ export function AvailabilityScreen({
 
 async function refreshAvailabilityAfterBooking(
   selection: BookingSlotSelection,
-  refreshAvailabilityDay: (date: string) => Promise<void>,
+  refreshAvailabilityDay: (date: LocalDateString) => Promise<void>,
 ) {
   await refreshAvailabilityDay(selection.date)
 }

@@ -1,5 +1,5 @@
 import { SectionHeader } from '@/components/ui/section-header'
-import { addDays, startOfDay } from '@/lib/date'
+import { addDays, parseLocalDate, startOfDay } from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 
 import {
@@ -91,5 +91,5 @@ function getRangeEndDate(
     return addDays(fallbackStartDate, AVAILABILITY_WEEK_DAY_COUNT)
   }
 
-  return startOfDay(lastDayGroup.date)
+  return parseLocalDate(lastDayGroup.date)
 }

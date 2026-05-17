@@ -1,6 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { localDate } from '../../../../tests/local-date'
 import { BookingSheetFlow } from './BookingSheetFlow'
 
 afterEach(() => {
@@ -28,7 +29,7 @@ describe('BookingSheetFlow', () => {
         bookingSheetState={{
           selection: {
             cableId: 'pro',
-            date: '2026-05-20',
+            date: localDate('2026-05-20'),
             endTime: '16:00',
             startTime: '15:00',
           },
@@ -53,7 +54,7 @@ describe('BookingSheetFlow', () => {
         bookingSheetState={{
           selection: {
             cableId: 'pro',
-            date: '2026-05-20',
+            date: localDate('2026-05-20'),
             endTime: '16:00',
             startTime: '15:00',
           },
@@ -86,7 +87,7 @@ describe('BookingSheetFlow', () => {
           },
           selection: {
             cableId: 'pro',
-            date: '2026-05-20',
+            date: localDate('2026-05-20'),
             endTime: '16:00',
             startTime: '15:00',
           },

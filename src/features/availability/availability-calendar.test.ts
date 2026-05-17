@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import { localDate } from '../../../tests/local-date'
+import { formatLocalDate } from '../../lib/date'
 import {
-  formatDateKey,
   groupAvailabilityWeeks,
   listCalendarSkeletonWeeks,
   listVisibleWeekdayIndices,
@@ -9,7 +10,7 @@ import type { AvailabilityDayGroup } from './availability-service'
 
 const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
   {
-    date: '2026-05-14',
+    date: localDate('2026-05-14'),
     displayDate: 'Thu 14 May',
     slots: [
       {
@@ -18,7 +19,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
         id: '2026-05-14-720',
         selection: {
           cableId: 'pro',
-          date: '2026-05-14',
+          date: localDate('2026-05-14'),
           endTime: '13:00',
           startTime: '12:00',
         },
@@ -28,7 +29,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
     ],
   },
   {
-    date: '2026-05-15',
+    date: localDate('2026-05-15'),
     displayDate: 'Fri 15 May',
     slots: [
       {
@@ -37,7 +38,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
         id: '2026-05-15-780',
         selection: {
           cableId: 'pro',
-          date: '2026-05-15',
+          date: localDate('2026-05-15'),
           endTime: '14:00',
           startTime: '13:00',
         },
@@ -47,7 +48,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
     ],
   },
   {
-    date: '2026-05-19',
+    date: localDate('2026-05-19'),
     displayDate: 'Tue 19 May',
     slots: [
       {
@@ -56,7 +57,7 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
         id: '2026-05-19-1020',
         selection: {
           cableId: 'pro',
-          date: '2026-05-19',
+          date: localDate('2026-05-19'),
           endTime: '18:00',
           startTime: '17:00',
         },
@@ -124,7 +125,7 @@ describe('availability-calendar', () => {
   it('lists the loading skeleton weeks from the same loaded range', () => {
     expect(
       listCalendarSkeletonWeeks(new Date('2026-05-14T12:00:00'), 7).map(
-        formatDateKey,
+        formatLocalDate,
       ),
     ).toEqual(['2026-05-11', '2026-05-18'])
   })

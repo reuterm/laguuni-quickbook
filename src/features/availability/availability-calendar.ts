@@ -1,7 +1,8 @@
 import {
   addDays,
   addWeeks,
-  format,
+  formatLocalDate,
+  type LocalDateString,
   parseLocalDate,
   startOfDay,
   startOfWeek,
@@ -29,7 +30,7 @@ export function groupAvailabilityWeeks(
 
   for (const dayGroup of dayGroups) {
     const weekStartDate = startOfWeek(parseLocalDate(dayGroup.date))
-    const weekId = formatDateKey(weekStartDate)
+    const weekId = formatLocalDate(weekStartDate)
     const weekdayIndex = getWeekdayIndex(dayGroup.date)
     const existingWeek = dayGroupsByWeek.get(weekId)
 
@@ -137,11 +138,11 @@ export function createSlotLookup(
   return slotLookup
 }
 
-export function createSlotLookupKey(date: string, startTime: string) {
+export function createSlotLookupKey(date: LocalDateString, startTime: string) {
   return `${date}:${startTime}`
 }
 
-export function formatAvailabilityDayLabel(date: string) {
+export function formatAvailabilityDayLabel(date: LocalDateString) {
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'short',
@@ -159,10 +160,6 @@ export function formatAvailabilityWeekLabel(weekStartDate: Date) {
   return `${formatter.format(weekStartDate)} - ${formatter.format(weekEndDate)}`
 }
 
-export function formatDateKey(date: Date) {
-  return format(date, 'yyyy-MM-dd')
-}
-
 export function getWeekdayDate(weekStartDate: Date, dayIndex: number) {
   return addDays(new Date(weekStartDate), dayIndex)
 }
@@ -171,7 +168,7 @@ export function getWeekdayLabel(dayIndex: number) {
   return weekdayLabels[dayIndex]
 }
 
-function getWeekdayIndex(date: string) {
+function getWeekdayIndex(date: LocalDateString) {
   const weekday = parseLocalDate(date).getDay()
 
   return weekday === 0 ? 6 : weekday - 1

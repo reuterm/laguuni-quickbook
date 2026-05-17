@@ -1,8 +1,9 @@
+import type { LocalDateString } from '../lib/date'
 import type { CableId } from './cable'
 
 export type AvailableDate = {
   cableId: CableId
-  date: string
+  date: LocalDateString
   hasBookableSlots: boolean
 }
 
@@ -20,7 +21,7 @@ export type CapacitySegment = {
 
 export type DailyAvailabilityWindow = {
   cableId: CableId
-  date: string
+  date: LocalDateString
   bookingSegments: readonly BookingSegment[]
   capacitySegments: readonly CapacitySegment[]
 }
