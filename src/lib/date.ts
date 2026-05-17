@@ -48,6 +48,18 @@ export function formatLocalDate(date: Date): LocalDateString {
   return toLocalDateString(formatLib(date, 'yyyy-MM-dd'))
 }
 
+export function formatDisplayDate(date: LocalDateString): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    weekday: 'short',
+  }).format(parseLocalDate(date))
+}
+
+export function formatMinuteOfDay(minuteOfDay: number): string {
+  return formatLib(new Date(0, 0, 1, 0, minuteOfDay), 'HH:mm')
+}
+
 export function setDate(
   date: LocalDateString,
   dayOfMonth: number,
