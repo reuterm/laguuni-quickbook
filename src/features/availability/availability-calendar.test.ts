@@ -68,6 +68,10 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
   },
 ]
 
+const firstWeekBookableDay = FIXTURE_DAY_GROUPS[0] ?? null
+const secondWeekBookableDay = FIXTURE_DAY_GROUPS[1] ?? null
+const nextWeekBookableDay = FIXTURE_DAY_GROUPS[2] ?? null
+
 describe('availability-calendar', () => {
   it('groups availability into monday-to-sunday weeks', () => {
     expect(groupAvailabilityWeeks(FIXTURE_DAY_GROUPS)).toMatchObject([
@@ -123,6 +127,10 @@ describe('availability-calendar', () => {
   })
 
   it('trims leading visible days that have no bookable slots', () => {
+    if (nextWeekBookableDay === null) {
+      throw new Error('Expected next week fixture day')
+    }
+
     expect(
       listVisibleWeekdayIndices(
         new Date('2026-05-18T00:00:00'),
@@ -133,10 +141,10 @@ describe('availability-calendar', () => {
           null,
           null,
           {
-            ...FIXTURE_DAY_GROUPS[2],
             date: localDate('2026-05-20'),
             displayDate: 'Wed 20 May',
-          },
+            slots: nextWeekBookableDay.slots,
+          } satisfies AvailabilityDayGroup,
           null,
           null,
           null,
@@ -157,8 +165,8 @@ describe('availability-calendar', () => {
           null,
           null,
           null,
-          FIXTURE_DAY_GROUPS[0],
-          FIXTURE_DAY_GROUPS[1],
+          firstWeekBookableDay,
+          secondWeekBookableDay,
           null,
           null,
         ],

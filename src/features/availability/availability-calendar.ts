@@ -86,7 +86,7 @@ export function listVisibleWeekdayIndices(
   const firstBookableVisibleIndex = visibleDayIndices.findIndex((dayIndex) => {
     const dayGroup = dayGroups[dayIndex]
 
-    return dayGroup !== null && dayGroup.slots.length > 0
+    return dayGroup != null && dayGroup.slots.length > 0
   })
 
   return firstBookableVisibleIndex > 0
