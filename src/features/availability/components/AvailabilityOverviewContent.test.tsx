@@ -22,6 +22,7 @@ describe('AvailabilityOverviewContent', () => {
   afterEach(() => {
     cleanup()
     intersectionObserverController.reset()
+    stubPageOverflow()
     Object.defineProperty(window, 'scrollY', {
       configurable: true,
       value: 0,
@@ -201,6 +202,123 @@ describe('AvailabilityOverviewContent', () => {
     intersectionObserverController.triggerLastObserved(true)
 
     expect(onLoadMore).toHaveBeenCalledTimes(0)
+  })
+
+  it('loads more when the initial range does not create page overflow', async () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    stubPageOverflow({
+      bodyScrollHeight: 1200,
+      documentElementScrollHeight: 1200,
+      innerHeight: 1200,
+    })
+
+    renderContent(createLoadedState('ready'), undefined, undefined, onLoadMore)
+
+    await waitFor(() => {
+      expect(onLoadMore).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('does not auto-load without page overflow when an append is already in progress', () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    stubPageOverflow({
+      bodyScrollHeight: 1200,
+      documentElementScrollHeight: 1200,
+      innerHeight: 1200,
+    })
+
+    renderContent(
+      createLoadedState('ready', undefined, { isLoadingMore: true }),
+      undefined,
+      undefined,
+      onLoadMore,
+    )
+
+    expect(onLoadMore).toHaveBeenCalledTimes(0)
+  })
+
+  it('does not auto-load without page overflow when the hard stop is reached', () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    stubPageOverflow({
+      bodyScrollHeight: 1200,
+      documentElementScrollHeight: 1200,
+      innerHeight: 1200,
+    })
+
+    renderContent(
+      createLoadedState('ready', undefined, { canLoadMore: false }),
+      undefined,
+      undefined,
+      onLoadMore,
+    )
+
+    expect(onLoadMore).toHaveBeenCalledTimes(0)
+  })
+
+  it('loads more after a resize removes page overflow', async () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    stubPageOverflow({
+      bodyScrollHeight: 1200,
+      documentElementScrollHeight: 1200,
+      innerHeight: 1000,
+    })
+
+    renderContent(createLoadedState('ready'), undefined, undefined, onLoadMore)
+
+    expect(onLoadMore).toHaveBeenCalledTimes(0)
+
+    stubPageOverflow({
+      bodyScrollHeight: 1200,
+      documentElementScrollHeight: 1200,
+      innerHeight: 1200,
+    })
+    fireEvent(window, new Event('resize'))
+
+    await waitFor(() => {
+      expect(onLoadMore).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('does not auto-load when body height still overflows the viewport', () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    stubPageOverflow({
+      bodyScrollHeight: 1600,
+      documentElementScrollHeight: 1200,
+      innerHeight: 1200,
+    })
+
+    renderContent(createLoadedState('ready'), undefined, undefined, onLoadMore)
+
+    expect(onLoadMore).toHaveBeenCalledTimes(0)
+  })
+
+  it('loads more after the user scrolls even when the sentinel intersected earlier', () => {
+    const onLoadMore = vi.fn(async () => {})
+
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 0,
+    })
+
+    renderContent(createLoadedState('ready'), undefined, undefined, onLoadMore)
+
+    intersectionObserverController.triggerLastObserved(true)
+
+    expect(onLoadMore).toHaveBeenCalledTimes(0)
+
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 128,
+    })
+
+    fireEvent.scroll(window)
+
+    expect(onLoadMore).toHaveBeenCalledTimes(1)
   })
 
   it('does not auto-load repeatedly without additional scrolling', () => {
@@ -454,6 +572,29 @@ function stubMatchMedia(matches: boolean) {
     })),
   )
   window.matchMedia = globalThis.matchMedia
+}
+
+function stubPageOverflow({
+  innerHeight = 800,
+  bodyScrollHeight = 1600,
+  documentElementScrollHeight = bodyScrollHeight,
+}: {
+  bodyScrollHeight?: number
+  documentElementScrollHeight?: number
+  innerHeight?: number
+} = {}) {
+  Object.defineProperty(window, 'innerHeight', {
+    configurable: true,
+    value: innerHeight,
+  })
+  Object.defineProperty(document.documentElement, 'scrollHeight', {
+    configurable: true,
+    value: documentElementScrollHeight,
+  })
+  Object.defineProperty(document.body, 'scrollHeight', {
+    configurable: true,
+    value: bodyScrollHeight,
+  })
 }
 
 function TestProviders({ children }: { children: React.ReactNode }) {
