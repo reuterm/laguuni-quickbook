@@ -42,6 +42,26 @@ describe('getAvailabilityOverviewContentModel', () => {
     expect(model.renderedCardDayGroups).toEqual(dayGroups)
   })
 
+  it('keeps loaded empty day groups while reporting no rendered availability', () => {
+    const emptyDayGroups = [
+      createEmptyDayGroup(localDate('2026-05-15')),
+      createEmptyDayGroup(localDate('2026-05-16')),
+    ]
+
+    const model = getAvailabilityOverviewContentModel(
+      createLoadedState('ready', emptyDayGroups),
+      'cards',
+    )
+
+    expect(model.hasAppendError).toBe(false)
+    expect(model.hasLoadedDayGroups).toBe(true)
+    expect(model.hasRenderedAvailability).toBe(false)
+    expect(model.isCalendarView).toBe(false)
+    expect(model.isRefreshing).toBe(false)
+    expect(model.renderedDayGroups).toEqual(emptyDayGroups)
+    expect(model.renderedCardDayGroups).toEqual([])
+  })
+
   it('filters empty day groups for cards while preserving loaded content state', () => {
     const emptyDayGroup = createEmptyDayGroup(localDate('2026-05-15'))
     const bookableDayGroup = createBookableDayGroup()
