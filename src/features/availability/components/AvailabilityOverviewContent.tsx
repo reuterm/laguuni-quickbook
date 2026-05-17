@@ -8,9 +8,10 @@ import {
   panelSurfaceClassName,
   subtleSurfaceBackgroundClassName,
 } from '@/components/ui/styles'
+import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
-
 import { useUserSettings } from '../../settings/use-user-settings'
+import { AVAILABILITY_CALENDAR_BREAKPOINT_QUERY } from '../availability-calendar'
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
@@ -36,9 +37,13 @@ export function AvailabilityOverviewContent({
 }: AvailabilityOverviewContentProps) {
   const { settings } = useUserSettings()
   const availabilityReferenceDate = useAvailabilityReferenceDate()
+  const isCalendarBreakpoint = useMediaQuery(
+    AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
+  )
   const contentModel = getAvailabilityOverviewContentModel(
     availabilityState,
     settings.availabilityView,
+    isCalendarBreakpoint,
   )
   const canLoadMore =
     availabilityState.status === 'ready' && availabilityState.canLoadMore
