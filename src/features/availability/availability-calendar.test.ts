@@ -103,6 +103,7 @@ describe('availability-calendar', () => {
         new Date('2026-05-14T12:00:00'),
         false,
         7,
+        [],
       ),
     ).toEqual([3, 4, 5, 6])
     expect(
@@ -111,6 +112,7 @@ describe('availability-calendar', () => {
         new Date('2026-05-14T12:00:00'),
         false,
         7,
+        [],
       ),
     ).toEqual([0, 1, 2])
   })
@@ -122,6 +124,7 @@ describe('availability-calendar', () => {
         new Date('2026-05-14T12:00:00'),
         true,
         7,
+        [],
       ),
     ).toEqual([0, 1, 2, 3, 4, 5, 6])
   })
@@ -172,6 +175,18 @@ describe('availability-calendar', () => {
         ],
       ),
     ).toEqual([3, 4, 5, 6])
+  })
+
+  it('keeps the visible range when no visible day is bookable', () => {
+    expect(
+      listVisibleWeekdayIndices(
+        new Date('2026-05-18T00:00:00'),
+        new Date('2026-05-18T12:00:00'),
+        false,
+        7,
+        [],
+      ),
+    ).toEqual([0, 1, 2, 3, 4, 5, 6])
   })
 
   it('lists the loading skeleton weeks from the same loaded range', () => {

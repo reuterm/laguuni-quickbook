@@ -65,6 +65,7 @@ function AvailabilityCalendarLoadingWeek({
     rangeStartDate,
     showFullWeekColumns,
     AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
+    [],
   )
   const loadingTimeKeys = ['time-1', 'time-2', 'time-3', 'time-4', 'time-5']
   const dayHeaders = visibleDayIndices.map((dayIndex) => (
