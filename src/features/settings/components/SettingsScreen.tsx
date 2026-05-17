@@ -215,15 +215,15 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                   className="w-full"
                   itemClassName="min-h-11"
                   items={[
-                    { label: 'Cards', value: 'cards' },
-                    { label: 'Calendar', value: 'calendar' },
+                    { label: 'Auto', value: 'cards' },
+                    { label: 'Calendar only', value: 'calendar' },
                   ]}
                   onValueChange={handleAvailabilityViewChange}
                   value={draftSettings.availabilityView}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Cards keep the existing layout. Calendar shows a denser
-                  day-by-time matrix.
+                  Auto adapts to the screen size. Calendar only keeps the
+                  calendar layout on every screen size.
                 </p>
               </div>
 

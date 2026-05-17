@@ -29,7 +29,7 @@ describe('Settings screen integration', () => {
     setInputValue('Phone', '+358401234567')
     setInputValue('Email', 'test@example.com')
     setInputValue('Season pass code', 'FIXTURE-CODE')
-    await user.click(screen.getByRole('tab', { name: 'Calendar' }))
+    await user.click(screen.getByRole('tab', { name: 'Calendar only' }))
     await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
 
@@ -53,9 +53,29 @@ describe('Settings screen integration', () => {
     expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument()
     expect(screen.getByDisplayValue('FIXTURE-CODE')).toBeInTheDocument()
     expect(screen.getByLabelText('Default cable')).toHaveValue('easy')
-    expect(screen.getByRole('tab', { name: 'Calendar' })).toHaveAttribute(
+    expect(screen.getByRole('tab', { name: 'Calendar only' })).toHaveAttribute(
       'aria-selected',
       'true',
+    )
+  })
+
+  it('maps the stored cards preference back to the Auto label', async () => {
+    const user = userEvent.setup()
+
+    renderApp()
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+    await user.click(screen.getByRole('tab', { name: 'Auto' }))
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    expect(screen.getByRole('tab', { name: 'Auto' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByRole('tab', { name: 'Calendar only' })).toHaveAttribute(
+      'aria-selected',
+      'false',
     )
   })
 
