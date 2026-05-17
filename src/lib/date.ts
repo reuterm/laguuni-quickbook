@@ -1,6 +1,7 @@
 import {
   addDays as addDaysLib,
   addWeeks as addWeeksLib,
+  differenceInCalendarDays as differenceInCalendarDaysLib,
   format as formatLib,
   startOfDay as startOfDayLib,
   startOfWeek as startOfWeekLib,
@@ -63,6 +64,13 @@ export function addDays(date: Date, amount: number): Date {
 
 export function addCalendarDays(date: Date, amount: number): Date {
   return addDays(startOfDay(date), amount)
+}
+
+export function differenceInCalendarDays(
+  startDate: Date,
+  endDate: Date,
+): number {
+  return differenceInCalendarDaysLib(endDate, startDate)
 }
 
 export function addWeeks(date: Date, amount: number): Date {

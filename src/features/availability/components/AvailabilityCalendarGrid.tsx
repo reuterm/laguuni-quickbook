@@ -1,5 +1,9 @@
 import { SectionHeader } from '@/components/ui/section-header'
-import { addCalendarDays, parseLocalDate, startOfDay } from '@/lib/date'
+import {
+  addCalendarDays,
+  differenceInCalendarDays,
+  parseLocalDate,
+} from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 
 import {
@@ -70,15 +74,7 @@ export function AvailabilityCalendarGrid({
 }
 
 function getRangeDayCount(rangeStartDate: Date, rangeEndDate: Date) {
-  const millisecondsPerDay = 24 * 60 * 60 * 1000
-
-  return (
-    Math.floor(
-      (startOfDay(rangeEndDate).getTime() -
-        startOfDay(rangeStartDate).getTime()) /
-        millisecondsPerDay,
-    ) + 1
-  )
+  return differenceInCalendarDays(rangeStartDate, rangeEndDate) + 1
 }
 
 function getRangeEndDate(
