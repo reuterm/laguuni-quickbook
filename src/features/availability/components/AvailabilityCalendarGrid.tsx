@@ -61,6 +61,7 @@ export function AvailabilityCalendarGrid({
               rangeStartDate,
               showFullWeekColumns,
               getRangeDayCount(rangeStartDate, rangeEndDate),
+              week.days,
             )}
             week={week}
             {...(bookingActionMode === 'hidden'

@@ -134,6 +134,11 @@ describe('AvailabilityCalendarGrid', () => {
         name: /Tue 19 May 1 slot/i,
       }),
     ).toBeInTheDocument()
+    expect(
+      within(secondWeekSection).queryByRole('columnheader', {
+        name: /Mon 18 May 0 slots/i,
+      }),
+    ).not.toBeInTheDocument()
     expect(screen.getByRole('rowheader', { name: '12:00' })).toBeInTheDocument()
     expect(screen.getByText('4/4')).toBeInTheDocument()
   })

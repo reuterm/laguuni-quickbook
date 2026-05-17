@@ -12,7 +12,7 @@ import type {
   AvailabilitySlot,
 } from './availability-model'
 
-export const AVAILABILITY_CALENDAR_BREAKPOINT_QUERY = '(min-width: 768px)'
+export const AVAILABILITY_CALENDAR_BREAKPOINT_QUERY = '(min-width: 758px)'
 
 const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 
@@ -60,6 +60,7 @@ export function listVisibleWeekdayIndices(
   rangeStartDate: Date,
   showFullWeekColumns: boolean,
   rangeDayCount: number,
+  dayGroups: readonly (AvailabilityDayGroup | null)[],
 ) {
   if (showFullWeekColumns) {
     return weekdayLabels.map((_, dayIndex) => dayIndex)
@@ -78,7 +79,15 @@ export function listVisibleWeekdayIndices(
     }
   }
 
-  return visibleDayIndices
+  const firstBookableVisibleIndex = visibleDayIndices.findIndex((dayIndex) => {
+    const dayGroup = dayGroups[dayIndex]
+
+    return dayGroup != null && dayGroup.slots.length > 0
+  })
+
+  return firstBookableVisibleIndex > 0
+    ? visibleDayIndices.slice(firstBookableVisibleIndex)
+    : visibleDayIndices
 }
 
 export function listCalendarSkeletonWeeks(

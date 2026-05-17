@@ -68,6 +68,10 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
   },
 ]
 
+const firstWeekBookableDay = FIXTURE_DAY_GROUPS[0] ?? null
+const secondWeekBookableDay = FIXTURE_DAY_GROUPS[1] ?? null
+const nextWeekBookableDay = FIXTURE_DAY_GROUPS[2] ?? null
+
 describe('availability-calendar', () => {
   it('groups availability into monday-to-sunday weeks', () => {
     expect(groupAvailabilityWeeks(FIXTURE_DAY_GROUPS)).toMatchObject([
@@ -99,6 +103,7 @@ describe('availability-calendar', () => {
         new Date('2026-05-14T12:00:00'),
         false,
         7,
+        [],
       ),
     ).toEqual([3, 4, 5, 6])
     expect(
@@ -107,6 +112,7 @@ describe('availability-calendar', () => {
         new Date('2026-05-14T12:00:00'),
         false,
         7,
+        [],
       ),
     ).toEqual([0, 1, 2])
   })
@@ -118,6 +124,67 @@ describe('availability-calendar', () => {
         new Date('2026-05-14T12:00:00'),
         true,
         7,
+        [],
+      ),
+    ).toEqual([0, 1, 2, 3, 4, 5, 6])
+  })
+
+  it('trims leading visible days that have no bookable slots', () => {
+    if (nextWeekBookableDay === null) {
+      throw new Error('Expected next week fixture day')
+    }
+
+    expect(
+      listVisibleWeekdayIndices(
+        new Date('2026-05-18T00:00:00'),
+        new Date('2026-05-18T12:00:00'),
+        false,
+        7,
+        [
+          null,
+          null,
+          {
+            date: localDate('2026-05-20'),
+            displayDate: 'Wed 20 May',
+            slots: nextWeekBookableDay.slots,
+          } satisfies AvailabilityDayGroup,
+          null,
+          null,
+          null,
+          null,
+        ],
+      ),
+    ).toEqual([2, 3, 4, 5, 6])
+  })
+
+  it('keeps visible days intact when the first visible day is already bookable', () => {
+    expect(
+      listVisibleWeekdayIndices(
+        new Date('2026-05-11T00:00:00'),
+        new Date('2026-05-14T12:00:00'),
+        false,
+        7,
+        [
+          null,
+          null,
+          null,
+          firstWeekBookableDay,
+          secondWeekBookableDay,
+          null,
+          null,
+        ],
+      ),
+    ).toEqual([3, 4, 5, 6])
+  })
+
+  it('keeps the visible range when no visible day is bookable', () => {
+    expect(
+      listVisibleWeekdayIndices(
+        new Date('2026-05-18T00:00:00'),
+        new Date('2026-05-18T12:00:00'),
+        false,
+        7,
+        [],
       ),
     ).toEqual([0, 1, 2, 3, 4, 5, 6])
   })
