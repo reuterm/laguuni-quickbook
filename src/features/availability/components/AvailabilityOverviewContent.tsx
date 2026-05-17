@@ -15,10 +15,7 @@ import { AVAILABILITY_CALENDAR_BREAKPOINT_QUERY } from '../availability-calendar
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
-import {
-  AvailabilityDayGroups,
-  availabilityDayAutoFitGridStyle,
-} from './AvailabilityDayGroups'
+import { AvailabilityDayGroups } from './AvailabilityDayGroups'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
 import { useAvailabilityAutoLoad } from './use-availability-auto-load'
@@ -67,12 +64,7 @@ export function AvailabilityOverviewContent({
     }
 
     return (
-      <div
-        role="status"
-        aria-live="polite"
-        className="grid items-start"
-        style={availabilityDayAutoFitGridStyle}
-      >
+      <div role="status" aria-live="polite" className="space-y-6">
         <p className="sr-only">Loading availability…</p>
         {[0, 1, 2].map((index) => (
           <div
