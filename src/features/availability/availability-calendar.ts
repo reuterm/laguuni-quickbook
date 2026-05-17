@@ -1,5 +1,5 @@
 import {
-  addDays,
+  addCalendarDays,
   addWeeks,
   formatLocalDate,
   type LocalDateString,
@@ -66,7 +66,7 @@ export function listVisibleWeekdayIndices(
   }
 
   const rangeStart = startOfDay(rangeStartDate)
-  const rangeEnd = addDays(startOfDay(rangeStartDate), rangeDayCount - 1)
+  const rangeEnd = addCalendarDays(rangeStartDate, rangeDayCount - 1)
 
   const visibleDayIndices: number[] = []
 
@@ -81,15 +81,11 @@ export function listVisibleWeekdayIndices(
   return visibleDayIndices
 }
 
-export function addCalendarDays(date: Date, dayCount: number) {
-  return addDays(startOfDay(date), dayCount)
-}
-
 export function listCalendarSkeletonWeeks(
   rangeStartDate: Date,
   rangeDayCount: number,
 ) {
-  const rangeEndDate = addDays(startOfDay(rangeStartDate), rangeDayCount - 1)
+  const rangeEndDate = addCalendarDays(rangeStartDate, rangeDayCount - 1)
 
   const weeks: Date[] = []
   let currentWeekStartDate = startOfWeek(rangeStartDate)
@@ -150,7 +146,7 @@ export function formatAvailabilityDayLabel(date: LocalDateString) {
 }
 
 export function formatAvailabilityWeekLabel(weekStartDate: Date) {
-  const weekEndDate = addDays(new Date(weekStartDate), 6)
+  const weekEndDate = addCalendarDays(weekStartDate, 6)
 
   const formatter = new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
@@ -161,7 +157,7 @@ export function formatAvailabilityWeekLabel(weekStartDate: Date) {
 }
 
 export function getWeekdayDate(weekStartDate: Date, dayIndex: number) {
-  return addDays(new Date(weekStartDate), dayIndex)
+  return addCalendarDays(weekStartDate, dayIndex)
 }
 
 export function getWeekdayLabel(dayIndex: number) {

@@ -1,12 +1,11 @@
 import type { CableId } from '../../domain/cable'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
 import {
-  addDays,
+  addCalendarDays,
   formatLocalDate,
   type LocalDateString,
   startOfWeek,
 } from '../../lib/date'
-import { addCalendarDays } from './availability-calendar'
 import { formatDisplayDate } from './availability-format'
 import type { AvailabilityDayGroup } from './availability-model'
 import { createAvailabilitySlots } from './availability-slots'
@@ -115,6 +114,6 @@ function listDatesInRange(
   dayCount: number,
 ): readonly LocalDateString[] {
   return Array.from({ length: dayCount }, (_, index) =>
-    formatLocalDate(addDays(rangeStartDate, index)),
+    formatLocalDate(addCalendarDays(rangeStartDate, index)),
   )
 }

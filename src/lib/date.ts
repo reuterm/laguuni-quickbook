@@ -61,6 +61,10 @@ export function addDays(date: Date, amount: number): Date {
   return addDaysLib(date, amount)
 }
 
+export function addCalendarDays(date: Date, amount: number): Date {
+  return addDays(startOfDay(date), amount)
+}
+
 export function addWeeks(date: Date, amount: number): Date {
   return addWeeksLib(date, amount)
 }
