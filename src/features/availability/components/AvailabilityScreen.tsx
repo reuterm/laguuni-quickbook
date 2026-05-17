@@ -45,12 +45,8 @@ export function AvailabilityScreen({
   )
   const { selectedCable, selectCable } = useAvailabilityScope()
   const activeCable = getCableById(selectedCable)
-  const {
-    availabilityState,
-    clearAppendError,
-    loadMoreAvailability,
-    refreshAvailabilityDay,
-  } = useAvailabilityOverview(api, selectedCable, availabilityReferenceDate)
+  const { availabilityState, loadMoreAvailability, refreshAvailabilityDay } =
+    useAvailabilityOverview(api, selectedCable, availabilityReferenceDate)
   const handleExportTrace = useCallback(
     async (traceId: string) => {
       await exportDiagnosticsForTrace(
@@ -155,7 +151,6 @@ export function AvailabilityScreen({
         <AvailabilityOverviewContent
           activeCableLabel={activeCable.label}
           availabilityState={availabilityState}
-          onClearAppendError={clearAppendError}
           onLoadMore={loadMoreAvailability}
           {...bookingActionProps}
         />

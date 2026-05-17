@@ -69,9 +69,6 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.getByText('Refreshing availability…')).toBeInTheDocument()
     expect(screen.getByText('3/4')).toBeInTheDocument()
     expect(screen.queryByText('Loading availability…')).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Load next week' }),
-    ).not.toBeInTheDocument()
   })
 
   it('renders weekly matrix tables when the saved view is calendar', () => {
@@ -116,9 +113,6 @@ describe('AvailabilityOverviewContent', () => {
     expect(
       screen.getByText(/No bookable one-hour slots are available for Pro/),
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Load next week' }),
-    ).toBeInTheDocument()
   })
 
   it('renders a cable-specific empty state in calendar view when all weeks are empty', () => {
@@ -129,26 +123,6 @@ describe('AvailabilityOverviewContent', () => {
     )
 
     expect(screen.getByText('No bookable slots in range')).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Load next week' }),
-    ).toBeInTheDocument()
-  })
-
-  it('loads more from the empty state', async () => {
-    const onLoadMore = vi.fn(async () => {})
-
-    renderContent(
-      createLoadedState('ready', createEmptyDayGroups()),
-      undefined,
-      undefined,
-      onLoadMore,
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: 'Load next week' }))
-
-    await waitFor(() => {
-      expect(onLoadMore).toHaveBeenCalledTimes(1)
-    })
   })
 
   it('hides booking actions in read-only mode', () => {
@@ -186,34 +160,6 @@ describe('AvailabilityOverviewContent', () => {
 
     expect(screen.getByText('Loading another week…')).toHaveClass('sr-only')
     expect(screen.getByLabelText('Loading')).toBeInTheDocument()
-  })
-
-  it('renders a manual load-next-week action when not currently appending', () => {
-    renderContent(createLoadedState('ready'))
-
-    expect(
-      screen.getByRole('button', { name: 'Load next week' }),
-    ).toBeInTheDocument()
-  })
-
-  it('hides the manual load-next-week action when the hard stop is reached', () => {
-    renderContent(createLoadedState('ready', undefined, { canLoadMore: false }))
-
-    expect(
-      screen.queryByRole('button', { name: 'Load next week' }),
-    ).not.toBeInTheDocument()
-  })
-
-  it('loads more when the manual action is pressed', async () => {
-    const onLoadMore = vi.fn(async () => {})
-
-    renderContent(createLoadedState('ready'), undefined, undefined, onLoadMore)
-
-    fireEvent.click(screen.getByRole('button', { name: 'Load next week' }))
-
-    await waitFor(() => {
-      expect(onLoadMore).toHaveBeenCalledTimes(1)
-    })
   })
 
   it('triggers loading more when the sentinel enters the viewport', async () => {
@@ -321,7 +267,6 @@ describe('AvailabilityOverviewContent', () => {
 
   it('renders an inline retry alert when loading the next week fails', async () => {
     const onLoadMore = vi.fn(async () => {})
-    const onClearAppendError = vi.fn()
 
     renderContent(
       createLoadedState('ready', undefined, {
@@ -330,7 +275,6 @@ describe('AvailabilityOverviewContent', () => {
       undefined,
       undefined,
       onLoadMore,
-      onClearAppendError,
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
@@ -338,12 +282,11 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Append failed')
 
     await waitFor(() => {
-      expect(onClearAppendError).toHaveBeenCalledTimes(1)
       expect(onLoadMore).toHaveBeenCalledTimes(1)
     })
   })
 
-  it('does not auto-load or show manual load-more while an append error is present', () => {
+  it('does not auto-load while an append error is present', () => {
     const onLoadMore = vi.fn(async () => {})
 
     renderContent(
@@ -355,9 +298,6 @@ describe('AvailabilityOverviewContent', () => {
       onLoadMore,
     )
 
-    expect(
-      screen.queryByRole('button', { name: 'Load next week' }),
-    ).not.toBeInTheDocument()
     expect(onLoadMore).toHaveBeenCalledTimes(0)
   })
 })
@@ -372,7 +312,6 @@ function renderContent(
     availabilityView?: 'cards' | 'calendar'
   },
   onLoadMore: () => Promise<void> = async () => {},
-  onClearAppendError: () => void = () => {},
 ) {
   window.localStorage.setItem(
     'laguuni.quickbook.settings',
@@ -394,7 +333,6 @@ function renderContent(
           activeCableLabel="Pro"
           availabilityState={availabilityState}
           bookingActionMode="hidden"
-          onClearAppendError={onClearAppendError}
           onLoadMore={onLoadMore}
         />
       </TestProviders>,
@@ -410,7 +348,6 @@ function renderContent(
         activeCableLabel="Pro"
         availabilityState={availabilityState}
         bookingActionMode={bookingActionMode}
-        onClearAppendError={onClearAppendError}
         onLoadMore={onLoadMore}
         onBookSelection={bookingProps?.onBookSelection ?? vi.fn()}
       />

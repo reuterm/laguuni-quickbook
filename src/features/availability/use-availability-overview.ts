@@ -43,7 +43,6 @@ export type AvailabilityState =
 
 type UseAvailabilityOverviewResult = {
   availabilityState: AvailabilityState
-  clearAppendError: () => void
   loadMoreAvailability: () => Promise<void>
   refreshAvailabilityDay: (date: LocalDateString) => Promise<void>
   refreshAvailability: () => Promise<void>
@@ -140,10 +139,6 @@ type AvailabilityOverviewAction =
       rangeVersion: number
       type: 'refreshDaySucceeded'
     }
-  | {
-      type: 'clearAppendError'
-    }
-
 export function useAvailabilityOverview(
   api: LaguuniApi,
   selectedCable: CableId,
@@ -336,10 +331,6 @@ export function useAvailabilityOverview(
     }
   }, [api, selectedCable])
 
-  const clearAppendError = useCallback(() => {
-    dispatch({ type: 'clearAppendError' })
-  }, [])
-
   useEffect(() => {
     isMountedRef.current = true
     void loadRange(initialRange, 'replace')
@@ -360,7 +351,6 @@ export function useAvailabilityOverview(
 
   return {
     availabilityState,
-    clearAppendError,
     loadMoreAvailability,
     refreshAvailabilityDay,
     refreshAvailability,
@@ -540,17 +530,6 @@ function availabilityOverviewReducer(
         activeDayRefreshCount: decrementActiveDayRefreshCount(
           state.activeDayRefreshCount,
         ),
-      }
-    }
-
-    case 'clearAppendError': {
-      if (state.phase !== 'ready' || state.appendErrorMessage === null) {
-        return state
-      }
-
-      return {
-        ...state,
-        appendErrorMessage: null,
       }
     }
   }

@@ -25,14 +25,12 @@ import type { AvailabilityBookingActionProps } from './availability-booking-acti
 type AvailabilityOverviewContentProps = {
   activeCableLabel: string
   availabilityState: AvailabilityState
-  onClearAppendError: () => void
   onLoadMore: () => Promise<void>
 } & AvailabilityBookingActionProps
 
 export function AvailabilityOverviewContent({
   activeCableLabel,
   availabilityState,
-  onClearAppendError,
   onLoadMore,
   ...bookingActionProps
 }: AvailabilityOverviewContentProps) {
@@ -225,7 +223,6 @@ export function AvailabilityOverviewContent({
               size="sm"
               variant="secondary"
               onClick={() => {
-                onClearAppendError()
                 void onLoadMore()
               }}
             >
@@ -243,19 +240,6 @@ export function AvailabilityOverviewContent({
         >
           <Spinner className="size-5" />
           <span className="sr-only">Loading another week…</span>
-        </div>
-      ) : canAutoLoadMore ? (
-        <div className="px-1">
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              void onLoadMore()
-            }}
-          >
-            Load next week
-          </Button>
         </div>
       ) : null}
 
