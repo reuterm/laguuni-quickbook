@@ -40,4 +40,15 @@ export function getAvailabilityOverviewContentModel(
   }
 }
 
+export function getEffectiveAvailabilityOverviewViewMode(
+  availabilityView: AvailabilityOverviewViewMode,
+  isCalendarBreakpoint: boolean,
+): AvailabilityOverviewViewMode {
+  if (availabilityView === 'calendar') {
+    return 'calendar'
+  }
+
+  return isCalendarBreakpoint ? 'calendar' : 'cards'
+}
+
 export type { AvailabilityOverviewContentModel, AvailabilityOverviewViewMode }

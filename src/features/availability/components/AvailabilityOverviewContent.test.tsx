@@ -35,12 +35,28 @@ describe('AvailabilityOverviewContent', () => {
   })
 
   it('renders the loading state', () => {
+    stubMatchMedia(false)
+
     renderContent({
       isLoadingMore: false,
       status: 'loading',
     })
 
     expect(screen.getByText('Loading availability…')).toBeInTheDocument()
+  })
+
+  it('renders a calendar-shaped loading state at the calendar breakpoint when cards are preferred', () => {
+    stubMatchMedia(true)
+
+    renderContent({
+      isLoadingMore: false,
+      status: 'loading',
+    })
+
+    expect(screen.getByText('Loading availability…')).toBeInTheDocument()
+    expect(screen.getAllByRole('table')).toHaveLength(2)
+    expect(screen.getByText('11 May - 17 May')).toBeInTheDocument()
+    expect(screen.getByText('18 May - 24 May')).toBeInTheDocument()
   })
 
   it('renders a calendar-shaped loading state when calendar view is enabled', () => {
@@ -73,6 +89,8 @@ describe('AvailabilityOverviewContent', () => {
   })
 
   it('renders weekly matrix tables when the saved view is calendar', () => {
+    stubMatchMedia(false)
+
     renderContent(
       createLoadedState('ready'),
       {
@@ -98,6 +116,29 @@ describe('AvailabilityOverviewContent', () => {
     ).toBeInTheDocument()
   })
 
+  it('renders weekly matrix tables at the calendar breakpoint when cards are preferred', () => {
+    stubMatchMedia(true)
+
+    renderContent(
+      createLoadedState('ready'),
+      {
+        bookingActionMode: 'enabled',
+        onBookSelection: vi.fn(),
+      },
+      { availabilityView: 'cards' },
+    )
+
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.getByText('11 May - 17 May')).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: /Mon 11 May 0 slots/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('columnheader', { name: /Thu 14 May 1 slot/i }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('rowheader', { name: '15:00' })).toBeInTheDocument()
+  })
+
   it('renders API errors as alerts', () => {
     renderContent({
       isLoadingMore: false,
@@ -109,6 +150,8 @@ describe('AvailabilityOverviewContent', () => {
   })
 
   it('renders a cable-specific empty state in card view', () => {
+    stubMatchMedia(false)
+
     renderContent(createLoadedState('ready', createEmptyDayGroups()))
 
     expect(
@@ -121,6 +164,18 @@ describe('AvailabilityOverviewContent', () => {
       createLoadedState('ready', createEmptyDayGroups()),
       { bookingActionMode: 'hidden' },
       { availabilityView: 'calendar' },
+    )
+
+    expect(screen.getByText('No bookable slots in range')).toBeInTheDocument()
+  })
+
+  it('renders the shared empty state at the calendar breakpoint when cards are preferred', () => {
+    stubMatchMedia(true)
+
+    renderContent(
+      createLoadedState('ready', createEmptyDayGroups()),
+      { bookingActionMode: 'hidden' },
+      { availabilityView: 'cards' },
     )
 
     expect(screen.getByText('No bookable slots in range')).toBeInTheDocument()

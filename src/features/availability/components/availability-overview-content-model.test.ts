@@ -3,7 +3,36 @@ import { describe, expect, it } from 'vitest'
 import { localDate } from '../../../../tests/local-date'
 import type { AvailabilityDayGroup } from '../availability-service'
 import type { AvailabilityState } from '../use-availability-overview'
-import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
+import {
+  getAvailabilityOverviewContentModel,
+  getEffectiveAvailabilityOverviewViewMode,
+} from './availability-overview-content-model'
+
+describe('getEffectiveAvailabilityOverviewViewMode', () => {
+  it('keeps cards below the calendar breakpoint when cards are preferred', () => {
+    expect(getEffectiveAvailabilityOverviewViewMode('cards', false)).toBe(
+      'cards',
+    )
+  })
+
+  it('switches cards to calendar at the calendar breakpoint', () => {
+    expect(getEffectiveAvailabilityOverviewViewMode('cards', true)).toBe(
+      'calendar',
+    )
+  })
+
+  it('keeps calendar below the calendar breakpoint when calendar is preferred', () => {
+    expect(getEffectiveAvailabilityOverviewViewMode('calendar', false)).toBe(
+      'calendar',
+    )
+  })
+
+  it('keeps calendar at the calendar breakpoint when calendar is preferred', () => {
+    expect(getEffectiveAvailabilityOverviewViewMode('calendar', true)).toBe(
+      'calendar',
+    )
+  })
+})
 
 describe('getAvailabilityOverviewContentModel', () => {
   it('returns an empty render model while availability is loading', () => {
