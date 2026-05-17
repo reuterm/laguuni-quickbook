@@ -3,8 +3,8 @@ import {
   subtleDividerClassName,
   subtleSurfaceBackgroundClassName,
 } from '@/components/ui/styles'
+import { formatLocalDate } from '@/lib/date'
 import { cn } from '@/lib/utils'
-import { formatLocalDate } from '../../../lib/date'
 import {
   type AvailabilityWeek,
   createSlotLookup,

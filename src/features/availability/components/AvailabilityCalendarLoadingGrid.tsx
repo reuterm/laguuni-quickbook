@@ -3,10 +3,9 @@ import {
   subtleDividerClassName,
   subtleSurfaceBackgroundClassName,
 } from '@/components/ui/styles'
-import { startOfWeek } from '@/lib/date'
+import { formatLocalDate, startOfWeek } from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
-import { formatLocalDate } from '../../../lib/date'
 import {
   AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   formatAvailabilityWeekLabel,

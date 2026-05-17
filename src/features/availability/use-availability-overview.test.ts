@@ -1,10 +1,10 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { CableId } from '@/domain/cable'
+import type { DailyAvailabilityWindow } from '@/domain/slot'
+import type { LaguuniApi } from '@/lib/api/laguuni-api'
+import type { LocalDateString } from '@/lib/date'
 import { localDate } from '../../../tests/local-date'
-import type { CableId } from '../../domain/cable'
-import type { DailyAvailabilityWindow } from '../../domain/slot'
-import type { LaguuniApi } from '../../lib/api/laguuni-api'
-import type { LocalDateString } from '../../lib/date'
 import { useAvailabilityOverview } from './use-availability-overview'
 
 describe('useAvailabilityOverview', () => {

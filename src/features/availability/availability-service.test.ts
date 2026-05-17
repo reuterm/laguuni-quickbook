@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
+import type { CableId } from '@/domain/cable'
+import type { DailyAvailabilityWindow } from '@/domain/slot'
+import type { LaguuniApi } from '@/lib/api/laguuni-api'
+import type { LocalDateString } from '@/lib/date'
 import { localDate } from '../../../tests/local-date'
-import type { CableId } from '../../domain/cable'
-import type { DailyAvailabilityWindow } from '../../domain/slot'
-import type { LaguuniApi } from '../../lib/api/laguuni-api'
-import type { LocalDateString } from '../../lib/date'
 import {
   AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
   createAvailabilitySlots,

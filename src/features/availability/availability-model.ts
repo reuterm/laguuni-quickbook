@@ -1,5 +1,5 @@
-import type { BookingSlotSelection } from '../../domain/booking'
-import type { LocalDateString } from '../../lib/date'
+import type { BookingSlotSelection } from '@/domain/booking'
+import type { LocalDateString } from '@/lib/date'
 
 export type AvailabilitySlot = {
   endTime: string

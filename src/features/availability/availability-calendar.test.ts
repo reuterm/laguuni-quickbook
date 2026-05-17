@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { formatLocalDate } from '@/lib/date'
 import { localDate } from '../../../tests/local-date'
-import { formatLocalDate } from '../../lib/date'
 import {
   groupAvailabilityWeeks,
   listCalendarSkeletonWeeks,

@@ -1,5 +1,4 @@
-import type { LocalDateString } from '../../lib/date'
-import { parseLocalDate } from '../../lib/date'
+import { type LocalDateString, parseLocalDate } from '@/lib/date'
 
 export function formatDisplayDate(date: LocalDateString): string {
   return new Intl.DateTimeFormat('en-GB', {
