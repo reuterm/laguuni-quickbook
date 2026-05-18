@@ -22,7 +22,7 @@ function App() {
         <AvailabilityScopeProvider>
           <ContentRail
             size="page"
-            className="flex min-h-svh flex-col gap-8 px-4 py-5 sm:py-8"
+            className="safe-area-page-gutters flex min-h-svh flex-col gap-8 py-5 sm:py-8"
           >
             <header>
               <ContentRail className="space-y-3 border-b border-border/70 pb-4">
