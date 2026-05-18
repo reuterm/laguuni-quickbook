@@ -104,3 +104,10 @@
     color: var(--foreground);
   }
 }
+
+@layer utilities {
+  .safe-area-page-gutters {
+    padding-left: max(env(safe-area-inset-left), 1rem);
+    padding-right: max(env(safe-area-inset-right), 1rem);
+  }
+}
