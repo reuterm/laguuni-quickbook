@@ -47,23 +47,17 @@ export function createAvailabilitySlots(
 function listBookableHourStartMinutes(
   bookingSegments: readonly BookingSegment[],
 ): readonly number[] {
-  const slotStarts = new Set<number>()
-
-  for (const segment of bookingSegments) {
-    if (!segment.isBookable) {
-      continue
-    }
-
-    for (
-      let startMinute = roundUpToHour(segment.startMinute);
-      startMinute + SLOT_DURATION_MINUTES <= segment.endMinute;
-      startMinute += SLOT_DURATION_MINUTES
-    ) {
-      slotStarts.add(startMinute)
-    }
-  }
-
-  return [...slotStarts].sort((left, right) => left - right)
+  return [
+    ...new Set(
+      bookingSegments
+        .filter(
+          (segment) =>
+            segment.isBookable &&
+            segment.endMinute - segment.startMinute >= SLOT_DURATION_MINUTES,
+        )
+        .map((segment) => segment.startMinute),
+    ),
+  ].sort((left, right) => left - right)
 }
 
 function findCoveringCapacitySegment(
@@ -85,8 +79,4 @@ function inferTotalCapacity(
       Math.max(highestFreeCapacity, segment.freeCapacity),
     FALLBACK_TOTAL_CAPACITY,
   )
-}
-
-function roundUpToHour(minuteOfDay: number): number {
-  return Math.ceil(minuteOfDay / SLOT_DURATION_MINUTES) * SLOT_DURATION_MINUTES
 }

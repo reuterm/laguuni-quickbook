@@ -262,9 +262,14 @@ describe('createAvailabilitySlots', () => {
     const dailyWindow: DailyAvailabilityWindow = {
       bookingSegments: [
         {
-          endMinute: 840,
+          endMinute: 780,
           isBookable: true,
           startMinute: 720,
+        },
+        {
+          endMinute: 840,
+          isBookable: true,
+          startMinute: 780,
         },
       ],
       cableId: 'pro',
@@ -308,13 +313,18 @@ describe('createAvailabilitySlots', () => {
     ])
   })
 
-  it('derives slot starts from normalized bookable segments instead of sweeping the whole day', () => {
+  it('preserves exact normalized bookable segment starts', () => {
     const dailyWindow: DailyAvailabilityWindow = {
       bookingSegments: [
         {
-          endMinute: 905,
+          endMinute: 785,
           isBookable: true,
           startMinute: 725,
+        },
+        {
+          endMinute: 875,
+          isBookable: true,
+          startMinute: 815,
         },
       ],
       cableId: 'easy',
@@ -330,32 +340,77 @@ describe('createAvailabilitySlots', () => {
 
     expect(createAvailabilitySlots(dailyWindow)).toEqual([
       {
-        endTime: '14:00',
+        endTime: '13:05',
         freeCapacity: 2,
-        id: '2026-05-03-780',
+        id: '2026-05-03-725',
         selection: {
           cableId: 'easy',
           date: localDate('2026-05-03'),
-          endTime: '14:00',
-          startTime: '13:00',
+          endTime: '13:05',
+          startTime: '12:05',
         },
-        startTime: '13:00',
+        startTime: '12:05',
         totalCapacity: 4,
       },
       {
-        endTime: '15:00',
+        endTime: '14:35',
         freeCapacity: 2,
-        id: '2026-05-03-840',
+        id: '2026-05-03-815',
         selection: {
           cableId: 'easy',
           date: localDate('2026-05-03'),
-          endTime: '15:00',
-          startTime: '14:00',
+          endTime: '14:35',
+          startTime: '13:35',
         },
-        startTime: '14:00',
+        startTime: '13:35',
         totalCapacity: 4,
       },
     ])
+  })
+
+  it('keeps staggered one-hour slots', () => {
+    const dailyWindow: DailyAvailabilityWindow = {
+      bookingSegments: [
+        {
+          endMinute: 780,
+          isBookable: true,
+          startMinute: 720,
+        },
+        {
+          endMinute: 870,
+          isBookable: true,
+          startMinute: 810,
+        },
+        {
+          endMinute: 960,
+          isBookable: true,
+          startMinute: 900,
+        },
+        {
+          endMinute: 1050,
+          isBookable: true,
+          startMinute: 990,
+        },
+        {
+          endMinute: 1140,
+          isBookable: true,
+          startMinute: 1080,
+        },
+      ],
+      cableId: 'pro',
+      capacitySegments: [
+        {
+          endMinute: 1140,
+          freeCapacity: 4,
+          startMinute: 720,
+        },
+      ],
+      date: localDate('2026-06-06'),
+    }
+
+    expect(
+      createAvailabilitySlots(dailyWindow).map((slot) => slot.startTime),
+    ).toEqual(['12:00', '13:30', '15:00', '16:30', '18:00'])
   })
 })
 
