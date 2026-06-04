@@ -40,6 +40,53 @@ describe('useAvailabilityOverview', () => {
     )
   })
 
+  it('does not load availability while disabled', async () => {
+    const { api, getDailyAvailabilityWindow } = createApi()
+
+    const { result } = renderHook(() =>
+      useAvailabilityOverview(api, 'pro', new Date('2026-05-14T12:00:00'), {
+        enabled: false,
+      }),
+    )
+
+    await act(async () => {
+      await result.current.loadMoreAvailability()
+      await result.current.refreshAvailability()
+      await result.current.refreshAvailabilityDay(localDate('2026-05-14'))
+    })
+
+    expect(result.current.availabilityState.status).toBe('loading')
+    expect(getDailyAvailabilityWindow).not.toHaveBeenCalled()
+  })
+
+  it('loads availability after becoming enabled again', async () => {
+    const { api, getDailyAvailabilityWindow } = createApi()
+
+    const { result, rerender } = renderHook(
+      ({ enabled }) =>
+        useAvailabilityOverview(api, 'pro', new Date('2026-05-14T12:00:00'), {
+          enabled,
+        }),
+      {
+        initialProps: {
+          enabled: false,
+        },
+      },
+    )
+
+    expect(getDailyAvailabilityWindow).not.toHaveBeenCalled()
+
+    rerender({
+      enabled: true,
+    })
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(14)
+  })
+
   it('loads exactly one additional week when more availability is requested', async () => {
     const { api, getDailyAvailabilityWindow } = createApi()
 

@@ -23,12 +23,14 @@ import { useAvailabilityAutoLoad } from './use-availability-auto-load'
 type AvailabilityOverviewContentProps = {
   activeCableLabel: string
   availabilityState: AvailabilityState
+  isOffline?: boolean
   onLoadMore: () => Promise<void>
 } & AvailabilityBookingActionProps
 
 export function AvailabilityOverviewContent({
   activeCableLabel,
   availabilityState,
+  isOffline = false,
   onLoadMore,
   ...bookingActionProps
 }: AvailabilityOverviewContentProps) {
@@ -53,6 +55,23 @@ export function AvailabilityOverviewContent({
     loadedDayGroupCount: contentModel.renderedDayGroups.length,
     onLoadMore,
   })
+
+  if (isOffline) {
+    return (
+      <Alert
+        role="status"
+        className={cn(subtleSurfaceBackgroundClassName, 'text-center')}
+      >
+        <AlertTitle className="text-center">
+          Reconnect to load availability
+        </AlertTitle>
+        <AlertDescription className="text-center">
+          Saved settings stay available on this device, but availability and
+          booking for {activeCableLabel} need an internet connection.
+        </AlertDescription>
+      </Alert>
+    )
+  }
 
   if (availabilityState.status === 'loading') {
     if (contentModel.isCalendarView) {

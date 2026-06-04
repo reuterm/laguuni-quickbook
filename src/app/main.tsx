@@ -1,3 +1,4 @@
+import { registerSW } from 'virtual:pwa-register'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
@@ -5,6 +6,10 @@ import App from './App'
 import './App.css'
 import { createAppConfig } from './config'
 import { AppProviders } from './providers'
+
+registerSW({
+  immediate: true,
+})
 
 const rootElement = document.getElementById('root')
 const appConfig = createAppConfig({

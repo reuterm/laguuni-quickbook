@@ -29,10 +29,12 @@ import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 import { getAvailabilityBookingActionProps } from './availability-booking-action'
 
 type AvailabilityScreenProps = {
+  isOnline: boolean
   onOpenSettings: () => void
 }
 
 export function AvailabilityScreen({
+  isOnline,
   onOpenSettings,
 }: AvailabilityScreenProps) {
   const api = useLaguuniApi()
@@ -44,7 +46,9 @@ export function AvailabilityScreen({
   const { selectedCable, selectCable } = useAvailabilityScope()
   const activeCable = getCableById(selectedCable)
   const { availabilityState, loadMoreAvailability, refreshAvailabilityDay } =
-    useAvailabilityOverview(api, selectedCable, availabilityReferenceDate)
+    useAvailabilityOverview(api, selectedCable, availabilityReferenceDate, {
+      enabled: isOnline,
+    })
   const handleExportTrace = useCallback(
     async (traceId: string) => {
       await exportDiagnosticsForTrace(
@@ -71,7 +75,8 @@ export function AvailabilityScreen({
     saveReadOnlyNoticeDismissed(true)
     setIsReadOnlyNoticeDismissed(true)
   }, [])
-  const showReadOnlyNotice = !isBookingReady && !isReadOnlyNoticeDismissed
+  const showReadOnlyNotice =
+    isOnline && !isBookingReady && !isReadOnlyNoticeDismissed
   const bookingActionProps = getAvailabilityBookingActionProps(
     isBookingReady,
     isBookingInProgress,
@@ -149,6 +154,7 @@ export function AvailabilityScreen({
         <AvailabilityOverviewContent
           activeCableLabel={activeCable.label}
           availabilityState={availabilityState}
+          isOffline={!isOnline}
           onLoadMore={loadMoreAvailability}
           {...bookingActionProps}
         />
