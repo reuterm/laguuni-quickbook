@@ -84,7 +84,7 @@ describe('AvailabilityOverviewContent', () => {
     renderContent(createLoadedState('refreshing'))
 
     expect(screen.getByText('Refreshing availability…')).toBeInTheDocument()
-    expect(screen.getByText('3/4')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
     expect(screen.queryByText('Loading availability…')).not.toBeInTheDocument()
   })
 
@@ -111,7 +111,7 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.getByRole('rowheader', { name: '15:00' })).toBeInTheDocument()
     expect(
       screen.getByRole('button', {
-        name: 'Book 15:00-16:00, 3/4 spots free',
+        name: 'Book 15:00-16:00, 3 spots free',
       }),
     ).toBeInTheDocument()
   })
