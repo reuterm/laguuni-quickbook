@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ContentRail } from '@/components/ui/content-rail'
 import { eyebrowClassName } from '@/components/ui/styles'
+import { useNetworkStatus } from '@/lib/hooks/use-network-status'
 import { AvailabilityScreen } from '../features/availability/components/AvailabilityScreen'
 import { AvailabilityScopeProvider } from '../features/availability/use-availability-scope'
 import {
@@ -14,6 +15,7 @@ import { UserSettingsProvider } from '../features/settings/use-user-settings'
 
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const isOnline = useNetworkStatus()
 
   return (
     <AppDiagnosticsBoundary>
@@ -48,6 +50,7 @@ function App() {
 
             <main className="flex-1">
               <AvailabilityScreen
+                isOnline={isOnline}
                 onOpenSettings={() => setIsSettingsOpen(true)}
               />
             </main>

@@ -34,11 +34,16 @@ type UseAvailabilityOverviewResult = {
   refreshAvailability: () => Promise<void>
 }
 
+type UseAvailabilityOverviewOptions = {
+  enabled?: boolean
+}
+
 export type { AvailabilityState } from './availability-overview-store'
 export function useAvailabilityOverview(
   api: LaguuniApi,
   selectedCable: CableId,
   referenceDate?: Date,
+  { enabled = true }: UseAvailabilityOverviewOptions = {},
 ): UseAvailabilityOverviewResult {
   const referenceDateValue = referenceDate?.getTime()
   const initialRange = useMemo(
@@ -145,11 +150,19 @@ export function useAvailabilityOverview(
   )
 
   const refreshAvailability = useCallback(async () => {
+    if (!enabled) {
+      return
+    }
+
     await loadRange(storeRef.current.loadedRange, 'refresh')
-  }, [loadRange])
+  }, [enabled, loadRange])
 
   const refreshAvailabilityDay = useCallback(
     async (date: LocalDateString) => {
+      if (!enabled) {
+        return
+      }
+
       const currentStore = storeRef.current
 
       if (!canRefreshDay(currentStore)) {
@@ -197,10 +210,14 @@ export function useAvailabilityOverview(
         })
       }
     },
-    [api, beginDayRefreshRequest, selectedCable],
+    [api, beginDayRefreshRequest, enabled, selectedCable],
   )
 
   const loadMoreAvailability = useCallback(async () => {
+    if (!enabled) {
+      return
+    }
+
     const currentStore = storeRef.current
 
     if (!canAppendWeek(currentStore, pendingAppendRef.current)) {
@@ -252,14 +269,19 @@ export function useAvailabilityOverview(
         type: 'appendFailed',
       })
     }
-  }, [api, beginAppendRequest, finishAppendRequest, selectedCable])
+  }, [api, beginAppendRequest, enabled, finishAppendRequest, selectedCable])
 
   useEffect(() => {
     isMountedRef.current = true
+
+    if (!enabled) {
+      return undefined
+    }
+
     void loadRange(initialRange, 'replace')
 
     return undefined
-  }, [initialRange, loadRange])
+  }, [enabled, initialRange, loadRange])
 
   useEffect(() => {
     return () => {

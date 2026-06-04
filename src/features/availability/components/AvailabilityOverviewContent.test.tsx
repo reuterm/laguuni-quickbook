@@ -17,6 +17,10 @@ import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 type AvailabilityOverviewProps = Parameters<
   typeof AvailabilityOverviewContent
 >[0]
+type AvailabilityOverviewBaseProps = Pick<
+  AvailabilityOverviewProps,
+  'activeCableLabel' | 'availabilityState' | 'isOffline' | 'onLoadMore'
+>
 
 describe('AvailabilityOverviewContent', () => {
   afterEach(() => {
@@ -147,6 +151,24 @@ describe('AvailabilityOverviewContent', () => {
     })
 
     expect(screen.getByRole('alert')).toHaveTextContent('Fixture outage')
+  })
+
+  it('renders a dedicated offline empty state', () => {
+    renderContent(createLoadedState('ready'), undefined, undefined, undefined, {
+      isOffline: true,
+    })
+
+    expect(
+      screen.getByText('Reconnect to load availability'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Saved settings stay available on this device, but availability and booking for Pro need an internet connection\./,
+      ),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Book' }),
+    ).not.toBeInTheDocument()
   })
 
   it('renders a cable-specific empty state in card view', () => {
@@ -485,7 +507,15 @@ function renderContent(
     availabilityView?: 'cards' | 'calendar'
   },
   onLoadMore: () => Promise<void> = async () => {},
+  propsOverrides?: Partial<AvailabilityOverviewBaseProps>,
 ) {
+  const availabilityContentProps = {
+    activeCableLabel: 'Pro',
+    availabilityState,
+    onLoadMore,
+    ...propsOverrides,
+  }
+
   window.localStorage.setItem(
     'laguuni.quickbook.settings',
     JSON.stringify({
@@ -503,10 +533,8 @@ function renderContent(
     return render(
       <TestProviders>
         <AvailabilityOverviewContent
-          activeCableLabel="Pro"
-          availabilityState={availabilityState}
+          {...availabilityContentProps}
           bookingActionMode="hidden"
-          onLoadMore={onLoadMore}
         />
       </TestProviders>,
     )
@@ -518,10 +546,8 @@ function renderContent(
   return render(
     <TestProviders>
       <AvailabilityOverviewContent
-        activeCableLabel="Pro"
-        availabilityState={availabilityState}
+        {...availabilityContentProps}
         bookingActionMode={bookingActionMode}
-        onLoadMore={onLoadMore}
         onBookSelection={bookingProps?.onBookSelection ?? vi.fn()}
       />
     </TestProviders>,
