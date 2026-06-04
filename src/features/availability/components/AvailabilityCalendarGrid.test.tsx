@@ -140,7 +140,7 @@ describe('AvailabilityCalendarGrid', () => {
       }),
     ).not.toBeInTheDocument()
     expect(screen.getByRole('rowheader', { name: '12:00' })).toBeInTheDocument()
-    expect(screen.getByText('4/4')).toBeInTheDocument()
+    expect(screen.getByText('4')).toBeInTheDocument()
   })
 
   it('uses the badge itself as the booking trigger', () => {
@@ -159,7 +159,7 @@ describe('AvailabilityCalendarGrid', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: 'Book 15:00-16:00, 2/4 spots free',
+        name: 'Book 15:00-16:00, 2 spots free',
       }),
     )
 
@@ -183,7 +183,7 @@ describe('AvailabilityCalendarGrid', () => {
     )
 
     expect(screen.queryAllByRole('button')).toHaveLength(0)
-    expect(screen.getAllByText(/\d\/4/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/^\d$/).length).toBeGreaterThan(0)
   })
 
   it('renders a simple dash for unavailable calendar cells', () => {
@@ -205,7 +205,7 @@ describe('AvailabilityCalendarGrid', () => {
       throw new Error('Expected 12:00 row')
     }
 
-    expect(within(twelveRow).getByText('4/4')).toBeInTheDocument()
+    expect(within(twelveRow).getByText('4')).toBeInTheDocument()
     expect(within(twelveRow).getAllByText('-').length).toBeGreaterThan(0)
   })
 

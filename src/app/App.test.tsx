@@ -29,7 +29,7 @@ describe('App', () => {
       'aria-selected',
       'true',
     )
-    expect(await screen.findAllByText('4/4')).not.toHaveLength(0)
+    expect(await screen.findAllByText('4')).not.toHaveLength(0)
     expect(
       screen.getByText(
         /Save your name, phone, and email in Settings to reveal booking actions\./,
@@ -162,7 +162,7 @@ describe('App', () => {
     })
 
     const calendarButtons = await screen.findAllByRole('button', {
-      name: 'Book 15:00-16:00, 4/4 spots free',
+      name: 'Book 15:00-16:00, 4 spots free',
     })
 
     const firstCalendarButton = calendarButtons[0]

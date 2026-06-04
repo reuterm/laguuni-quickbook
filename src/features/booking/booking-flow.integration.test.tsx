@@ -170,7 +170,7 @@ describe('booking flow integration', () => {
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
 
-    await expectCapacityLabel('3/4')
+    await expectCapacityLabel('3')
 
     await confirmFirstBooking(user)
 
@@ -184,7 +184,7 @@ describe('booking flow integration', () => {
       expect(deletedBasketTokens).toHaveLength(1)
     })
 
-    await expectCapacityLabel('2/4')
+    await expectCapacityLabel('2')
   })
 
   it('deletes and refreshes availability when a failed booking is dismissed', async () => {
@@ -233,7 +233,7 @@ describe('booking flow integration', () => {
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
 
-    await expectCapacityLabel('3/4')
+    await expectCapacityLabel('3')
 
     await confirmFirstBooking(user)
 
@@ -247,7 +247,7 @@ describe('booking flow integration', () => {
       expect(deletedBasketTokens).toHaveLength(1)
     })
 
-    await expectCapacityLabel('2/4')
+    await expectCapacityLabel('2')
   })
 
   it('allows dismissing a failed booking status', async () => {
@@ -430,7 +430,7 @@ describe('booking flow integration', () => {
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
     })
 
-    await expectCapacityLabel('3/4')
+    await expectCapacityLabel('3')
 
     await confirmFirstBooking(user)
 
@@ -438,7 +438,7 @@ describe('booking flow integration', () => {
       await screen.findByRole('heading', { name: 'Booking confirmed' }),
     ).toBeInTheDocument()
 
-    await expectCapacityLabel('2/4')
+    await expectCapacityLabel('2')
   })
 })
 
