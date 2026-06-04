@@ -1,9 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { CableId } from '@/domain/cable'
-import type { DailyAvailabilityWindow } from '@/domain/slot'
+import type { AvailableDate, DailyAvailabilityWindow } from '@/domain/slot'
 import type { LaguuniApi } from '@/lib/api/laguuni-api'
-import type { LocalDateString } from '@/lib/date'
+import {
+  formatLocalDate,
+  type LocalDateString,
+  parseLocalDate,
+} from '@/lib/date'
 import { localDate } from '../../../tests/local-date'
 import { useAvailabilityOverview } from './use-availability-overview'
 
@@ -941,6 +945,9 @@ function createApi(
   getDailyAvailabilityWindow: LaguuniApi['getDailyAvailabilityWindow'] = vi.fn(
     async (_cableId, date) => createDailyAvailabilityWindow(date),
   ),
+  getAvailableDates: LaguuniApi['getAvailableDates'] = vi.fn(
+    createGetAvailableDates(),
+  ),
 ) {
   return {
     api: {
@@ -948,13 +955,36 @@ function createApi(
       applyCodeToBasket: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
-      getAvailableDates: unexpectedApiCall,
+      getAvailableDates,
       getDailyAvailabilityWindow,
       loadBasketPricingSummary: unexpectedApiCall,
       lookupCode: unexpectedApiCall,
       submitCheckout: unexpectedApiCall,
     } satisfies LaguuniApi,
+    getAvailableDates,
     getDailyAvailabilityWindow,
+  }
+}
+
+function createGetAvailableDates() {
+  return async (
+    cableId: CableId,
+    anchorDate: LocalDateString,
+  ): Promise<readonly AvailableDate[]> => {
+    const monthStartDate = parseLocalDate(anchorDate)
+    const currentMonth = monthStartDate.getMonth()
+    const availableDates: AvailableDate[] = []
+
+    while (monthStartDate.getMonth() === currentMonth) {
+      availableDates.push({
+        cableId,
+        date: formatLocalDate(monthStartDate),
+        hasBookableSlots: true,
+      })
+      monthStartDate.setDate(monthStartDate.getDate() + 1)
+    }
+
+    return availableDates
   }
 }
 

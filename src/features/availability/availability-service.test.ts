@@ -1,11 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { CableId } from '@/domain/cable'
-import type { DailyAvailabilityWindow } from '@/domain/slot'
+import type { AvailableDate, DailyAvailabilityWindow } from '@/domain/slot'
 import type { LaguuniApi } from '@/lib/api/laguuni-api'
 import type { LocalDateString } from '@/lib/date'
 import { localDate } from '../../../tests/local-date'
 import {
-  AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
   createAvailabilitySlots,
   loadAvailabilityDay,
   loadAvailabilityOverview,
@@ -14,6 +13,7 @@ import {
 
 describe('loadAvailabilityOverview', () => {
   it('loads whole calendar weeks across month boundaries', async () => {
+    const getAvailableDates = vi.fn(createGetAvailableDates())
     const getDailyAvailabilityWindow = vi.fn(
       async (_cableId: CableId, date: LocalDateString) =>
         dailyAvailabilityByDate[date] ??
@@ -24,7 +24,7 @@ describe('loadAvailabilityOverview', () => {
       applyCodeToBasket: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
-      getAvailableDates: unexpectedApiCall,
+      getAvailableDates,
       getDailyAvailabilityWindow,
       loadBasketPricingSummary: unexpectedApiCall,
       lookupCode: unexpectedApiCall,
@@ -38,16 +38,18 @@ describe('loadAvailabilityOverview', () => {
       1,
     )
 
-    expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(7)
+    expect(getAvailableDates).toHaveBeenCalledTimes(1)
+    expect(getAvailableDates).toHaveBeenCalledWith('pro', '2026-05-01')
+    expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(3)
     expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
       1,
       'pro',
-      '2026-05-25',
+      '2026-05-27',
     )
     expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
-      7,
+      3,
       'pro',
-      '2026-05-31',
+      '2026-05-29',
     )
     expect(dayGroups.map((dayGroup) => dayGroup.date)).toEqual([
       '2026-05-25',
@@ -61,6 +63,7 @@ describe('loadAvailabilityOverview', () => {
   })
 
   it('loads the initial two-week range by default', async () => {
+    const getAvailableDates = vi.fn(createGetAvailableDates())
     const getDailyAvailabilityWindow = vi.fn(
       async (_cableId: CableId, date: LocalDateString) =>
         dailyAvailabilityByDate[date] ??
@@ -71,7 +74,7 @@ describe('loadAvailabilityOverview', () => {
       applyCodeToBasket: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
-      getAvailableDates: unexpectedApiCall,
+      getAvailableDates,
       getDailyAvailabilityWindow,
       loadBasketPricingSummary: unexpectedApiCall,
       lookupCode: unexpectedApiCall,
@@ -80,19 +83,82 @@ describe('loadAvailabilityOverview', () => {
 
     await loadAvailabilityOverview(api, 'pro', new Date('2026-05-26T12:00:00'))
 
-    expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(
-      AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
+    expect(getAvailableDates).toHaveBeenCalledTimes(2)
+    expect(getAvailableDates).toHaveBeenNthCalledWith(1, 'pro', '2026-05-01')
+    expect(getAvailableDates).toHaveBeenNthCalledWith(2, 'pro', '2026-06-01')
+    expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(5)
+    expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
+      5,
+      'pro',
+      '2026-06-04',
+    )
+  })
+
+  it('loads detailed availability for dates marked partial or bookable and skips omitted dates', async () => {
+    const getAvailableDates = vi.fn(
+      async (_cableId: CableId, anchorDate: LocalDateString) => {
+        if (anchorDate !== localDate('2026-06-01')) {
+          return []
+        }
+
+        return [
+          createAvailableDate('2026-06-06', false),
+          createAvailableDate('2026-06-07', true),
+        ]
+      },
+    )
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: LocalDateString) =>
+        dailyAvailabilityByDate[date] ?? createDailyAvailabilityWindow(date),
+    )
+    const api = {
+      addReservationToBasket: unexpectedApiCall,
+      applyCodeToBasket: unexpectedApiCall,
+      createBasket: unexpectedApiCall,
+      deleteBasket: unexpectedApiCall,
+      getAvailableDates,
+      getDailyAvailabilityWindow,
+      loadBasketPricingSummary: unexpectedApiCall,
+      lookupCode: unexpectedApiCall,
+      submitCheckout: unexpectedApiCall,
+    } satisfies LaguuniApi
+
+    const dayGroups = await loadAvailabilityOverview(
+      api,
+      'pro',
+      new Date('2026-06-02T12:00:00'),
+      1,
+    )
+
+    expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(2)
+    expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
+      1,
+      'pro',
+      '2026-06-06',
     )
     expect(getDailyAvailabilityWindow).toHaveBeenNthCalledWith(
-      14,
+      2,
       'pro',
       '2026-06-07',
     )
+    expect(
+      dayGroups.find((dayGroup) => dayGroup.date === localDate('2026-06-05'))
+        ?.slots,
+    ).toEqual([])
+    expect(
+      dayGroups.find((dayGroup) => dayGroup.date === localDate('2026-06-06'))
+        ?.slots.length,
+    ).toBeGreaterThan(0)
+    expect(
+      dayGroups.find((dayGroup) => dayGroup.date === localDate('2026-06-07'))
+        ?.slots.length,
+    ).toBeGreaterThan(0)
   })
 })
 
 describe('loadAvailabilityWeek', () => {
   it('returns full-week metadata and keeps empty days in the result', async () => {
+    const getAvailableDates = vi.fn(createGetAvailableDates())
     const getDailyAvailabilityWindow = vi.fn(
       async (_cableId: CableId, date: LocalDateString) =>
         dailyAvailabilityByDate[date] ??
@@ -103,7 +169,7 @@ describe('loadAvailabilityWeek', () => {
       applyCodeToBasket: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
-      getAvailableDates: unexpectedApiCall,
+      getAvailableDates,
       getDailyAvailabilityWindow,
       loadBasketPricingSummary: unexpectedApiCall,
       lookupCode: unexpectedApiCall,
@@ -129,6 +195,7 @@ describe('loadAvailabilityWeek', () => {
 
 describe('loadAvailabilityDay', () => {
   it('loads a single day group without expanding to the surrounding week', async () => {
+    const getAvailableDates = vi.fn(createGetAvailableDates())
     const getDailyAvailabilityWindow = vi.fn(
       async (_cableId: CableId, date: LocalDateString) =>
         dailyAvailabilityByDate[date] ??
@@ -139,7 +206,7 @@ describe('loadAvailabilityDay', () => {
       applyCodeToBasket: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
-      getAvailableDates: unexpectedApiCall,
+      getAvailableDates,
       getDailyAvailabilityWindow,
       loadBasketPricingSummary: unexpectedApiCall,
       lookupCode: unexpectedApiCall,
@@ -155,6 +222,38 @@ describe('loadAvailabilityDay', () => {
     expect(getDailyAvailabilityWindow).toHaveBeenCalledTimes(1)
     expect(getDailyAvailabilityWindow).toHaveBeenCalledWith('pro', '2026-05-29')
     expect(dayGroup).toMatchObject({ date: '2026-05-29' })
+  })
+
+  it('returns an empty day group when the date is omitted from available dates', async () => {
+    const getAvailableDates = vi.fn(async () => [] as readonly AvailableDate[])
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: LocalDateString) =>
+        createDailyAvailabilityWindow(date),
+    )
+    const api = {
+      addReservationToBasket: unexpectedApiCall,
+      applyCodeToBasket: unexpectedApiCall,
+      createBasket: unexpectedApiCall,
+      deleteBasket: unexpectedApiCall,
+      getAvailableDates,
+      getDailyAvailabilityWindow,
+      loadBasketPricingSummary: unexpectedApiCall,
+      lookupCode: unexpectedApiCall,
+      submitCheckout: unexpectedApiCall,
+    } satisfies LaguuniApi
+
+    const dayGroup = await loadAvailabilityDay(
+      api,
+      'pro',
+      localDate('2026-06-03'),
+    )
+
+    expect(getDailyAvailabilityWindow).not.toHaveBeenCalled()
+    expect(dayGroup).toEqual({
+      date: localDate('2026-06-03'),
+      displayDate: 'Wed 3 Jun',
+      slots: [],
+    })
   })
 })
 
@@ -261,9 +360,43 @@ describe('createAvailabilitySlots', () => {
 })
 
 const dailyAvailabilityByDate: Record<string, DailyAvailabilityWindow> = {
+  '2026-06-06': createDailyAvailabilityWindow(localDate('2026-06-06')),
+  '2026-06-07': createDailyAvailabilityWindow(localDate('2026-06-07')),
   '2026-05-29': createDailyAvailabilityWindow(localDate('2026-05-29')),
   '2026-06-01': createDailyAvailabilityWindow(localDate('2026-06-01')),
   '2026-06-04': createDailyAvailabilityWindow(localDate('2026-06-04')),
+}
+
+function createAvailableDate(
+  date: string,
+  hasBookableSlots: boolean,
+): AvailableDate {
+  return {
+    cableId: 'pro',
+    date: localDate(date),
+    hasBookableSlots,
+  }
+}
+
+function createGetAvailableDates() {
+  return async (_cableId: CableId, anchorDate: LocalDateString) => {
+    if (anchorDate === localDate('2026-05-01')) {
+      return [
+        createAvailableDate('2026-05-27', false),
+        createAvailableDate('2026-05-28', true),
+        createAvailableDate('2026-05-29', true),
+      ]
+    }
+
+    if (anchorDate === localDate('2026-06-01')) {
+      return [
+        createAvailableDate('2026-06-01', false),
+        createAvailableDate('2026-06-04', true),
+      ]
+    }
+
+    return []
+  }
 }
 
 function createDailyAvailabilityWindow(
