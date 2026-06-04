@@ -1,10 +1,12 @@
 import type { CableId } from '@/domain/cable'
+import type { DailyAvailabilityWindow } from '@/domain/slot'
 import type { LaguuniApi } from '@/lib/api/laguuni-api'
 import {
   addCalendarDays,
   formatDisplayDate,
   formatLocalDate,
   type LocalDateString,
+  parseLocalDate,
   startOfWeek,
 } from '@/lib/date'
 import type { AvailabilityDayGroup } from './availability-model'
@@ -34,13 +36,15 @@ export async function loadAvailabilityDay(
   cableId: CableId,
   date: LocalDateString,
 ): Promise<AvailabilityDayGroup> {
+  const availableDates = await loadAvailableDateSet(api, cableId, [date])
+
+  if (!availableDates.has(date)) {
+    return createEmptyAvailabilityDayGroup(date)
+  }
+
   const dailyWindow = await api.getDailyAvailabilityWindow(cableId, date)
 
-  return {
-    date: dailyWindow.date,
-    displayDate: formatDisplayDate(dailyWindow.date),
-    slots: createAvailabilitySlots(dailyWindow),
-  }
+  return createAvailabilityDayGroup(dailyWindow)
 }
 
 export async function loadAvailabilityWeek(
@@ -49,19 +53,14 @@ export async function loadAvailabilityWeek(
   weekStartDate: Date = new Date(),
 ): Promise<AvailabilityWeekPage> {
   const normalizedWeekStartDate = startOfWeek(weekStartDate)
-  const dayGroups = await loadAvailabilityRange(
+  const dayGroups = await loadAvailabilityOverview(
     api,
     cableId,
     normalizedWeekStartDate,
-    AVAILABILITY_WEEK_DAY_COUNT,
+    1,
   )
 
-  return {
-    dayGroups,
-    hasBookableSlots: dayGroups.some((dayGroup) => dayGroup.slots.length > 0),
-    weekId: formatLocalDate(normalizedWeekStartDate),
-    weekStartDate: normalizedWeekStartDate,
-  }
+  return createAvailabilityWeekPage(normalizedWeekStartDate, dayGroups)
 }
 
 export async function loadAvailabilityOverview(
@@ -71,42 +70,90 @@ export async function loadAvailabilityOverview(
   weekCount: number = AVAILABILITY_INITIAL_WEEK_COUNT,
 ): Promise<readonly AvailabilityDayGroup[]> {
   const normalizedStartDate = startOfWeek(rangeStartDate)
-  const weekPages = await Promise.all(
-    Array.from({ length: weekCount }, (_, index) =>
-      loadAvailabilityWeek(
-        api,
-        cableId,
-        addCalendarDays(
-          normalizedStartDate,
-          index * AVAILABILITY_WEEK_DAY_COUNT,
-        ),
-      ),
-    ),
+  return loadAvailabilityRangeDayGroups(
+    api,
+    cableId,
+    normalizedStartDate,
+    weekCount * AVAILABILITY_WEEK_DAY_COUNT,
   )
-
-  return weekPages.flatMap((weekPage) => weekPage.dayGroups)
 }
 
-async function loadAvailabilityRange(
+async function loadAvailabilityRangeDayGroups(
   api: LaguuniApi,
   cableId: CableId,
   rangeStartDate: Date,
   dayCount: number,
-) {
+): Promise<readonly AvailabilityDayGroup[]> {
   const datesInRange = listDatesInRange(rangeStartDate, dayCount)
-  const dailyWindows = await Promise.all(
-    datesInRange.map((date) => api.getDailyAvailabilityWindow(cableId, date)),
+  const availableDates = await loadAvailableDateSet(api, cableId, datesInRange)
+
+  return Promise.all(
+    datesInRange.map(async (date) => {
+      if (!availableDates.has(date)) {
+        return createEmptyAvailabilityDayGroup(date)
+      }
+
+      return createAvailabilityDayGroup(
+        await api.getDailyAvailabilityWindow(cableId, date),
+      )
+    }),
+  )
+}
+
+async function loadAvailableDateSet(
+  api: LaguuniApi,
+  cableId: CableId,
+  dates: readonly LocalDateString[],
+): Promise<ReadonlySet<LocalDateString>> {
+  const monthAnchorDates = [...new Set(dates.map(getMonthAnchorDate))]
+  const availableDates = await Promise.all(
+    monthAnchorDates.map((anchorDate) =>
+      api.getAvailableDates(cableId, anchorDate),
+    ),
   )
 
-  return dailyWindows.map((dailyWindow) => {
-    const dayGroup = {
-      date: dailyWindow.date,
-      displayDate: formatDisplayDate(dailyWindow.date),
-      slots: createAvailabilitySlots(dailyWindow),
-    } satisfies AvailabilityDayGroup
+  return new Set(
+    availableDates.flatMap((monthDates) => monthDates.map((date) => date.date)),
+  )
+}
 
-    return dayGroup
-  })
+function createAvailabilityWeekPage(
+  weekStartDate: Date,
+  dayGroups: readonly AvailabilityDayGroup[],
+): AvailabilityWeekPage {
+  return {
+    dayGroups,
+    hasBookableSlots: dayGroups.some((dayGroup) => dayGroup.slots.length > 0),
+    weekId: formatLocalDate(weekStartDate),
+    weekStartDate,
+  }
+}
+
+function createAvailabilityDayGroup(
+  dailyWindow: DailyAvailabilityWindow,
+): AvailabilityDayGroup {
+  return {
+    date: dailyWindow.date,
+    displayDate: formatDisplayDate(dailyWindow.date),
+    slots: createAvailabilitySlots(dailyWindow),
+  }
+}
+
+function createEmptyAvailabilityDayGroup(
+  date: LocalDateString,
+): AvailabilityDayGroup {
+  return {
+    date,
+    displayDate: formatDisplayDate(date),
+    slots: [],
+  }
+}
+
+function getMonthAnchorDate(date: LocalDateString): LocalDateString {
+  const monthAnchorDate = parseLocalDate(date)
+  monthAnchorDate.setDate(1)
+
+  return formatLocalDate(monthAnchorDate)
 }
 
 function listDatesInRange(

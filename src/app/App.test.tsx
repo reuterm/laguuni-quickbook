@@ -105,9 +105,7 @@ describe('App', () => {
       await screen.findAllByRole('button', { name: 'Book' }),
     ).not.toHaveLength(0)
 
-    expect(
-      screen.queryByRole('tab', { name: 'Hietsu' }),
-    ).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Hietsu' })).toBeInTheDocument()
 
     await user.click(screen.getByRole('tab', { name: 'Easy' }))
 

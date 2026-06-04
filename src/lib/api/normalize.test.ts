@@ -49,4 +49,33 @@ describe('normalizeDailyAvailabilityWindow', () => {
     })
     expect(easyAvailabilityFixture.availableDates).toHaveLength(20)
   })
+
+  it('accepts overnight storefront end times with next-day suffixes', () => {
+    const availabilityWindow = normalizeDailyAvailabilityWindow(
+      'hietsu',
+      localDate('2026-06-02'),
+      {
+        endtimes: {
+          '21.15': ['22.15', '23.15', '0.15+1'],
+          '23.00': ['24.00', '1.00+1'],
+        },
+        starttimes: ['21.15', '23.00'],
+        tomorrowtuples: [],
+        tuples: [[1230, 1440, 4]],
+      },
+    )
+
+    expect(availabilityWindow.bookingSegments).toEqual([
+      {
+        endMinute: 1335,
+        isBookable: true,
+        startMinute: 1275,
+      },
+      {
+        endMinute: 1440,
+        isBookable: true,
+        startMinute: 1380,
+      },
+    ])
+  })
 })

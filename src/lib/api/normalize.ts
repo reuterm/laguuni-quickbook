@@ -139,20 +139,34 @@ function normalizeCapacitySegments(
 }
 
 function parseStorefrontTime(value: string): number {
-  const [hour, minute] = value.split('.')
+  const match = /^(\d{1,2})\.(\d{2})(?:\+(\d+))?$/.exec(value)
 
-  if (hour === undefined || minute === undefined) {
-    throw new Error(`Storefront time must be HH.mm, received "${value}"`)
+  if (!match) {
+    throw new Error(
+      `Storefront time must be HH.mm or HH.mm+N, received "${value}"`,
+    )
   }
 
+  const [, hour, minute, dayOffset = '0'] = match
   const parsedHour = Number(hour)
   const parsedMinute = Number(minute)
+  const parsedDayOffset = Number(dayOffset)
 
-  if (Number.isNaN(parsedHour) || Number.isNaN(parsedMinute)) {
+  if (
+    Number.isNaN(parsedHour) ||
+    Number.isNaN(parsedMinute) ||
+    Number.isNaN(parsedDayOffset)
+  ) {
     throw new Error(`Storefront time must be numeric, received "${value}"`)
   }
 
-  return parsedHour * 60 + parsedMinute
+  if (parsedMinute >= 60) {
+    throw new Error(
+      `Storefront time minute must be below 60, received "${value}"`,
+    )
+  }
+
+  return parsedHour * 60 + parsedMinute + parsedDayOffset * 24 * 60
 }
 
 function isRawAvailableDateTuple(
