@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ContentRail } from '@/components/ui/content-rail'
 import { eyebrowClassName } from '@/components/ui/styles'
 import { useNetworkStatus } from '@/lib/hooks/use-network-status'
+import { isStandaloneMode } from '@/lib/standalone-mode'
 import { AvailabilityScreen } from '../features/availability/components/AvailabilityScreen'
 import { AvailabilityScopeProvider } from '../features/availability/use-availability-scope'
 import {
@@ -17,6 +18,8 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const isOnline = useNetworkStatus()
 
+  const pwaGutter = isStandaloneMode() ? 'safe-area-standalone-top' : ''
+
   return (
     <AppDiagnosticsBoundary>
       <DiagnosticsRuntimeCapture />
@@ -24,7 +27,7 @@ function App() {
         <AvailabilityScopeProvider>
           <ContentRail
             size="page"
-            className="safe-area-page-gutters flex min-h-svh flex-col gap-8 py-5 sm:py-8"
+            className={`safe-area-page-gutters ${pwaGutter} flex min-h-svh flex-col gap-8 py-5 sm:py-8`}
           >
             <header>
               <ContentRail className="space-y-3 border-b border-border/70 pb-4">
