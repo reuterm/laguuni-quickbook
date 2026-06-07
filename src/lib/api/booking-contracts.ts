@@ -49,7 +49,6 @@ export type SubmitCheckoutArgs = {
   observeCashCheckoutStep?: (
     step: 'cashreturn_completed' | 'order_details_loaded',
   ) => void
-  observePaymentCancelStep?: (step: 'mobilepayreturn_completed') => void
   observeResponse?: (observation: CheckoutResponseObservation) => void
   observePaymentRedirect?: (redirectUrl: string | null) => void
   paymentMethod: CheckoutPaymentMethod

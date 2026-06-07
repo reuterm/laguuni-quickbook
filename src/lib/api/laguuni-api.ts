@@ -124,7 +124,6 @@ export class LaguuniApiClient implements LaguuniApi {
   async submitCheckout({
     basketToken,
     observeCashCheckoutStep,
-    observePaymentCancelStep,
     observePaymentRedirect,
     observeResponse,
     paymentMethod,
@@ -133,7 +132,6 @@ export class LaguuniApiClient implements LaguuniApi {
     return submitCheckoutRequest(this.#client, {
       basketToken,
       ...(observeCashCheckoutStep ? { observeCashCheckoutStep } : {}),
-      ...(observePaymentCancelStep ? { observePaymentCancelStep } : {}),
       ...(observePaymentRedirect ? { observePaymentRedirect } : {}),
       profile,
       paymentMethod,

@@ -170,7 +170,6 @@ export async function submitCheckout(
   {
     basketToken,
     observeCashCheckoutStep,
-    observePaymentCancelStep,
     observePaymentRedirect,
     observeResponse,
     paymentMethod,
