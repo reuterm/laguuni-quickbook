@@ -213,6 +213,7 @@ export function decodeCheckoutResponse(value: unknown): CheckoutResponse {
   return {
     observation,
     order: readOptionalIdentifier(value, ['order', 'orderId']),
+    paymentToken: readOptionalIdentifier(value, ['paymentToken']),
     paymentRequired: readOptionalBooleanLike(value, 'paymentRequired'),
     redirectUrl: readOptionalNullableStringLike(value, 'redirectUrl'),
     status: 'ok',
@@ -344,6 +345,7 @@ export function mapCheckoutResponseToResult(
     // storefront success contract is captured from a real checkout response.
     return {
       orderIdentifier: checkout.order ?? null,
+      paymentToken: checkout.paymentToken ?? null,
       redirectUrl: checkout.redirectUrl ?? null,
       status: 'payment_required',
     }

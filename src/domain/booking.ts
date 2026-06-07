@@ -41,6 +41,7 @@ type BookingCheckoutSuccess = {
 
 type BookingCheckoutPaymentRequired = {
   orderIdentifier: string | null
+  paymentToken: string | null
   redirectUrl: string | null
   status: 'payment_required'
 }
