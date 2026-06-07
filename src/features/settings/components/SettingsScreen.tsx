@@ -1,8 +1,9 @@
 import type * as React from 'react'
-import { type ChangeEvent, useEffect, useState } from 'react'
+import { type ChangeEvent, useState } from 'react'
 
 import { useAppVersion, useDiagnostics } from '@/app/providers'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertTitle } from '@/components/ui/alert-title'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
 import { Input } from '@/components/ui/input'
@@ -98,19 +99,8 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
     resetDeveloperModeUnlockProgress,
   } = useDeveloperMode()
   const [draftSettings, setDraftSettings] = useState<UserSettings>(settings)
-  const [_isSaved, setIsSaved] = useState(false)
 
-  useEffect(() => {
-    setDraftSettings(settings)
-  }, [settings])
-
-  useEffect(() => {
-    if (!open) {
-      setDraftSettings(settings)
-      setIsSaved(false)
-      resetDeveloperModeUnlockProgress()
-    }
-  }, [open, resetDeveloperModeUnlockProgress, settings])
+  const displayedDraftSettings = open ? draftSettings : settings
 
   function handleFieldChange(field: EditableField) {
     return (event: ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +108,6 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
         ...currentSettings,
         [field]: event.target.value,
       }))
-      setIsSaved(false)
     }
   }
 
@@ -132,7 +121,6 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
             ? nextCableId
             : null,
     }))
-    setIsSaved(false)
   }
 
   function handleAvailabilityViewChange(
@@ -142,18 +130,25 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
       ...currentSettings,
       availabilityView: nextView,
     }))
-    setIsSaved(false)
   }
 
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     saveSettings(draftSettings)
-    setIsSaved(true)
-    onOpenChange(false)
+    handleOpenChange(false)
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setDraftSettings(settings)
+      resetDeveloperModeUnlockProgress()
+    }
+
+    onOpenChange(nextOpen)
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent side="right" className="flex w-full flex-col sm:max-w-lg">
         <div className="min-h-0 flex-1 overflow-y-auto">
           <SheetHeader className="space-y-2 pr-10 text-left">
@@ -180,7 +175,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                   <SettingsTextField
                     key={field.key}
                     definition={field}
-                    value={draftSettings[field.key]}
+                    value={displayedDraftSettings[field.key]}
                     onChange={handleFieldChange(field.key)}
                   />
                 ))}
@@ -190,7 +185,10 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                 <NativeSelect
                   id="default-cable"
                   name="defaultCable"
-                  value={draftSettings.defaultCable ?? NO_DEFAULT_CABLE_VALUE}
+                  value={
+                    displayedDraftSettings.defaultCable ??
+                    NO_DEFAULT_CABLE_VALUE
+                  }
                   onChange={(event) =>
                     handleDefaultCableChange(event.target.value)
                   }
@@ -219,7 +217,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                     { label: 'Calendar only', value: 'calendar' },
                   ]}
                   onValueChange={handleAvailabilityViewChange}
-                  value={draftSettings.availabilityView}
+                  value={displayedDraftSettings.availabilityView}
                 />
                 <p className="text-sm text-muted-foreground">
                   Auto adapts to the screen size. Calendar only keeps the

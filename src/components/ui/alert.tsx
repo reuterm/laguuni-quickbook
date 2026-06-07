@@ -39,13 +39,7 @@ function Alert({
   )
 }
 
-function AlertTitle({ className, ...props }: React.ComponentProps<'h5'>) {
-  return (
-    <h5 className={cn('font-medium tracking-tight', className)} {...props} />
-  )
-}
-
-function AlertDescription({
+export function AlertDescription({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
@@ -60,4 +54,4 @@ function AlertDescription({
   )
 }
 
-export { Alert, AlertDescription, AlertTitle }
+export { Alert }

@@ -2,7 +2,8 @@ import type { ErrorInfo, PropsWithChildren, ReactNode } from 'react'
 import { Component, useCallback, useEffect } from 'react'
 
 import { useDiagnostics } from '@/app/providers'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertTitle } from '@/components/ui/alert-title'
 import { Button } from '@/components/ui/button'
 
 import { DiagnosticsCopyAction } from './DiagnosticsCopyAction'
