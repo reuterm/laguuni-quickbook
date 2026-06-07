@@ -47,17 +47,20 @@ export function createAvailabilitySlots(
 function listBookableHourStartMinutes(
   bookingSegments: readonly BookingSegment[],
 ): readonly number[] {
-  return [
-    ...new Set(
-      bookingSegments
-        .filter(
-          (segment) =>
-            segment.isBookable &&
-            segment.endMinute - segment.startMinute >= SLOT_DURATION_MINUTES,
-        )
-        .map((segment) => segment.startMinute),
-    ),
-  ].sort((left, right) => left - right)
+  const slotStartMinutes = new Set<number>()
+
+  for (const segment of bookingSegments) {
+    if (
+      !segment.isBookable ||
+      segment.endMinute - segment.startMinute < SLOT_DURATION_MINUTES
+    ) {
+      continue
+    }
+
+    slotStartMinutes.add(segment.startMinute)
+  }
+
+  return Array.from(slotStartMinutes).toSorted((left, right) => left - right)
 }
 
 function findCoveringCapacitySegment(

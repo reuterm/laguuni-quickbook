@@ -1,9 +1,4 @@
-import {
-  createContext,
-  type PropsWithChildren,
-  useContext,
-  useMemo,
-} from 'react'
+import { createContext, type PropsWithChildren, use, useMemo } from 'react'
 
 import {
   type BookingService,
@@ -80,7 +75,7 @@ export function AppProviders({
 }
 
 function useAppDependencies(): AppDependencies {
-  const dependencies = useContext(AppDependenciesContext)
+  const dependencies = use(AppDependenciesContext)
 
   if (dependencies === null) {
     throw new Error('App dependencies must be used within AppProviders')

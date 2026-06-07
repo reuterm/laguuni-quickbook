@@ -96,6 +96,19 @@ export function useBookingSheetController({
     void finalizeDismissedSubmission(completedSubmission)
   }, [finalizeDismissedSubmission])
 
+  const releaseAbandonedCompletedSubmission = useCallback(() => {
+    const completedSubmission = completedSubmissionRef.current
+
+    if (
+      completedSubmission === null ||
+      completedSubmission.result.status === 'success'
+    ) {
+      return
+    }
+
+    void completedSubmission.releaseReservation()
+  }, [])
+
   const requestBooking = useCallback((selection: BookingSlotSelection) => {
     setBookingSheetState((currentState) => {
       if (currentState.status === 'submitting') {
@@ -143,18 +156,9 @@ export function useBookingSheetController({
 
   useEffect(() => {
     return () => {
-      const completedSubmission = completedSubmissionRef.current
-
-      if (
-        completedSubmission === null ||
-        completedSubmission.result.status === 'success'
-      ) {
-        return
-      }
-
-      void completedSubmission.releaseReservation()
+      releaseAbandonedCompletedSubmission()
     }
-  }, [])
+  }, [releaseAbandonedCompletedSubmission])
 
   useEffect(() => {
     if (

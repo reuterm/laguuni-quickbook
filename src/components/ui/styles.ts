@@ -1,5 +1,4 @@
-export const eyebrowTypographyClassName =
-  'font-medium uppercase tracking-[0.2em]'
+const eyebrowTypographyClassName = 'font-medium uppercase tracking-[0.2em]'
 export const eyebrowClassName = `text-xs ${eyebrowTypographyClassName} text-muted-foreground`
 
 const surfaceBorderClassName = 'border-border/70'
@@ -16,14 +15,10 @@ export const formControlClassName = `flex ${controlBaseClassName}`
 export const nativeSelectControlClassName = controlBaseClassName
 
 const surfaceChromeClassName = `rounded-2xl border ${surfaceBorderClassName}`
-const raisedSurfaceBackgroundClassName =
-  'bg-card/75 text-card-foreground backdrop-blur-sm'
 
 export const subtleSurfaceBackgroundClassName = 'bg-card/55'
-export const groupedSurfaceBackgroundClassName = 'bg-card/65'
+const groupedSurfaceBackgroundClassName = 'bg-card/65'
 export const mutedSurfaceClassName = `${surfaceBorderClassName} ${mutedSurfaceBackgroundClassName}`
-
-export const cardSurfaceClassName = `${surfaceChromeClassName} ${raisedSurfaceBackgroundClassName}`
 
 export const panelSurfaceClassName = `${surfaceChromeClassName} ${subtleSurfaceBackgroundClassName}`
 

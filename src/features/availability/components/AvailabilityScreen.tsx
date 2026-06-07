@@ -1,7 +1,8 @@
 import { X } from 'lucide-react'
 import { useCallback, useState } from 'react'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertTitle } from '@/components/ui/alert-title'
 import { Button } from '@/components/ui/button'
 import { ContentRail } from '@/components/ui/content-rail'
 import {

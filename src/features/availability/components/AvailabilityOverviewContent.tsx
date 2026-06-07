@@ -1,5 +1,6 @@
 import { useAvailabilityReferenceDate } from '@/app/providers'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertTitle } from '@/components/ui/alert-title'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
@@ -83,7 +84,7 @@ export function AvailabilityOverviewContent({
     }
 
     return (
-      <div role="status" aria-live="polite" className="space-y-6">
+      <output aria-live="polite" className="space-y-6">
         <p className="sr-only">Loading availability…</p>
         {[0, 1, 2].map((index) => (
           <div
@@ -98,7 +99,7 @@ export function AvailabilityOverviewContent({
             </div>
           </div>
         ))}
-      </div>
+      </output>
     )
   }
 
@@ -164,14 +165,10 @@ export function AvailabilityOverviewContent({
       ) : null}
 
       {availabilityState.isLoadingMore ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className="flex justify-center px-1 py-2"
-        >
+        <output aria-live="polite" className="flex justify-center px-1 py-2">
           <Spinner className="size-5" />
           <span className="sr-only">Loading another week…</span>
-        </div>
+        </output>
       ) : null}
 
       <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-1 w-full" />

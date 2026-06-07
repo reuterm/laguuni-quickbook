@@ -1,8 +1,8 @@
 import {
   createContext,
   type PropsWithChildren,
+  use,
   useCallback,
-  useContext,
   useMemo,
   useState,
 } from 'react'
@@ -52,7 +52,7 @@ export function UserSettingsProvider({ children }: PropsWithChildren) {
 }
 
 export function useUserSettings(): UserSettingsController {
-  const userSettings = useContext(UserSettingsContext)
+  const userSettings = use(UserSettingsContext)
 
   if (userSettings === null) {
     throw new Error('User settings must be used within UserSettingsProvider')

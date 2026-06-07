@@ -360,7 +360,7 @@ function mergeWeekPages(
   const pagesById = new Map(currentPages.map((page) => [page.weekId, page]))
   pagesById.set(nextPage.weekId, nextPage)
 
-  return [...pagesById.values()].sort(
+  return Array.from(pagesById.values()).toSorted(
     (left, right) =>
       left.weekStartDate.getTime() - right.weekStartDate.getTime(),
   )
