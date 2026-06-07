@@ -27,6 +27,7 @@ function createApiStub(): LaguuniApi {
       itemId: 'fixture-item-id',
     })),
     applyCodeToBasket: vi.fn(async () => {}),
+    cancelMobilePayCheckout: vi.fn(async () => {}),
     createBasket: vi.fn(async () => 'created-basket-token'),
     deleteBasket: vi.fn(async () => {}),
     getAvailableDates: vi.fn(),
@@ -159,6 +160,32 @@ describe('DefaultBookingService', () => {
 
     await submission.releaseReservation()
 
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+  })
+
+  it('falls back to deleting the basket when payment-required results do not include a payment token', async () => {
+    const api = createApiStub()
+
+    vi.mocked(api.submitCheckout).mockResolvedValueOnce({
+      orderIdentifier: null,
+      paymentToken: null,
+      redirectUrl: fixtureMobilePayRedirectUrl,
+      status: 'payment_required',
+    })
+
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const submission = await service.book(
+      {
+        profile,
+        selection,
+      },
+      trace,
+    )
+
+    await submission.releaseReservation()
+
+    expect(api.cancelMobilePayCheckout).not.toHaveBeenCalled()
     expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
   })
 
@@ -371,6 +398,7 @@ describe('DefaultBookingService', () => {
 
       return {
         orderIdentifier: '12345',
+        paymentToken: 'fixture-payment-token',
         redirectUrl: fixtureMobilePayRedirectUrl,
         status: 'payment_required',
       }
@@ -390,6 +418,7 @@ describe('DefaultBookingService', () => {
     ).resolves.toMatchObject({
       result: {
         orderIdentifier: '12345',
+        paymentToken: 'fixture-payment-token',
         redirectUrl: fixtureMobilePayRedirectUrl,
         status: 'payment_required',
       },
@@ -417,6 +446,7 @@ describe('DefaultBookingService', () => {
 
       return {
         orderIdentifier: null,
+        paymentToken: 'fixture-payment-token',
         redirectUrl: fixtureMobilePayRedirectUrl,
         status: 'payment_required',
       }
@@ -436,6 +466,7 @@ describe('DefaultBookingService', () => {
     ).resolves.toMatchObject({
       result: {
         orderIdentifier: null,
+        paymentToken: 'fixture-payment-token',
         redirectUrl: fixtureMobilePayRedirectUrl,
         status: 'payment_required',
       },
@@ -490,6 +521,7 @@ describe('DefaultBookingService', () => {
 
     vi.mocked(api.submitCheckout).mockResolvedValueOnce({
       orderIdentifier: null,
+      paymentToken: 'fixture-payment-token',
       redirectUrl: fixtureMobilePayRedirectUrl,
       status: 'payment_required',
     })
@@ -548,6 +580,7 @@ describe('DefaultBookingService', () => {
 
     vi.mocked(api.submitCheckout).mockResolvedValueOnce({
       orderIdentifier: null,
+      paymentToken: 'fixture-payment-token',
       redirectUrl: fixtureMobilePayRedirectUrl,
       status: 'payment_required',
     })
@@ -589,6 +622,7 @@ describe('DefaultBookingService', () => {
 
     vi.mocked(api.submitCheckout).mockResolvedValueOnce({
       orderIdentifier: null,
+      paymentToken: 'fixture-payment-token',
       redirectUrl: fixtureMobilePayRedirectUrl,
       status: 'payment_required',
     })
@@ -606,6 +640,7 @@ describe('DefaultBookingService', () => {
     await submission.releaseReservation()
     await submission.releaseReservation()
 
+    expect(api.cancelMobilePayCheckout).toHaveBeenCalledTimes(1)
     expect(api.deleteBasket).toHaveBeenCalledTimes(1)
   })
 })

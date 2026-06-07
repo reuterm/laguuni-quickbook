@@ -185,6 +185,7 @@ describe('useBookingSheetController', () => {
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: releaseReservationMock,
       result: {
+        paymentToken: 'fixture-payment-token',
         redirectUrl: 'https://example.com/pay',
         status: 'payment_required',
       },
@@ -398,6 +399,7 @@ describe('useBookingSheetController', () => {
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation,
       result: {
+        paymentToken: 'fixture-payment-token',
         redirectUrl: 'https://example.com/pay',
         status: 'payment_required',
       },
@@ -429,6 +431,7 @@ describe('useBookingSheetController', () => {
     await waitFor(() => {
       expect(onBookingFinalized).toHaveBeenCalledWith({
         result: {
+          paymentToken: 'fixture-payment-token',
           redirectUrl: 'https://example.com/pay',
           status: 'payment_required',
         },
@@ -445,6 +448,7 @@ describe('useBookingSheetController', () => {
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: releaseReservationMock,
       result: {
+        paymentToken: 'fixture-payment-token',
         redirectUrl: 'https://example.com/pay',
         status: 'payment_required',
       },
@@ -472,6 +476,7 @@ describe('useBookingSheetController', () => {
       expect(releaseReservationMock).toHaveBeenCalledTimes(1)
       expect(onBookingFinalized).toHaveBeenCalledWith({
         result: {
+          paymentToken: 'fixture-payment-token',
           redirectUrl: 'https://example.com/pay',
           status: 'payment_required',
         },
@@ -487,6 +492,7 @@ describe('useBookingSheetController', () => {
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: releaseReservationMock,
       result: {
+        paymentToken: 'fixture-payment-token',
         redirectUrl: 'https://example.com/pay',
         status: 'payment_required',
       },
@@ -514,6 +520,7 @@ describe('useBookingSheetController', () => {
     await waitFor(() => {
       expect(onBookingFinalized).toHaveBeenCalledWith({
         result: {
+          paymentToken: 'fixture-payment-token',
           redirectUrl: 'https://example.com/pay',
           status: 'payment_required',
         },
@@ -554,6 +561,7 @@ describe('useBookingSheetController', () => {
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: releaseReservationMock,
       result: {
+        paymentToken: 'fixture-payment-token',
         redirectUrl: 'https://example.com/pay',
         status: 'payment_required',
       },

@@ -128,6 +128,17 @@ export class DefaultBookingService implements BookingService {
 
       diagnosticsReporter.recordCheckoutCompleted(bookingResult)
 
+      if (bookingResult.status === 'payment_required') {
+        reservationRelease = createPaymentRequiredReservationRelease({
+          api: this.#api,
+          basketToken,
+          onError: () => {
+            diagnosticsReporter.recordBasketReleaseFailed()
+          },
+          paymentToken: bookingResult.paymentToken,
+        })
+      }
+
       return createBookingSubmission({
         reservationRelease:
           bookingResult.status === 'success'
@@ -212,6 +223,40 @@ function createReservationRelease({
     releasePromise = api.deleteBasket(basketToken).catch(() => {
       onError()
     })
+
+    return releasePromise
+  }
+}
+
+function createPaymentRequiredReservationRelease({
+  api,
+  basketToken,
+  onError,
+  paymentToken,
+}: {
+  api: LaguuniApi
+  basketToken: string
+  onError: () => void
+  paymentToken: string | null
+}): ReservationRelease {
+  let releasePromise: Promise<void> | null = null
+
+  return async () => {
+    if (releasePromise !== null) {
+      return releasePromise
+    }
+
+    releasePromise = (async () => {
+      try {
+        if (paymentToken !== null) {
+          await api.cancelMobilePayCheckout(paymentToken)
+        }
+
+        await api.deleteBasket(basketToken)
+      } catch {
+        onError()
+      }
+    })()
 
     return releasePromise
   }

@@ -102,6 +102,7 @@ describe('BookingResultPanel', () => {
       <BookingResultPanel
         result={{
           orderIdentifier: 'fixture-order-id',
+          paymentToken: 'fixture-payment-token',
           redirectUrl: 'https://example.com/pay',
           status: 'payment_required',
         }}
