@@ -1000,6 +1000,7 @@ function createApi(
     api: {
       addReservationToBasket: unexpectedApiCall,
       applyCodeToBasket: unexpectedApiCall,
+      cancelMobilePayCheckout: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
       getAvailableDates,
