@@ -10,8 +10,13 @@ import {
 export type LocalDateString = string & { readonly __brand: 'LocalDateString' }
 
 const localDatePattern = /^\d{4}-\d{2}-\d{2}$/
+const displayDateFormatter = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  weekday: 'short',
+})
 
-export function isLocalDateString(value: string): value is LocalDateString {
+function isLocalDateString(value: string): value is LocalDateString {
   if (!localDatePattern.test(value)) {
     return false
   }
@@ -49,11 +54,7 @@ export function formatLocalDate(date: Date): LocalDateString {
 }
 
 export function formatDisplayDate(date: LocalDateString): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    weekday: 'short',
-  }).format(parseLocalDate(date))
+  return displayDateFormatter.format(parseLocalDate(date))
 }
 
 export function formatMinuteOfDay(minuteOfDay: number): string {
@@ -70,7 +71,7 @@ export function setDate(
   return formatLocalDate(nextDate)
 }
 
-export function addDays(date: Date, amount: number): Date {
+function addDays(date: Date, amount: number): Date {
   return addDaysLib(date, amount)
 }
 
@@ -87,10 +88,6 @@ export function differenceInCalendarDays(
 
 export function addWeeks(date: Date, amount: number): Date {
   return addWeeksLib(date, amount)
-}
-
-export function format(date: Date, formatString: string): string {
-  return formatLib(date, formatString)
 }
 
 export function startOfDay(date: Date): Date {

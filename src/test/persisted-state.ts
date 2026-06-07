@@ -1,9 +1,6 @@
 import { DEFAULT_USER_SETTINGS, type UserSettings } from '../domain/settings'
 import { READ_ONLY_NOTICE_STORAGE_KEY } from '../features/availability/read-only-notice-storage'
-import {
-  DIAGNOSTICS_STORAGE_KEY,
-  type DiagnosticsRecoveryIssue,
-} from '../features/diagnostics/logs'
+import { DIAGNOSTICS_STORAGE_KEY } from '../features/diagnostics/logs'
 import {
   DEVELOPER_MODE_STORAGE_KEY,
   saveDeveloperModeEnabled,
@@ -39,37 +36,6 @@ export function enableDeveloperMode(
   storage: BrowserStorage = window.localStorage,
 ) {
   saveDeveloperModeEnabled(true, storage)
-}
-
-export function writeCorruptedDiagnostics(
-  recoveryIssue: DiagnosticsRecoveryIssue,
-  storage: BrowserStorage = window.localStorage,
-) {
-  if (recoveryIssue === 'invalid-format') {
-    storage.setItem(DIAGNOSTICS_STORAGE_KEY, '{not valid json')
-
-    return
-  }
-
-  if (recoveryIssue === 'unsupported-version') {
-    storage.setItem(
-      DIAGNOSTICS_STORAGE_KEY,
-      JSON.stringify({
-        entries: [],
-        version: 999,
-      }),
-    )
-
-    return
-  }
-
-  storage.setItem(
-    DIAGNOSTICS_STORAGE_KEY,
-    JSON.stringify({
-      entries: [{ invalid: true }],
-      version: 1,
-    }),
-  )
 }
 
 export function writeCorruptedSettings(

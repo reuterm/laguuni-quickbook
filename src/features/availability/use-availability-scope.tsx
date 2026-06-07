@@ -1,7 +1,7 @@
 import {
   createContext,
   type PropsWithChildren,
-  useContext,
+  use,
   useMemo,
   useState,
 } from 'react'
@@ -38,7 +38,7 @@ export function AvailabilityScopeProvider({ children }: PropsWithChildren) {
 }
 
 export function useAvailabilityScope(): AvailabilityScope {
-  const availabilityScope = useContext(AvailabilityScopeContext)
+  const availabilityScope = use(AvailabilityScopeContext)
 
   if (availabilityScope === null) {
     throw new Error(

@@ -96,5 +96,3 @@ function getAvailabilityToneClassName(
 
   return availabilityToneClassNames.high
 }
-
-export { getAvailabilityToneClassName }

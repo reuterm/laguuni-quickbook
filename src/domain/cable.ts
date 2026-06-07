@@ -9,7 +9,7 @@ export type CableId = Cable['id']
 
 export const DEFAULT_CABLE_ID: CableId = SUPPORTED_CABLES[0].id
 
-export const CABLE_BY_ID = {
+const CABLE_BY_ID = {
   pro: SUPPORTED_CABLES[0],
   easy: SUPPORTED_CABLES[1],
   hietsu: SUPPORTED_CABLES[2],
