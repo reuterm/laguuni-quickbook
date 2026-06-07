@@ -17,6 +17,7 @@ import {
   addReservationToBasket as addReservationToBasketRequest,
   applyCodeToBasket as applyCodeToBasketRequest,
   type BasketPricingSummary,
+  cancelMobilePayCheckout as cancelMobilePayCheckoutRequest,
   createBasket as createBasketRequest,
   deleteBasket as deleteBasketRequest,
   type LookupCodeArgs,
@@ -34,6 +35,7 @@ export type LaguuniApi = {
     selection: BookingSlotSelection
   }): Promise<AddReservationResponse>
   applyCodeToBasket(args: ApplyCodeArgs): Promise<void>
+  cancelMobilePayCheckout(paymentToken: string): Promise<void>
   createBasket(): Promise<BasketToken>
   deleteBasket(basketToken: BasketToken): Promise<void>
   getAvailableDates(
@@ -74,6 +76,10 @@ export class LaguuniApiClient implements LaguuniApi {
 
   async createBasket(): Promise<BasketToken> {
     return createBasketRequest(this.#client)
+  }
+
+  async cancelMobilePayCheckout(paymentToken: string): Promise<void> {
+    return cancelMobilePayCheckoutRequest(this.#client, paymentToken)
   }
 
   async deleteBasket(basketToken: BasketToken): Promise<void> {

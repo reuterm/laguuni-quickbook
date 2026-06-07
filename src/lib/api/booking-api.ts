@@ -84,6 +84,24 @@ export async function deleteBasket(
   }
 }
 
+export async function cancelMobilePayCheckout(
+  client: HttpClient,
+  paymentToken: string,
+): Promise<void> {
+  const response = await client.request({
+    body: null,
+    decoder: () => null,
+    method: 'POST',
+    path: `/api/laguuni/fi_FI/completeorderhandler/${paymentToken}/mobilepayreturn.json`,
+  })
+
+  if (![200, 404].includes(response.status)) {
+    throw new Error(
+      `Unexpected status ${response.status} while trying to cancel MobilePay checkout`,
+    )
+  }
+}
+
 export async function applyCodeToBasket(
   client: HttpClient,
   { basketToken, code }: ApplyCodeArgs,
@@ -198,6 +216,7 @@ export async function submitCheckout(
 
     return {
       orderIdentifier: null,
+      paymentToken: checkoutResponse.paymentToken,
       redirectUrl: paymentRedirect.redirectUrl,
       status: 'payment_required',
     }

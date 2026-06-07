@@ -27,6 +27,7 @@ describe('booking-result-presentation', () => {
       getBookingResultPresentation(
         {
           orderIdentifier: 'fixture-order-id',
+          paymentToken: 'fixture-payment-token',
           redirectUrl: 'https://example.com/pay',
           status: 'payment_required',
         },
@@ -45,6 +46,7 @@ describe('booking-result-presentation', () => {
       getBookingResultPresentation(
         {
           orderIdentifier: 'fixture-order-id',
+          paymentToken: null,
           redirectUrl: null,
           status: 'payment_required',
         },

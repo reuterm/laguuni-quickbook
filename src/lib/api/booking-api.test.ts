@@ -4,6 +4,7 @@ import type { BookingProfile, BookingSlotSelection } from '../../domain/booking'
 import {
   addReservationToBasket,
   applyCodeToBasket,
+  cancelMobilePayCheckout,
   deleteBasket,
   loadBasketPricingSummary,
   submitCheckout,
@@ -113,6 +114,7 @@ describe('booking-api transport mapping', () => {
       }),
     ).resolves.toEqual({
       orderIdentifier: '12345',
+      paymentToken: null,
       redirectUrl: 'https://shop.laguuniin.fi/pay/fixture-payment-token',
       status: 'payment_required',
     })
@@ -155,6 +157,7 @@ describe('booking-api transport mapping', () => {
       }),
     ).resolves.toEqual({
       orderIdentifier: null,
+      paymentToken: 'fixture-payment-token',
       redirectUrl: 'https://pay.mobilepay.fi/fixture-session',
       status: 'payment_required',
     })
@@ -262,6 +265,46 @@ describe('booking-api transport mapping', () => {
       method: 'DELETE',
       path: '/api/laguuni/baskets/fixture-basket-token.json',
     })
+  })
+
+  it('cancels MobilePay checkout through the completeorderhandler endpoint', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const client = createCapturingClient(requests, null)
+
+    await expect(
+      cancelMobilePayCheckout(client, 'fixture-payment-token'),
+    ).resolves.toBeUndefined()
+
+    expect(requests[0]).toMatchObject({
+      body: null,
+      method: 'POST',
+      path: '/api/laguuni/fi_FI/completeorderhandler/fixture-payment-token/mobilepayreturn.json',
+    })
+  })
+
+  it('treats missing MobilePay cancel targets as already cleaned up', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const client = createStatusCapturingClient(requests, null, 404)
+
+    await expect(
+      cancelMobilePayCheckout(client, 'fixture-payment-token'),
+    ).resolves.toBeUndefined()
+
+    expect(requests[0]).toMatchObject({
+      method: 'POST',
+      path: '/api/laguuni/fi_FI/completeorderhandler/fixture-payment-token/mobilepayreturn.json',
+    })
+  })
+
+  it('rejects unexpected MobilePay cancel statuses', async () => {
+    const requests: HttpRequest<unknown>[] = []
+    const client = createStatusCapturingClient(requests, null, 500)
+
+    await expect(
+      cancelMobilePayCheckout(client, 'fixture-payment-token'),
+    ).rejects.toThrow(
+      'Unexpected status 500 while trying to cancel MobilePay checkout',
+    )
   })
 
   it('treats missing baskets as already cleaned up', async () => {

@@ -22,6 +22,7 @@ describe('loadAvailabilityOverview', () => {
     const api = {
       addReservationToBasket: unexpectedApiCall,
       applyCodeToBasket: unexpectedApiCall,
+      cancelMobilePayCheckout: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
       getAvailableDates,
@@ -72,6 +73,7 @@ describe('loadAvailabilityOverview', () => {
     const api = {
       addReservationToBasket: unexpectedApiCall,
       applyCodeToBasket: unexpectedApiCall,
+      cancelMobilePayCheckout: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
       getAvailableDates,
@@ -114,6 +116,7 @@ describe('loadAvailabilityOverview', () => {
     const api = {
       addReservationToBasket: unexpectedApiCall,
       applyCodeToBasket: unexpectedApiCall,
+      cancelMobilePayCheckout: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
       getAvailableDates,
@@ -167,6 +170,7 @@ describe('loadAvailabilityWeek', () => {
     const api = {
       addReservationToBasket: unexpectedApiCall,
       applyCodeToBasket: unexpectedApiCall,
+      cancelMobilePayCheckout: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
       getAvailableDates,
@@ -204,6 +208,7 @@ describe('loadAvailabilityDay', () => {
     const api = {
       addReservationToBasket: unexpectedApiCall,
       applyCodeToBasket: unexpectedApiCall,
+      cancelMobilePayCheckout: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
       getAvailableDates,
@@ -233,6 +238,7 @@ describe('loadAvailabilityDay', () => {
     const api = {
       addReservationToBasket: unexpectedApiCall,
       applyCodeToBasket: unexpectedApiCall,
+      cancelMobilePayCheckout: unexpectedApiCall,
       createBasket: unexpectedApiCall,
       deleteBasket: unexpectedApiCall,
       getAvailableDates,
