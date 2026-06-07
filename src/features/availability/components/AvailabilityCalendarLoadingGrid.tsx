@@ -16,6 +16,8 @@ import { AVAILABILITY_INITIAL_RANGE_DAY_COUNT } from '../availability-service'
 import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame'
 import { availabilityCalendarColumnClassNames } from './availability-calendar-ui'
 
+const loadingTimeKeys = ['time-1', 'time-2', 'time-3', 'time-4', 'time-5']
+
 type AvailabilityCalendarLoadingGridProps = {
   availabilityReferenceDate?: Date | undefined
 }
@@ -33,7 +35,7 @@ export function AvailabilityCalendarLoadingGrid({
   )
 
   return (
-    <div role="status" aria-live="polite" className="space-y-4">
+    <output aria-live="polite" className="space-y-4">
       <p className="sr-only">Loading availability…</p>
 
       {loadingWeekStartDates.map((weekStartDate) => (
@@ -44,7 +46,7 @@ export function AvailabilityCalendarLoadingGrid({
           weekStartDate={weekStartDate}
         />
       ))}
-    </div>
+    </output>
   )
 }
 
@@ -67,7 +69,6 @@ function AvailabilityCalendarLoadingWeek({
     AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
     [],
   )
-  const loadingTimeKeys = ['time-1', 'time-2', 'time-3', 'time-4', 'time-5']
   const dayHeaders = visibleDayIndices.map((dayIndex) => (
     <th
       key={`${weekKey}-${dayIndex}-header`}

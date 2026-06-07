@@ -15,6 +15,10 @@ import type {
 export const AVAILABILITY_CALENDAR_BREAKPOINT_QUERY = '(min-width: 758px)'
 
 const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+const availabilityDateFormatter = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+})
 
 export type AvailabilityWeek = {
   days: Array<AvailabilityDayGroup | null>
@@ -50,7 +54,7 @@ export function groupAvailabilityWeeks(
     })
   }
 
-  return [...dayGroupsByWeek.values()].sort((left, right) =>
+  return Array.from(dayGroupsByWeek.values()).toSorted((left, right) =>
     left.id.localeCompare(right.id),
   )
 }
@@ -122,7 +126,7 @@ export function listCalendarTimes(
     }
   }
 
-  return [...times].sort((left, right) => left.localeCompare(right))
+  return Array.from(times).toSorted((left, right) => left.localeCompare(right))
 }
 
 export function createSlotLookup(
@@ -148,21 +152,13 @@ export function createSlotLookupKey(date: LocalDateString, startTime: string) {
 }
 
 export function formatAvailabilityDayLabel(date: LocalDateString) {
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-  }).format(parseLocalDate(date))
+  return availabilityDateFormatter.format(parseLocalDate(date))
 }
 
 export function formatAvailabilityWeekLabel(weekStartDate: Date) {
   const weekEndDate = addCalendarDays(weekStartDate, 6)
 
-  const formatter = new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-  })
-
-  return `${formatter.format(weekStartDate)} - ${formatter.format(weekEndDate)}`
+  return `${availabilityDateFormatter.format(weekStartDate)} - ${availabilityDateFormatter.format(weekEndDate)}`
 }
 
 export function getWeekdayDate(weekStartDate: Date, dayIndex: number) {

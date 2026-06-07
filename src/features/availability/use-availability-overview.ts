@@ -116,34 +116,40 @@ export function useAvailabilityOverview(
 
       dispatch(createRangeLoadStartedAction(mode, nextRange, nextRangeVersion))
 
+      if (!isMountedRef.current) {
+        return
+      }
+
       try {
-        const weekPages = await loadWeeks(nextRange)
+        const pendingWeekPages = loadWeeks(nextRange)
 
         if (!isMountedRef.current) {
           return
         }
 
-        dispatch(
-          createRangeLoadSucceededAction(
-            mode,
-            nextRange,
-            nextRangeVersion,
-            weekPages,
-          ),
-        )
+        const weekPages = await pendingWeekPages
+
+        if (isMountedRef.current) {
+          dispatch(
+            createRangeLoadSucceededAction(
+              mode,
+              nextRange,
+              nextRangeVersion,
+              weekPages,
+            ),
+          )
+        }
       } catch (error) {
-        if (!isMountedRef.current) {
-          return
+        if (isMountedRef.current) {
+          dispatch(
+            createRangeLoadFailedAction(
+              mode,
+              nextRange,
+              nextRangeVersion,
+              getErrorMessage(error),
+            ),
+          )
         }
-
-        dispatch(
-          createRangeLoadFailedAction(
-            mode,
-            nextRange,
-            nextRangeVersion,
-            getErrorMessage(error),
-          ),
-        )
       }
     },
     [beginNextRangeRequest, loadWeeks],
@@ -179,35 +185,37 @@ export function useAvailabilityOverview(
         type: 'refreshDayStarted',
       })
 
+      if (!isMountedRef.current) {
+        return
+      }
+
       try {
-        const refreshedDayGroup = await loadAvailabilityDay(
-          api,
-          selectedCable,
-          date,
-        )
+        const pendingDayGroup = loadAvailabilityDay(api, selectedCable, date)
 
         if (!isMountedRef.current) {
           return
         }
 
-        dispatch({
-          date,
-          dayGroup: refreshedDayGroup,
-          dayRefreshToken,
-          rangeVersion,
-          type: 'refreshDaySucceeded',
-        })
+        const refreshedDayGroup = await pendingDayGroup
+
+        if (isMountedRef.current) {
+          dispatch({
+            date,
+            dayGroup: refreshedDayGroup,
+            dayRefreshToken,
+            rangeVersion,
+            type: 'refreshDaySucceeded',
+          })
+        }
       } catch {
-        if (!isMountedRef.current) {
-          return
+        if (isMountedRef.current) {
+          dispatch({
+            date,
+            dayRefreshToken,
+            rangeVersion,
+            type: 'refreshDayFailed',
+          })
         }
-
-        dispatch({
-          date,
-          dayRefreshToken,
-          rangeVersion,
-          type: 'refreshDayFailed',
-        })
       }
     },
     [api, beginDayRefreshRequest, enabled, selectedCable],
@@ -238,8 +246,13 @@ export function useAvailabilityOverview(
       type: 'appendStarted',
     })
 
+    if (!isMountedRef.current) {
+      finishAppendRequest()
+      return
+    }
+
     try {
-      const nextWeekPage = await loadAvailabilityWeek(
+      const pendingWeekPage = loadAvailabilityWeek(
         api,
         selectedCable,
         nextWeekStartDate,
@@ -250,24 +263,27 @@ export function useAvailabilityOverview(
         return
       }
 
-      finishAppendRequest()
-      dispatch({
-        rangeVersion,
-        type: 'appendSucceeded',
-        weekPage: nextWeekPage,
-      })
-    } catch (error) {
-      if (!isMountedRef.current) {
-        finishAppendRequest()
-        return
-      }
+      const nextWeekPage = await pendingWeekPage
 
       finishAppendRequest()
-      dispatch({
-        errorMessage: getErrorMessage(error),
-        rangeVersion,
-        type: 'appendFailed',
-      })
+
+      if (isMountedRef.current) {
+        dispatch({
+          rangeVersion,
+          type: 'appendSucceeded',
+          weekPage: nextWeekPage,
+        })
+      }
+    } catch (error) {
+      finishAppendRequest()
+
+      if (isMountedRef.current) {
+        dispatch({
+          errorMessage: getErrorMessage(error),
+          rangeVersion,
+          type: 'appendFailed',
+        })
+      }
     }
   }, [api, beginAppendRequest, enabled, finishAppendRequest, selectedCable])
 
@@ -284,8 +300,10 @@ export function useAvailabilityOverview(
   }, [enabled, initialRange, loadRange])
 
   useEffect(() => {
+    const mountedRef = isMountedRef
+
     return () => {
-      isMountedRef.current = false
+      mountedRef.current = false
     }
   }, [])
 
