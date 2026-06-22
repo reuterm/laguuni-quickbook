@@ -104,8 +104,8 @@ describe('loadAvailabilityOverview', () => {
         }
 
         return [
-          createAvailableDate('2026-06-06', false),
-          createAvailableDate('2026-06-07', true),
+          createAvailableDate('2026-06-06'),
+          createAvailableDate('2026-06-07'),
         ]
       },
     )
@@ -428,14 +428,10 @@ const dailyAvailabilityByDate: Record<string, DailyAvailabilityWindow> = {
   '2026-06-04': createDailyAvailabilityWindow(localDate('2026-06-04')),
 }
 
-function createAvailableDate(
-  date: string,
-  hasBookableSlots: boolean,
-): AvailableDate {
+function createAvailableDate(date: string): AvailableDate {
   return {
     cableId: 'pro',
     date: localDate(date),
-    hasBookableSlots,
   }
 }
 
@@ -443,16 +439,16 @@ function createGetAvailableDates() {
   return async (_cableId: CableId, anchorDate: LocalDateString) => {
     if (anchorDate === localDate('2026-05-01')) {
       return [
-        createAvailableDate('2026-05-27', false),
-        createAvailableDate('2026-05-28', true),
-        createAvailableDate('2026-05-29', true),
+        createAvailableDate('2026-05-27'),
+        createAvailableDate('2026-05-28'),
+        createAvailableDate('2026-05-29'),
       ]
     }
 
     if (anchorDate === localDate('2026-06-01')) {
       return [
-        createAvailableDate('2026-06-01', false),
-        createAvailableDate('2026-06-04', true),
+        createAvailableDate('2026-06-01'),
+        createAvailableDate('2026-06-04'),
       ]
     }
 

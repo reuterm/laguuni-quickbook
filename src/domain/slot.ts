@@ -4,7 +4,6 @@ import type { CableId } from './cable'
 export type AvailableDate = {
   cableId: CableId
   date: LocalDateString
-  hasBookableSlots: boolean
 }
 
 export type BookingSegment = {
