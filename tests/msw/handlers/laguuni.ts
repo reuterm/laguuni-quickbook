@@ -22,10 +22,6 @@ const availabilityFixtureByProductId = {
   '7': easyAvailabilityFixture,
 }
 
-const TEST_API_BASE_URL = normalizeApiBaseUrl(
-  process.env.LAGUUNI_API_BASE_URL ?? DEFAULT_LAGUUNI_API_BASE_URL,
-)
-
 const basketStateByToken = new Map<string, BasketState>()
 
 const MOBILEPAY_HANDLER_REDIRECT = {
@@ -33,203 +29,217 @@ const MOBILEPAY_HANDLER_REDIRECT = {
     'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
 }
 
-export const laguuniHandlers = [
-  http.get(`${TEST_API_BASE_URL}/api/laguuni/baskets.json`, () =>
-    HttpResponse.json(basketFixture),
-  ),
+export const laguuniHandlers = createLaguuniHandlers()
 
-  http.get(
-    `${TEST_API_BASE_URL}/api/laguuni/products/:productId/availabledates/:anchorDate.json`,
-    ({ params, request }) => {
-      const productId = String(params.productId)
-      const fixture =
-        availabilityFixtureByProductId[
-          productId as keyof typeof availabilityFixtureByProductId
-        ]
+export function createLaguuniHandlers(baseUrl = getDefaultHandlerBaseUrl()) {
+  const normalizedBaseUrl = normalizeApiBaseUrl(baseUrl)
 
-      if (!fixture) {
-        return HttpResponse.json(
-          { errorCode: 'UNKNOWN_PRODUCT', status: 'error' },
-          { status: 404 },
-        )
-      }
+  return [
+    http.get(`${normalizedBaseUrl}/api/laguuni/baskets.json`, () =>
+      HttpResponse.json(basketFixture),
+    ),
 
-      const url = new URL(request.url)
+    http.get(
+      `${normalizedBaseUrl}/api/laguuni/products/:productId/availabledates/:anchorDate.json`,
+      ({ params, request }) => {
+        const productId = String(params.productId)
+        const fixture =
+          availabilityFixtureByProductId[
+            productId as keyof typeof availabilityFixtureByProductId
+          ]
 
-      if (
-        !matchesSearchParams(url, {
-          count: '1',
-          field: 'hourlyfrom',
-          mode: 'hours',
-          required_resources: 'true',
-          resource_count: '1',
-        })
-      ) {
-        return invalidQueryResponse('available dates')
-      }
+        if (!fixture) {
+          return HttpResponse.json(
+            { errorCode: 'UNKNOWN_PRODUCT', status: 'error' },
+            { status: 404 },
+          )
+        }
 
-      return HttpResponse.json(fixture.availableDates)
-    },
-  ),
+        const url = new URL(request.url)
 
-  http.get(
-    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/products/:productId/availabletimes/:date.json`,
-    ({ params, request }) => {
-      const productId = String(params.productId)
-      const fixture =
-        availabilityFixtureByProductId[
-          productId as keyof typeof availabilityFixtureByProductId
-        ]
+        if (
+          !matchesSearchParams(url, {
+            count: '1',
+            field: 'hourlyfrom',
+            mode: 'hours',
+            required_resources: 'true',
+            resource_count: '1',
+          })
+        ) {
+          return invalidQueryResponse('available dates')
+        }
 
-      if (!fixture) {
-        return HttpResponse.json(
-          { errorCode: 'UNKNOWN_PRODUCT', status: 'error' },
-          { status: 404 },
-        )
-      }
+        return HttpResponse.json(fixture.availableDates)
+      },
+    ),
 
-      const url = new URL(request.url)
+    http.get(
+      `${normalizedBaseUrl}/api/laguuni/fi_FI/products/:productId/availabletimes/:date.json`,
+      ({ params, request }) => {
+        const productId = String(params.productId)
+        const fixture =
+          availabilityFixtureByProductId[
+            productId as keyof typeof availabilityFixtureByProductId
+          ]
 
-      if (url.searchParams.get('capacity') === 'true') {
-        return HttpResponse.json(fixture.availableTimesCapacity)
-      }
+        if (!fixture) {
+          return HttpResponse.json(
+            { errorCode: 'UNKNOWN_PRODUCT', status: 'error' },
+            { status: 404 },
+          )
+        }
 
-      if (url.searchParams.get('count') !== '1') {
-        return invalidQueryResponse('availability times')
-      }
+        const url = new URL(request.url)
 
-      return HttpResponse.json(fixture.availableTimesCount)
-    },
-  ),
+        if (url.searchParams.get('capacity') === 'true') {
+          return HttpResponse.json(fixture.availableTimesCapacity)
+        }
 
-  http.get(
-    `${TEST_API_BASE_URL}/api/laguuni/discounts/:code/public.json`,
-    ({ params }) => {
-      const code = String(params.code)
+        if (url.searchParams.get('count') !== '1') {
+          return invalidQueryResponse('availability times')
+        }
 
-      if (code === 'FIXTURE-DISCOUNT') {
-        return HttpResponse.json(discountAcceptedFixture)
-      }
+        return HttpResponse.json(fixture.availableTimesCount)
+      },
+    ),
 
-      return HttpResponse.json(discountInvalidFixture, { status: 404 })
-    },
-  ),
+    http.get(
+      `${normalizedBaseUrl}/api/laguuni/discounts/:code/public.json`,
+      ({ params }) => {
+        const code = String(params.code)
 
-  http.post(
-    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/baskets/:basketToken/items/new.json`,
-    async ({ params, request }) => {
-      const basketToken = String(params.basketToken)
-      const body = await readRequestBody(request)
+        if (code === 'FIXTURE-DISCOUNT') {
+          return HttpResponse.json(discountAcceptedFixture)
+        }
 
-      if (isValidApplyCodeBody(body)) {
+        return HttpResponse.json(discountInvalidFixture, { status: 404 })
+      },
+    ),
+
+    http.post(
+      `${normalizedBaseUrl}/api/laguuni/fi_FI/baskets/:basketToken/items/new.json`,
+      async ({ params, request }) => {
+        const basketToken = String(params.basketToken)
+        const body = await readRequestBody(request)
+
+        if (isValidApplyCodeBody(body)) {
+          const basketState = getBasketState(basketToken)
+          basketState.hasZeroTotalCode = hasExpectedCode(body, 'FIXTURE-DISCOUNT')
+          return HttpResponse.json(null)
+        }
+
+        if (!isValidAddToBasketBody(body)) {
+          return invalidRequestBodyResponse('add reservation')
+        }
+
+        getBasketState(basketToken).hasReservation = true
+
+        return HttpResponse.json(addToBasketFixture)
+      },
+    ),
+
+    http.get(
+      `${normalizedBaseUrl}/api/laguuni/fi_FI/baskets/:basketToken/items.json`,
+      ({ params, request }) => {
+        const url = new URL(request.url)
+
+        if (url.searchParams.get('publicreservations') !== 'true') {
+          return invalidQueryResponse('basket items')
+        }
+
+        const basketState = getBasketState(String(params.basketToken))
+
+        if (!basketState.hasReservation) {
+          return HttpResponse.json([])
+        }
+
+        if (basketState.checkoutCompleted) {
+          return HttpResponse.json([])
+        }
+
+        return HttpResponse.json([
+          {
+            discountedprice: basketState.hasZeroTotalCode ? '0' : null,
+            price: '26',
+          },
+        ])
+      },
+    ),
+
+    http.post(
+      `${normalizedBaseUrl}/api/laguuni/fi_FI/orders/:basketToken.json`,
+      async ({ params, request }) => {
+        const basketToken = String(params.basketToken)
+        const body = await readRequestBody(request)
+
+        if (!isValidCheckoutBody(body)) {
+          return invalidRequestBodyResponse('submit checkout')
+        }
+
         const basketState = getBasketState(basketToken)
-        basketState.hasZeroTotalCode = hasExpectedCode(body, 'FIXTURE-DISCOUNT')
-        return HttpResponse.json(null)
-      }
+        basketState.checkoutCompleted = true
 
-      if (!isValidAddToBasketBody(body)) {
-        return invalidRequestBodyResponse('add reservation')
-      }
+        if (basketToken === 'fixture-basket-payment') {
+          return HttpResponse.json(checkoutPaymentRequiredFixture)
+        }
 
-      getBasketState(basketToken).hasReservation = true
+        if (basketToken === 'fixture-basket-failure') {
+          return HttpResponse.json(checkoutFailureFixture)
+        }
 
-      return HttpResponse.json(addToBasketFixture)
-    },
-  ),
+        if (isRecord(body) && body.payment === 'cash') {
+          return HttpResponse.json(checkoutSuccessFixture)
+        }
 
-  http.get(
-    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/baskets/:basketToken/items.json`,
-    ({ params, request }) => {
-      const url = new URL(request.url)
-
-      if (url.searchParams.get('publicreservations') !== 'true') {
-        return invalidQueryResponse('basket items')
-      }
-
-      const basketState = getBasketState(String(params.basketToken))
-
-      if (!basketState.hasReservation) {
-        return HttpResponse.json([])
-      }
-
-      if (basketState.checkoutCompleted) {
-        return HttpResponse.json([])
-      }
-
-      return HttpResponse.json([
-        {
-          discountedprice: basketState.hasZeroTotalCode ? '0' : null,
-          price: '26',
-        },
-      ])
-    },
-  ),
-
-  http.post(
-    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
-    async ({ params, request }) => {
-      const basketToken = String(params.basketToken)
-      const body = await readRequestBody(request)
-
-      if (!isValidCheckoutBody(body)) {
-        return invalidRequestBodyResponse('submit checkout')
-      }
-
-      const basketState = getBasketState(basketToken)
-      basketState.checkoutCompleted = true
-
-      if (basketToken === 'fixture-basket-payment') {
         return HttpResponse.json(checkoutPaymentRequiredFixture)
-      }
+      },
+    ),
 
-      if (basketToken === 'fixture-basket-failure') {
-        return HttpResponse.json(checkoutFailureFixture)
-      }
+    http.get(
+      `${normalizedBaseUrl}/api/laguuni/fi_FI/rest/post/mobilepayhandler/:token.json`,
+      ({ request }) => {
+        const url = new URL(request.url)
 
-      if (isRecord(body) && body.payment === 'cash') {
-        return HttpResponse.json(checkoutSuccessFixture)
-      }
+        if (
+          url.searchParams.get('method') !== 'Create' ||
+          url.searchParams.get('domain') !== 'shop.laguuniin.fi'
+        ) {
+          return invalidQueryResponse('mobilepay handler')
+        }
 
-      return HttpResponse.json(checkoutPaymentRequiredFixture)
-    },
-  ),
+        return HttpResponse.json(MOBILEPAY_HANDLER_REDIRECT)
+      },
+    ),
 
-  http.get(
-    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/rest/post/mobilepayhandler/:token.json`,
-    ({ request }) => {
-      const url = new URL(request.url)
+    http.post(
+      `${normalizedBaseUrl}/api/laguuni/fi_FI/completeorderhandler/:identifier/cashreturn.json`,
+      ({ params }) =>
+        HttpResponse.json({
+          items: {
+            ...completeOrderCashreturnFixture.items,
+            identifier: String(params.identifier),
+          },
+        }),
+    ),
 
-      if (
-        url.searchParams.get('method') !== 'Create' ||
-        url.searchParams.get('domain') !== 'shop.laguuniin.fi'
-      ) {
-        return invalidQueryResponse('mobilepay handler')
-      }
-
-      return HttpResponse.json(MOBILEPAY_HANDLER_REDIRECT)
-    },
-  ),
-
-  http.post(
-    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/completeorderhandler/:identifier/cashreturn.json`,
-    ({ params }) =>
-      HttpResponse.json({
-        items: {
-          ...completeOrderCashreturnFixture.items,
+    http.get(
+      `${normalizedBaseUrl}/api/laguuni/fi_FI/orders/:identifier.json`,
+      ({ params }) =>
+        HttpResponse.json({
+          ...orderSuccessDetailsFixture,
           identifier: String(params.identifier),
-        },
-      }),
-  ),
+        }),
+    ),
+  ]
+}
 
-  http.get(
-    `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:identifier.json`,
-    ({ params }) =>
-      HttpResponse.json({
-        ...orderSuccessDetailsFixture,
-        identifier: String(params.identifier),
-      }),
-  ),
-]
+function getDefaultHandlerBaseUrl() {
+  if (typeof process !== 'undefined' && process.env.LAGUUNI_API_BASE_URL) {
+    return process.env.LAGUUNI_API_BASE_URL
+  }
+
+  return DEFAULT_LAGUUNI_API_BASE_URL
+}
 
 type BasketState = {
   checkoutCompleted: boolean
