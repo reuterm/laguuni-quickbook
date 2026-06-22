@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { expect, userEvent, within } from 'storybook/test'
 
 import { createLaguuniHandlers } from '../../../../tests/msw/handlers/laguuni'
 import { BOOKING_ENABLED_SETTINGS, noop } from '@/storybook/fixtures'
@@ -8,6 +9,21 @@ import { AvailabilityScreen } from './AvailabilityScreen'
 const storybookLaguuniHandlers = createLaguuniHandlers(
   'https://shop.laguuniin.fi',
 )
+const paymentRequiredHandlers = createLaguuniHandlers(
+  'https://shop.laguuniin.fi',
+  {
+    basketToken: 'fixture-basket-payment',
+    paymentRedirectUrl: 'https://example.com/mobilepay',
+  },
+)
+const failedBookingHandlers = createLaguuniHandlers(
+  'https://shop.laguuniin.fi',
+  { basketToken: 'fixture-basket-failure' },
+)
+const successfulBookingSettings = {
+  ...BOOKING_ENABLED_SETTINGS,
+  seasonPassCode: 'FIXTURE-DISCOUNT',
+}
 
 const meta = {
   component: AvailabilityScreen,
@@ -38,5 +54,80 @@ export const BookingEnabled: Story = {
   },
   parameters: {
     settings: BOOKING_ENABLED_SETTINGS,
+  },
+}
+
+export const PaymentRequired: Story = {
+  args: {
+    isOnline: true,
+    onOpenSettings: noop,
+  },
+  parameters: {
+    msw: {
+      handlers: paymentRequiredHandlers,
+    },
+    settings: BOOKING_ENABLED_SETTINGS,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const page = within(canvasElement.ownerDocument.body)
+
+    await userEvent.click(canvas.getAllByRole('button', { name: 'Book' })[0]!)
+    await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
+
+    await expect(
+      page.findByRole('heading', { name: 'Payment required' }),
+    ).resolves.toBeInTheDocument()
+    await expect(
+      page.findByRole('link', { name: 'Continue to payment' }),
+    ).resolves.toHaveAttribute('href', 'https://example.com/mobilepay')
+  },
+}
+
+export const FailedBooking: Story = {
+  args: {
+    isOnline: true,
+    onOpenSettings: noop,
+  },
+  parameters: {
+    msw: {
+      handlers: failedBookingHandlers,
+    },
+    settings: BOOKING_ENABLED_SETTINGS,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const page = within(canvasElement.ownerDocument.body)
+
+    await userEvent.click(canvas.getAllByRole('button', { name: 'Book' })[0]!)
+    await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
+
+    await expect(
+      page.findByRole('heading', { name: 'Booking failed' }),
+    ).resolves.toBeInTheDocument()
+    await expect(
+      page.findByRole('button', { name: 'Copy diagnostics' }),
+    ).resolves.toBeInTheDocument()
+  },
+}
+
+export const SuccessfulBooking: Story = {
+  args: {
+    isOnline: true,
+    onOpenSettings: noop,
+  },
+  parameters: {
+    settings: successfulBookingSettings,
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement)
+    const page = within(canvasElement.ownerDocument.body)
+
+    await userEvent.click(canvas.getAllByRole('button', { name: 'Book' })[0]!)
+    await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
+
+    await expect(
+      page.findByRole('heading', { name: 'Booking confirmed' }),
+    ).resolves.toBeInTheDocument()
   },
 }

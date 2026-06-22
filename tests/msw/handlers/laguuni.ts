@@ -24,19 +24,27 @@ const availabilityFixtureByProductId = {
 
 const basketStateByToken = new Map<string, BasketState>()
 
-const MOBILEPAY_HANDLER_REDIRECT = {
-  redirectUrl:
-    'https://pay.mobilepay.fi/?token=<captured-via-handler-response>',
+type LaguuniHandlerOptions = {
+  basketToken?: string
+  paymentRedirectUrl?: string
 }
+
+const DEFAULT_PAYMENT_REDIRECT_URL = 'https://example.com/mobilepay'
 
 export const laguuniHandlers = createLaguuniHandlers()
 
-export function createLaguuniHandlers(baseUrl = getDefaultHandlerBaseUrl()) {
+export function createLaguuniHandlers(
+  baseUrl = getDefaultHandlerBaseUrl(),
+  {
+    basketToken = basketFixture,
+    paymentRedirectUrl = DEFAULT_PAYMENT_REDIRECT_URL,
+  }: LaguuniHandlerOptions = {},
+) {
   const normalizedBaseUrl = normalizeApiBaseUrl(baseUrl)
 
   return [
     http.get(`${normalizedBaseUrl}/api/laguuni/baskets.json`, () =>
-      HttpResponse.json(basketFixture),
+      HttpResponse.json(basketToken),
     ),
 
     http.get(
@@ -207,7 +215,9 @@ export function createLaguuniHandlers(baseUrl = getDefaultHandlerBaseUrl()) {
           return invalidQueryResponse('mobilepay handler')
         }
 
-        return HttpResponse.json(MOBILEPAY_HANDLER_REDIRECT)
+        return HttpResponse.json({
+          redirectUrl: paymentRedirectUrl,
+        })
       },
     ),
 
