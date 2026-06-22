@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { FormField } from './form-field'
 import { Input } from './input'
@@ -22,7 +22,11 @@ export const Description: Story = {
 
 export const Error: Story = {
   render: (args) => (
-    <FormField {...args} label="Season pass code" error="This code was not accepted.">
+    <FormField
+      {...args}
+      label="Season pass code"
+      error="This code was not accepted."
+    >
       <Input placeholder="Optional" defaultValue="FIXTURE-CODE" />
     </FormField>
   ),

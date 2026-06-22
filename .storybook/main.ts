@@ -1,33 +1,26 @@
-import type { StorybookConfig } from '@storybook/react-vite'
 import { fileURLToPath } from 'node:url'
+import type { StorybookConfig } from '@storybook/react-vite'
 
 const config: StorybookConfig = {
-  addons: ['@storybook/addon-docs', '@storybook/addon-a11y', '@storybook/addon-mcp'],
+  addons: [
+    '@storybook/addon-docs',
+    '@storybook/addon-a11y',
+    '@storybook/addon-mcp',
+  ],
+  core: {
+    builder: {
+      name: '@storybook/builder-vite',
+      options: {
+        viteConfigPath: '.storybook/vite.config.ts',
+      },
+    },
+  },
   framework: {
     name: '@storybook/react-vite',
     options: {},
   },
-  staticDirs: ['../public'],
+  staticDirs: ['../.storybook/public'],
   stories: ['../src/**/*.stories.@(ts|tsx)'],
-  viteFinal: async (config) => {
-    process.env.STORYBOOK = 'true'
-
-    config.resolve ??= {}
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': fileURLToPath(new URL('../src', import.meta.url)),
-    }
-
-    config.define = {
-      ...config.define,
-      'import.meta.env.VITE_APP_VERSION': JSON.stringify('storybook'),
-      'import.meta.env.VITE_LAGUUNI_API_BASE_URL': JSON.stringify(
-        'https://shop.laguuniin.fi',
-      ),
-    }
-
-    return config
-  },
 }
 
 export default config

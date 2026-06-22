@@ -1,13 +1,13 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import {
   BOOKABLE_DAY_GROUPS,
   BOOKING_ENABLED_SETTINGS,
   CALENDAR_DAY_GROUPS,
   CALENDAR_VIEW_SETTINGS,
-  EMPTY_DAY_GROUPS,
   createReadyAvailabilityState,
   createRefreshingAvailabilityState,
+  EMPTY_DAY_GROUPS,
   noop,
   noopAsync,
 } from '@/storybook/fixtures'

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { Button } from './button'
 import { SurfaceList, SurfaceListItem } from './surface-list'
@@ -32,7 +32,9 @@ export const Interactive: Story = {
       <SurfaceListItem interactive>
         <div>
           <p className="font-medium text-foreground">Diagnostics trace</p>
-          <p className="text-sm text-muted-foreground">Tap to inspect a retained booking flow.</p>
+          <p className="text-sm text-muted-foreground">
+            Tap to inspect a retained booking flow.
+          </p>
         </div>
         <Button size="sm" variant="ghost">
           Open

@@ -1,9 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import {
   CALENDAR_DAY_GROUPS,
-  STORYBOOK_REFERENCE_DATE,
   noop,
+  STORYBOOK_REFERENCE_DATE,
 } from '@/storybook/fixtures'
 
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'

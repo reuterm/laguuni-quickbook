@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 
 import { SegmentedControl } from './segmented-control'
@@ -32,7 +32,11 @@ function SegmentedControlStory({
       ariaLabel="Availability view"
       items={[
         { label: 'Auto', value: 'cards' },
-        { disabled: disabledLastItem, label: 'Calendar only', value: 'calendar' },
+        {
+          disabled: disabledLastItem,
+          label: 'Calendar only',
+          value: 'calendar',
+        },
       ]}
       onValueChange={setValue}
       value={value}

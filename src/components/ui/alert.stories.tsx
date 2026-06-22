@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { Alert, AlertDescription } from './alert'
 import { AlertTitle } from './alert-title'

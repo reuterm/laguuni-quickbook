@@ -5,23 +5,24 @@ import { AppProviders } from '../src/app/providers'
 import { AvailabilityScopeProvider } from '../src/features/availability/use-availability-scope'
 import { UserSettingsProvider } from '../src/features/settings/use-user-settings'
 import {
-  clearPersistedAppState,
-  enableDeveloperMode,
-  saveUserSettings,
-  writeCorruptedSettings,
-} from '../src/test/persisted-state'
+  clearPersistedStorybookState,
+  enableStorybookDeveloperMode,
+  saveStorybookUserSettings,
+  writeStorybookCorruptedSettings,
+} from './storybook-persisted-state'
 
 type StorybookParameters = {
   appVersion?: string
   availabilityReferenceDate?: Date
   developerMode?: boolean
   seedCorruptedSettings?: boolean
-  settings?: Parameters<typeof saveUserSettings>[0]
+  settings?: Parameters<typeof saveStorybookUserSettings>[0]
 }
 
 const DEFAULT_API_BASE_URL = 'https://shop.laguuniin.fi'
 const DEFAULT_APP_VERSION = 'storybook'
 const DEFAULT_AVAILABILITY_REFERENCE_DATE = new Date('2026-05-14T12:00:00')
+const storybookStorage = createStorybookStorage()
 
 export const StorybookAppProviders: Decorator = (Story, context) => {
   const parameters = context.parameters as StorybookParameters
@@ -64,16 +65,17 @@ function SeededStateBoundary({
   parameters: StorybookParameters
 }) {
   useState(() => {
-    clearPersistedAppState()
+    installStorybookStorage(storybookStorage)
+    clearPersistedStorybookState(storybookStorage)
 
     if (parameters.seedCorruptedSettings) {
-      writeCorruptedSettings()
+      writeStorybookCorruptedSettings(undefined, storybookStorage)
     } else if (parameters.settings) {
-      saveUserSettings(parameters.settings)
+      saveStorybookUserSettings(parameters.settings, storybookStorage)
     }
 
     if (parameters.developerMode) {
-      enableDeveloperMode()
+      enableStorybookDeveloperMode(storybookStorage)
     }
 
     return true
@@ -81,9 +83,48 @@ function SeededStateBoundary({
 
   useEffect(() => {
     return () => {
-      clearPersistedAppState()
+      clearPersistedStorybookState(storybookStorage)
     }
   }, [])
 
   return children
+}
+
+type StorybookStorage = Storage & {
+  reset(): void
+}
+
+function createStorybookStorage(): StorybookStorage {
+  const values = new Map<string, string>()
+
+  return {
+    clear() {
+      values.clear()
+    },
+    get length() {
+      return values.size
+    },
+    getItem(key: string) {
+      return values.get(key) ?? null
+    },
+    key(index: number) {
+      return [...values.keys()][index] ?? null
+    },
+    removeItem(key: string) {
+      values.delete(key)
+    },
+    reset() {
+      values.clear()
+    },
+    setItem(key: string, value: string) {
+      values.set(key, value)
+    },
+  }
+}
+
+function installStorybookStorage(storage: Storage) {
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: storage,
+  })
 }

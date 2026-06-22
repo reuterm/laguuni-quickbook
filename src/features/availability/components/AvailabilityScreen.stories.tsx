@@ -1,25 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 
-import { createLaguuniHandlers } from '../../../../tests/msw/handlers/laguuni'
 import { BOOKING_ENABLED_SETTINGS, noop } from '@/storybook/fixtures'
+import { createStorybookLaguuniHandlers } from '../../../../.storybook/laguuni-handlers'
 
 import { AvailabilityScreen } from './AvailabilityScreen'
 
-const storybookLaguuniHandlers = createLaguuniHandlers(
-  'https://shop.laguuniin.fi',
-)
-const paymentRequiredHandlers = createLaguuniHandlers(
-  'https://shop.laguuniin.fi',
-  {
-    basketToken: 'fixture-basket-payment',
-    paymentRedirectUrl: 'https://example.com/mobilepay',
-  },
-)
-const failedBookingHandlers = createLaguuniHandlers(
-  'https://shop.laguuniin.fi',
-  { basketToken: 'fixture-basket-failure' },
-)
+const storybookLaguuniHandlers = createStorybookLaguuniHandlers('booking-enabled')
+const paymentRequiredHandlers = createStorybookLaguuniHandlers('payment-required')
+const failedBookingHandlers = createStorybookLaguuniHandlers('failed-booking')
 const successfulBookingSettings = {
   ...BOOKING_ENABLED_SETTINGS,
   seasonPassCode: 'FIXTURE-DISCOUNT',
@@ -68,8 +57,7 @@ export const PaymentRequired: Story = {
     },
     settings: BOOKING_ENABLED_SETTINGS,
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
+  play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
     await userEvent.click(canvas.getAllByRole('button', { name: 'Book' })[0]!)
@@ -95,8 +83,7 @@ export const FailedBooking: Story = {
     },
     settings: BOOKING_ENABLED_SETTINGS,
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
+  play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
     await userEvent.click(canvas.getAllByRole('button', { name: 'Book' })[0]!)
@@ -119,8 +106,7 @@ export const SuccessfulBooking: Story = {
   parameters: {
     settings: successfulBookingSettings,
   },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement)
+  play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
     await userEvent.click(canvas.getAllByRole('button', { name: 'Book' })[0]!)

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './tabs'
@@ -26,10 +26,14 @@ function TabsStory() {
         <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
       </TabsList>
       <TabsContent value="overview">
-        <p className="text-sm text-muted-foreground">Primary availability content.</p>
+        <p className="text-sm text-muted-foreground">
+          Primary availability content.
+        </p>
       </TabsContent>
       <TabsContent value="diagnostics">
-        <p className="text-sm text-muted-foreground">Secondary diagnostics content.</p>
+        <p className="text-sm text-muted-foreground">
+          Secondary diagnostics content.
+        </p>
       </TabsContent>
     </Tabs>
   )

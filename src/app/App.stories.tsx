@@ -1,12 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/react'
-
-import App from './App'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { BOOKING_ENABLED_SETTINGS } from '../storybook/fixtures'
-import { createLaguuniHandlers } from '../../tests/msw/handlers/laguuni'
+import App from './App'
+import { createStorybookLaguuniHandlers } from '../../.storybook/laguuni-handlers'
 
-const storybookLaguuniHandlers = createLaguuniHandlers(
-  'https://shop.laguuniin.fi',
-)
+const storybookLaguuniHandlers = createStorybookLaguuniHandlers()
 
 const meta = {
   component: App,

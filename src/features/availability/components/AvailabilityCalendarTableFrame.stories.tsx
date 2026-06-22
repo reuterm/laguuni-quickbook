@@ -1,9 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { createAvailabilitySlot } from '@/storybook/fixtures'
-
-import { AvailabilityCapacityChip } from './availability-badge'
 import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame'
+import { AvailabilityCapacityChip } from './availability-badge'
 
 const meta = {
   component: AvailabilityCalendarTableFrame,

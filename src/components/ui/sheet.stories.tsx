@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { Button } from './button'
 import {
@@ -40,10 +40,15 @@ export const RightSide: Story = {
 export const BottomSide: Story = {
   render: () => (
     <Sheet open>
-      <SheetContent side="bottom" className="rounded-t-[2rem] px-5 pb-7 pt-6 sm:mx-auto sm:max-w-lg">
+      <SheetContent
+        side="bottom"
+        className="rounded-t-[2rem] px-5 pb-7 pt-6 sm:mx-auto sm:max-w-lg"
+      >
         <SheetHeader className="pr-10 text-left">
           <SheetTitle>Booking details</SheetTitle>
-          <SheetDescription>Bottom sheet presentation used for checkout flow.</SheetDescription>
+          <SheetDescription>
+            Bottom sheet presentation used for checkout flow.
+          </SheetDescription>
         </SheetHeader>
         <Button>Confirm booking</Button>
       </SheetContent>

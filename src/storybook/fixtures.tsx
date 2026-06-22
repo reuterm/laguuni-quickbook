@@ -11,7 +11,11 @@ import type {
 } from '@/features/availability/availability-service'
 import type { AvailabilityState } from '@/features/availability/use-availability-overview'
 import type { BookingSheetState } from '@/features/booking/use-booking-sheet-controller'
-import { formatDisplayDate, parseLocalDate, toLocalDateString } from '@/lib/date'
+import {
+  formatDisplayDate,
+  parseLocalDate,
+  toLocalDateString,
+} from '@/lib/date'
 
 export const STORYBOOK_REFERENCE_DATE = new Date('2026-05-14T12:00:00')
 
@@ -143,7 +147,9 @@ export function createAvailabilityWeek(
   dayGroups: readonly AvailabilityDayGroup[] = CALENDAR_DAY_GROUPS,
 ): AvailabilityWeek {
   return {
-    days: dayGroups.map((dayGroup) => dayGroup) as Array<AvailabilityDayGroup | null>,
+    days: dayGroups.map(
+      (dayGroup) => dayGroup,
+    ) as Array<AvailabilityDayGroup | null>,
     id: '2026-05-11',
     label: '11 May - 17 May',
     weekStartDate: parseLocalDate(localDate('2026-05-11')),
