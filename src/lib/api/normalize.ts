@@ -10,7 +10,7 @@ import { isRecord, isStringArray } from '../type-guards'
 
 export type RawAvailableDateTuple = readonly [
   dayOfMonth: number,
-  hasBookableSlots: 0 | 1,
+  hasBookableSlots: number,
 ]
 
 export type RawAvailableDatesResponse = readonly RawAvailableDateTuple[]
@@ -34,7 +34,9 @@ export function decodeAvailableDatesResponse(
   value: unknown,
 ): RawAvailableDatesResponse {
   if (!Array.isArray(value) || !value.every(isRawAvailableDateTuple)) {
-    throw new Error('Available date responses must contain [day, 0|1] tuples')
+    throw new Error(
+      'Available date responses must contain [number, number] tuples',
+    )
   }
 
   return value
@@ -73,11 +75,19 @@ export function normalizeAvailableDates(
   anchorDate: LocalDateString,
   rawResponse: RawAvailableDatesResponse,
 ): AvailableDate[] {
-  return rawResponse.map(([dayOfMonth, hasBookableSlots]) => ({
-    cableId,
-    date: setDate(anchorDate, dayOfMonth),
-    hasBookableSlots: hasBookableSlots === 1,
-  }))
+  const res: AvailableDate[] = []
+
+  for (const [dayOfMonth, hasBookableSlots] of rawResponse) {
+    if (hasBookableSlots < 0) {
+      continue
+    }
+
+    res.push({
+      cableId,
+      date: setDate(anchorDate, dayOfMonth),
+    })
+  }
+  return res
 }
 
 export function normalizeDailyAvailabilityWindow(
@@ -176,7 +186,7 @@ function isRawAvailableDateTuple(
     Array.isArray(value) &&
     value.length === 2 &&
     typeof value[0] === 'number' &&
-    (value[1] === 0 || value[1] === 1)
+    typeof value[1] === 'number'
   )
 }
 

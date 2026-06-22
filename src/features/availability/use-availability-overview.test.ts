@@ -1027,7 +1027,6 @@ function createGetAvailableDates() {
       availableDates.push({
         cableId,
         date: formatLocalDate(monthStartDate),
-        hasBookableSlots: true,
       })
       monthStartDate.setDate(monthStartDate.getDate() + 1)
     }
