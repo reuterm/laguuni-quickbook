@@ -42,16 +42,6 @@ type SharedLaguuniHandlerOptions = {
   paymentRedirectUrl?: string
 }
 
-type StorybookLaguuniScenario =
-  | 'booking-enabled'
-  | 'failed-booking'
-  | 'payment-required'
-
-type TestLaguuniHandlerOptions = {
-  basketToken?: string
-  paymentRedirectUrl?: string
-}
-
 export function createLaguuniHandlerState(): LaguuniHandlerState {
   return {
     basketStateByToken: new Map<string, BasketState>(),
@@ -62,37 +52,20 @@ export function resetLaguuniHandlerState(state: LaguuniHandlerState) {
   state.basketStateByToken.clear()
 }
 
-export function createTestLaguuniHandlers(
+export function createLaguuniApiHandlers(
   state: LaguuniHandlerState,
-  baseUrl = getDefaultLaguuniHandlerBaseUrl(),
   {
+    baseUrl = DEFAULT_LAGUUNI_API_BASE_URL,
     basketToken = basketFixture,
+    includeCleanupHandlers = false,
     paymentRedirectUrl = DEFAULT_PAYMENT_REDIRECT_URL,
-  }: TestLaguuniHandlerOptions = {},
+  }: SharedLaguuniHandlerOptions = {},
 ) {
   return createSharedLaguuniHandlers(state, {
     baseUrl,
     basketToken,
+    includeCleanupHandlers,
     paymentRedirectUrl,
-  })
-}
-
-export function createStorybookLaguuniHandlers(
-  state: LaguuniHandlerState,
-  scenario: StorybookLaguuniScenario = 'booking-enabled',
-  baseUrl = DEFAULT_LAGUUNI_API_BASE_URL,
-) {
-  const basketToken =
-    scenario === 'payment-required'
-      ? 'fixture-basket-payment'
-      : scenario === 'failed-booking'
-        ? 'fixture-basket-failure'
-        : basketFixture
-
-  return createSharedLaguuniHandlers(state, {
-    baseUrl,
-    basketToken,
-    includeCleanupHandlers: true,
   })
 }
 
@@ -438,5 +411,3 @@ function isStorefrontDate(value: unknown): value is string {
 function isStorefrontTime(value: unknown): value is string {
   return typeof value === 'string' && /^\d{2}\.\d{2}$/.test(value)
 }
-
-export type { StorybookLaguuniScenario }

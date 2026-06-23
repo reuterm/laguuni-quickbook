@@ -2,7 +2,10 @@ import type { Preview } from '@storybook/react-vite'
 import { initialize, mswLoader } from 'msw-storybook-addon'
 
 import '../src/app/App.css'
-import { resetStorybookLaguuniHandlerState } from './laguuni-handlers'
+import {
+  createStorybookLaguuniHandlers,
+  resetStorybookLaguuniHandlerState,
+} from './laguuni-handlers'
 import { StorybookAppProviders } from './storybook-app-providers'
 
 initialize({
@@ -28,6 +31,9 @@ const preview: Preview = {
       },
     },
     layout: 'centered',
+    msw: {
+      handlers: createStorybookLaguuniHandlers(),
+    },
     options: {
       storySort: {
         order: [

@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 import {
   useAvailabilityReferenceDate,
+  useBrowserStorage,
   useDiagnostics,
   useLaguuniApi,
 } from '../../../app/providers'
@@ -39,10 +40,11 @@ export function AvailabilityScreen({
   onOpenSettings,
 }: AvailabilityScreenProps) {
   const api = useLaguuniApi()
+  const storage = useBrowserStorage()
   const diagnostics = useDiagnostics()
   const availabilityReferenceDate = useAvailabilityReferenceDate()
   const [isReadOnlyNoticeDismissed, setIsReadOnlyNoticeDismissed] = useState(
-    () => loadReadOnlyNoticeDismissed(),
+    () => loadReadOnlyNoticeDismissed(storage),
   )
   const { selectedCable, selectCable } = useAvailabilityScope()
   const activeCable = getCableById(selectedCable)
@@ -73,9 +75,9 @@ export function AvailabilityScreen({
   })
 
   const handleDismissReadOnlyNotice = useCallback(() => {
-    saveReadOnlyNoticeDismissed(true)
+    saveReadOnlyNoticeDismissed(true, storage)
     setIsReadOnlyNoticeDismissed(true)
-  }, [])
+  }, [storage])
   const showReadOnlyNotice =
     isOnline && !isBookingReady && !isReadOnlyNoticeDismissed
   const bookingActionProps = getAvailabilityBookingActionProps(

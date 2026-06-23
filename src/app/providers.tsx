@@ -11,6 +11,7 @@ import {
 import { FetchHttpClient } from '../lib/api/client'
 import { type LaguuniApi, LaguuniApiClient } from '../lib/api/laguuni-api'
 import {
+  type BrowserStorage,
   createBrowserStorage,
   LocalSettingsStore,
   type UserSettingsStore,
@@ -21,6 +22,7 @@ type AppDependencies = {
   appVersion: string
   availabilityReferenceDate?: Date | undefined
   bookingService: BookingService
+  browserStorage: BrowserStorage
   diagnostics: Diagnostics
   settingsStore: UserSettingsStore
 }
@@ -31,41 +33,59 @@ type AppProvidersProps = PropsWithChildren<{
   apiBaseUrl: string
   appVersion: string
   availabilityReferenceDate?: Date | undefined
+  diagnostics?: Diagnostics
+  settingsStore?: UserSettingsStore
+  storage?: BrowserStorage
 }>
 
 export function AppProviders({
   apiBaseUrl,
   appVersion,
   availabilityReferenceDate,
+  diagnostics,
+  settingsStore,
+  storage,
   children,
 }: AppProvidersProps) {
   const dependencies = useMemo<AppDependencies>(() => {
-    const browserStorage = createBrowserStorage()
+    const browserStorage = storage ?? createBrowserStorage()
     const api = new LaguuniApiClient({
       client: new FetchHttpClient({
         baseUrl: apiBaseUrl,
         fetchImplementation: globalThis.fetch.bind(globalThis),
       }),
     })
-    const settingsStore = new LocalSettingsStore({
-      storage: browserStorage,
-    })
-    const diagnostics = new LocalDiagnosticsStore({
-      appVersion,
-      storage: browserStorage,
-    })
+    const resolvedSettingsStore =
+      settingsStore ??
+      new LocalSettingsStore({
+        storage: browserStorage,
+      })
+    const resolvedDiagnostics =
+      diagnostics ??
+      new LocalDiagnosticsStore({
+        appVersion,
+        storage: browserStorage,
+      })
 
     return {
       api,
       appVersion,
       availabilityReferenceDate,
+      browserStorage,
       bookingService: new DefaultBookingService({
         api,
       }),
-      diagnostics,
-      settingsStore,
+      diagnostics: resolvedDiagnostics,
+      settingsStore: resolvedSettingsStore,
     }
-  }, [apiBaseUrl, appVersion, availabilityReferenceDate])
+  }, [
+    apiBaseUrl,
+    appVersion,
+    availabilityReferenceDate,
+    diagnostics,
+    settingsStore,
+    storage,
+  ])
 
   return (
     <AppDependenciesContext.Provider value={dependencies}>
@@ -102,6 +122,10 @@ export function useBookingService(): BookingService {
 
 export function useUserSettingsStore(): UserSettingsStore {
   return useAppDependencies().settingsStore
+}
+
+export function useBrowserStorage(): BrowserStorage {
+  return useAppDependencies().browserStorage
 }
 
 export function useDiagnostics(): Diagnostics {

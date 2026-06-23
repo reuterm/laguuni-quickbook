@@ -1,21 +1,32 @@
 import {
-  createStorybookLaguuniHandlers as createCoreStorybookLaguuniHandlers,
+  createLaguuniApiHandlers,
   createLaguuniHandlerState,
   resetLaguuniHandlerState,
-  type StorybookLaguuniScenario,
 } from '../tests/msw/handlers/laguuni-core'
 
 const storybookLaguuniHandlerState = createLaguuniHandlerState()
+
+type StorybookLaguuniScenario =
+  | 'booking-enabled'
+  | 'failed-booking'
+  | 'payment-required'
 
 export function createStorybookLaguuniHandlers(
   scenario: StorybookLaguuniScenario = 'booking-enabled',
   baseUrl?: string,
 ) {
-  return createCoreStorybookLaguuniHandlers(
-    storybookLaguuniHandlerState,
-    scenario,
+  const basketToken =
+    scenario === 'payment-required'
+      ? 'fixture-basket-payment'
+      : scenario === 'failed-booking'
+        ? 'fixture-basket-failure'
+        : undefined
+
+  return createLaguuniApiHandlers(storybookLaguuniHandlerState, {
     baseUrl,
-  )
+    basketToken,
+    includeCleanupHandlers: true,
+  })
 }
 
 export function resetStorybookLaguuniHandlerState() {

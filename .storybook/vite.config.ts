@@ -8,7 +8,7 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify('storybook'),
     'import.meta.env.VITE_LAGUUNI_API_BASE_URL': JSON.stringify(
-      'https://shop.laguuniin.fi',
+      'https://storybook.laguuni.invalid',
     ),
   },
   plugins: [react(), tailwindcss()],
