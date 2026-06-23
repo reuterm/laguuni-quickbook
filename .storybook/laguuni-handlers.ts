@@ -4,6 +4,13 @@ import {
   resetLaguuniHandlerState,
 } from '../tests/msw/handlers/laguuni-core'
 
+export const STORYBOOK_LAGUUNI_API_BASE_URL =
+  'https://storybook.laguuni.invalid'
+
+export function getStorybookLaguuniApiBaseUrl() {
+  return globalThis.location?.origin ?? STORYBOOK_LAGUUNI_API_BASE_URL
+}
+
 const storybookLaguuniHandlerState = createLaguuniHandlerState()
 
 type StorybookLaguuniScenario =
@@ -13,7 +20,7 @@ type StorybookLaguuniScenario =
 
 export function createStorybookLaguuniHandlers(
   scenario: StorybookLaguuniScenario = 'booking-enabled',
-  baseUrl?: string,
+  baseUrl = getStorybookLaguuniApiBaseUrl(),
 ) {
   const basketToken =
     scenario === 'payment-required'

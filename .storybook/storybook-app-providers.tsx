@@ -5,6 +5,7 @@ import { AppProviders } from '../src/app/providers'
 import { AvailabilityScopeProvider } from '../src/features/availability/use-availability-scope'
 import { UserSettingsProvider } from '../src/features/settings/use-user-settings'
 import type { BrowserStorage } from '../src/lib/storage/local-storage'
+import { getStorybookLaguuniApiBaseUrl } from './laguuni-handlers'
 import {
   clearPersistedStorybookState,
   enableStorybookDeveloperMode,
@@ -20,7 +21,6 @@ type StorybookParameters = {
   settings?: Parameters<typeof saveStorybookUserSettings>[0]
 }
 
-const DEFAULT_API_BASE_URL = 'https://storybook.laguuni.invalid'
 const DEFAULT_APP_VERSION = 'storybook'
 const DEFAULT_AVAILABILITY_REFERENCE_DATE = new Date('2026-05-14T12:00:00')
 
@@ -39,7 +39,7 @@ export const StorybookAppProviders: Decorator = (Story, context) => {
     <SeededStateBoundary key={stateKey} parameters={parameters}>
       {(storage) => (
         <AppProviders
-          apiBaseUrl={DEFAULT_API_BASE_URL}
+          apiBaseUrl={getStorybookLaguuniApiBaseUrl()}
           appVersion={parameters.appVersion ?? DEFAULT_APP_VERSION}
           availabilityReferenceDate={
             parameters.availabilityReferenceDate ??
