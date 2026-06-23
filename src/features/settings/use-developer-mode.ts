@@ -1,6 +1,5 @@
 import { useState } from 'react'
 
-import { useBrowserStorage } from '../../app/providers'
 import {
   loadDeveloperModeEnabled,
   saveDeveloperModeEnabled,
@@ -16,9 +15,8 @@ type UseDeveloperModeResult = {
 }
 
 export function useDeveloperMode(): UseDeveloperModeResult {
-  const storage = useBrowserStorage()
   const [developerModeEnabled, setDeveloperModeEnabled] = useState(() =>
-    loadDeveloperModeEnabled(storage),
+    loadDeveloperModeEnabled(),
   )
   const [_unlockTapCount, setUnlockTapCount] = useState(0)
 
@@ -34,7 +32,7 @@ export function useDeveloperMode(): UseDeveloperModeResult {
         return nextCount
       }
 
-      saveDeveloperModeEnabled(true, storage)
+      saveDeveloperModeEnabled(true)
       setDeveloperModeEnabled(true)
 
       return 0
@@ -42,7 +40,7 @@ export function useDeveloperMode(): UseDeveloperModeResult {
   }
 
   function disableDeveloperMode() {
-    saveDeveloperModeEnabled(false, storage)
+    saveDeveloperModeEnabled(false)
     setDeveloperModeEnabled(false)
     setUnlockTapCount(0)
   }
