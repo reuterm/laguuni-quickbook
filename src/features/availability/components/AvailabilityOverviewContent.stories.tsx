@@ -88,7 +88,7 @@ export const Offline: Story = {
   },
 }
 
-export const Error: Story = {
+export const ApiError: Story = {
   args: {
     activeCableLabel: 'Pro',
     availabilityState: {
