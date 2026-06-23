@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { createSelection } from '@/storybook/fixture-data'
+import { createSelection } from '$storybook/fixture-data'
 
 import { getBookingSelectionPresentation } from '../booking-selection-label'
 import { BookingSubmittingPanel } from './BookingSubmittingPanel'

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 
-import { BOOKING_ENABLED_SETTINGS, noop } from '@/storybook/fixture-data'
+import { BOOKING_ENABLED_SETTINGS, noop } from '$storybook/fixture-data'
 import { createStorybookLaguuniHandlers } from '../../../../.storybook/laguuni-handlers'
 
 import { AvailabilityScreen } from './AvailabilityScreen'

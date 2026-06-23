@@ -4,7 +4,7 @@ import {
   createBookingSheetState,
   noop,
   noopAsync,
-} from '@/storybook/fixture-data'
+} from '$storybook/fixture-data'
 
 import { BookingSheetFlow } from './BookingSheetFlow'
 

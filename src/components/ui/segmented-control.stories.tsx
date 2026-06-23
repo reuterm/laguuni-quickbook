@@ -3,21 +3,40 @@ import { useState } from 'react'
 
 import { SegmentedControl } from './segmented-control'
 
+type SegmentedControlStoryArgs = {
+  disabledLastItem: boolean
+}
+
 const meta = {
+  argTypes: {
+    disabledLastItem: {
+      control: 'boolean',
+    },
+    items: {
+      control: false,
+    },
+    onValueChange: {
+      control: false,
+    },
+    value: {
+      control: false,
+    },
+  },
   component: SegmentedControl,
   title: 'UI/SegmentedControl',
-} satisfies Meta<typeof SegmentedControl>
+} satisfies Meta<SegmentedControlStoryArgs>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  render: () => <SegmentedControlStory />,
-}
-
-export const DisabledOption: Story = {
-  render: () => <SegmentedControlStory disabledLastItem />,
+  args: {
+    disabledLastItem: false,
+  },
+  render: ({ disabledLastItem }) => (
+    <SegmentedControlStory disabledLastItem={disabledLastItem} />
+  ),
 }
 
 function SegmentedControlStory({

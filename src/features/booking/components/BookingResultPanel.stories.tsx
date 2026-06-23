@@ -4,7 +4,7 @@ import {
   createBookingResult,
   createSelection,
   noopAsync,
-} from '@/storybook/fixture-data'
+} from '$storybook/fixture-data'
 
 import { getBookingSelectionPresentation } from '../booking-selection-label'
 import { BookingResultPanel } from './BookingResultPanel'

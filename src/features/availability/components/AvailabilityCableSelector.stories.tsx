@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { BOOKING_ENABLED_SETTINGS, noop } from '@/storybook/fixture-data'
+import { BOOKING_ENABLED_SETTINGS, noop } from '$storybook/fixture-data'
 
 import { AvailabilityCableSelector } from './AvailabilityCableSelector'
 

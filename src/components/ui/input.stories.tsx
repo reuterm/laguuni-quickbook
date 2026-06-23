@@ -13,14 +13,8 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
+    disabled: false,
     defaultValue: 'Test User',
     placeholder: 'Test User',
-  },
-}
-
-export const Disabled: Story = {
-  args: {
-    defaultValue: 'Read only',
-    disabled: true,
   },
 }

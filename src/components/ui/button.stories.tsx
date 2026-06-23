@@ -3,6 +3,19 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Button } from './button'
 
 const meta = {
+  argTypes: {
+    variant: {
+      control: 'inline-radio',
+      options: [
+        'default',
+        'outline',
+        'secondary',
+        'ghost',
+        'link',
+        'destructive',
+      ],
+    },
+  },
   component: Button,
   title: 'UI/Button',
 } satisfies Meta<typeof Button>
@@ -11,22 +24,10 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
-export const Primary: Story = {
+export const Default: Story = {
   args: {
     children: 'Primary action',
-  },
-}
-
-export const Outline: Story = {
-  args: {
-    children: 'Secondary action',
-    variant: 'outline',
-  },
-}
-
-export const Disabled: Story = {
-  args: {
-    children: 'Disabled action',
-    disabled: true,
+    disabled: false,
+    variant: 'default',
   },
 }

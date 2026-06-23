@@ -1,39 +1,74 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { createAvailabilitySlot, noop } from '@/storybook/fixture-data'
+import { createAvailabilitySlot, noop } from '$storybook/fixture-data'
 
 import { AvailabilityCapacityChip } from './availability-badge'
 
+type CapacityStoryArgs = {
+  capacityState: 'high' | 'medium' | 'low'
+  disabled?: boolean
+  interactive: boolean
+  onClick?: () => void
+}
+
 const meta = {
+  argTypes: {
+    capacityState: {
+      control: 'inline-radio',
+      options: ['high', 'medium', 'low'],
+    },
+    slot: {
+      control: false,
+    },
+  },
   component: AvailabilityCapacityChip,
   title: 'Availability/CapacityChip',
-} satisfies Meta<typeof AvailabilityCapacityChip>
+} satisfies Meta<CapacityStoryArgs>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
-export const High: Story = {
-  args: {
-    slot: createAvailabilitySlot({ freeCapacity: 4, totalCapacity: 4 }),
-  },
+const slotByCapacityState = {
+  high: createAvailabilitySlot({ freeCapacity: 4, totalCapacity: 4 }),
+  low: createAvailabilitySlot({ freeCapacity: 1, totalCapacity: 4 }),
+  medium: createAvailabilitySlot({ freeCapacity: 2, totalCapacity: 4 }),
+} as const
+
+function renderCapacityChip({
+  capacityState,
+  disabled,
+  interactive,
+  onClick,
+}: CapacityStoryArgs) {
+  const slot = slotByCapacityState[capacityState]
+
+  if (interactive) {
+    return (
+      <AvailabilityCapacityChip
+        disabled={disabled}
+        onClick={onClick ?? noop}
+        slot={slot}
+      />
+    )
+  }
+
+  return <AvailabilityCapacityChip slot={slot} />
 }
 
-export const Medium: Story = {
+export const Default: Story = {
   args: {
-    slot: createAvailabilitySlot({ freeCapacity: 2, totalCapacity: 4 }),
+    capacityState: 'high',
+    interactive: false,
   },
-}
-
-export const Low: Story = {
-  args: {
-    slot: createAvailabilitySlot({ freeCapacity: 1, totalCapacity: 4 }),
-  },
+  render: renderCapacityChip,
 }
 
 export const Interactive: Story = {
   args: {
+    capacityState: 'low',
+    interactive: true,
     onClick: noop,
-    slot: createAvailabilitySlot({ freeCapacity: 1, totalCapacity: 4 }),
   },
+  render: renderCapacityChip,
 }
