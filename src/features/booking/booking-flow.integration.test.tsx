@@ -60,6 +60,7 @@ describe('booking flow integration', () => {
 
   it('shows a failure state when checkout returns an error', async () => {
     const user = userEvent.setup()
+    const deletedBasketTokens: Array<string> = []
 
     saveUserSettings({
       email: 'test@example.com',
@@ -70,6 +71,13 @@ describe('booking flow integration', () => {
       http.post(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
         () => HttpResponse.json(checkoutFailureFixture, { status: 200 }),
+      ),
+      http.delete(
+        `${TEST_API_BASE_URL}/api/laguuni/baskets/:basketToken.json`,
+        ({ params }) => {
+          deletedBasketTokens.push(String(params.basketToken))
+          return HttpResponse.json(null)
+        },
       ),
     )
 
@@ -82,10 +90,18 @@ describe('booking flow integration', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'could not be completed during checkout',
     )
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    await waitFor(() => {
+      expect(deletedBasketTokens).toHaveLength(1)
+    })
   })
 
   it('shows payment required when checkout returns a plain token string', async () => {
     const user = userEvent.setup()
+    const deletedBasketTokens: Array<string> = []
+    const cancelledPaymentTokens: Array<string> = []
 
     saveUserSettings({
       email: 'test@example.com',
@@ -100,6 +116,20 @@ describe('booking flow integration', () => {
       http.get(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/rest/post/mobilepayhandler/:token.json`,
         () => HttpResponse.json(MOBILEPAY_HANDLER_REDIRECT),
+      ),
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/completeorderhandler/:paymentToken/mobilepayreturn.json`,
+        ({ params }) => {
+          cancelledPaymentTokens.push(String(params.paymentToken))
+          return HttpResponse.json(null)
+        },
+      ),
+      http.delete(
+        `${TEST_API_BASE_URL}/api/laguuni/baskets/:basketToken.json`,
+        ({ params }) => {
+          deletedBasketTokens.push(String(params.basketToken))
+          return HttpResponse.json(null)
+        },
       ),
     )
 
@@ -118,10 +148,18 @@ describe('booking flow integration', () => {
     expect(
       screen.getByRole('link', { name: 'Continue to payment' }),
     ).toHaveAttribute('target', '_blank')
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    await waitFor(() => {
+      expect(cancelledPaymentTokens).toHaveLength(1)
+      expect(deletedBasketTokens).toHaveLength(1)
+    })
   })
 
   it('deletes and refreshes availability when a payment-required booking is dismissed', async () => {
     const user = userEvent.setup()
+    const cancelledPaymentTokens: Array<string> = []
     const deletedBasketTokens: Array<string> = []
     let hasDeletedBasket = false
 
@@ -138,6 +176,13 @@ describe('booking flow integration', () => {
       http.get(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/rest/post/mobilepayhandler/:token.json`,
         () => HttpResponse.json(MOBILEPAY_HANDLER_REDIRECT),
+      ),
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/completeorderhandler/:paymentToken/mobilepayreturn.json`,
+        ({ params }) => {
+          cancelledPaymentTokens.push(String(params.paymentToken))
+          return HttpResponse.json(null)
+        },
       ),
       http.delete(
         `${TEST_API_BASE_URL}/api/laguuni/baskets/:basketToken.json`,
@@ -181,6 +226,7 @@ describe('booking flow integration', () => {
     await user.click(screen.getByRole('button', { name: 'Close' }))
 
     await waitFor(() => {
+      expect(cancelledPaymentTokens).toHaveLength(1)
       expect(deletedBasketTokens).toHaveLength(1)
     })
 
