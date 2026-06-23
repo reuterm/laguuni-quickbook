@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { noopAsync, StorySurface } from '../../storybook/fixtures'
+import { noopAsync } from '../../storybook/fixture-data'
+import { StorySurface } from '../../storybook/fixtures'
 import { DiagnosticsCopyAction } from './DiagnosticsCopyAction'
 
 const meta = {

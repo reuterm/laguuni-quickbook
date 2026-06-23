@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { createAvailabilitySlot, noop } from '@/storybook/fixtures'
+import { createAvailabilitySlot, noop } from '@/storybook/fixture-data'
 
 import { AvailabilityCapacityChip } from './availability-badge'
 

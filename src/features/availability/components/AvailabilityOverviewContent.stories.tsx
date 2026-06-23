@@ -10,7 +10,7 @@ import {
   EMPTY_DAY_GROUPS,
   noop,
   noopAsync,
-} from '@/storybook/fixtures'
+} from '@/storybook/fixture-data'
 
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 

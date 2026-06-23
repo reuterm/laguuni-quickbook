@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { createAvailabilityWeek, noop } from '@/storybook/fixtures'
+import { createAvailabilityWeek, noop } from '@/storybook/fixture-data'
 
 import { AvailabilityCalendarWeek } from './AvailabilityCalendarWeek'
 

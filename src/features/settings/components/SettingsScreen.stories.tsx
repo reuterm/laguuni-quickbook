@@ -4,7 +4,7 @@ import {
   BOOKING_ENABLED_SETTINGS,
   DEVELOPER_MODE_SETTINGS,
   noop,
-} from '../../../storybook/fixtures'
+} from '../../../storybook/fixture-data'
 import { SettingsScreen } from './SettingsScreen'
 
 const meta = {

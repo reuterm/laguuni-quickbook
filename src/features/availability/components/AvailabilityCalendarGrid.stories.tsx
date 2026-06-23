@@ -4,7 +4,7 @@ import {
   CALENDAR_DAY_GROUPS,
   noop,
   STORYBOOK_REFERENCE_DATE,
-} from '@/storybook/fixtures'
+} from '@/storybook/fixture-data'
 
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 

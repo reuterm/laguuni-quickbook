@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { noopAsync } from '@/storybook/fixtures'
+import { noopAsync } from '@/storybook/fixture-data'
 
 import { BookingConfirmPanel } from './BookingConfirmPanel'
 

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { createSelection, noop, noopAsync } from '@/storybook/fixtures'
+import { createSelection, noop, noopAsync } from '@/storybook/fixture-data'
 
 import { getBookingSelectionPresentation } from '../booking-selection-label'
 import { BookingConfirmPanel } from './BookingConfirmPanel'

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { MatchMediaState, STORYBOOK_REFERENCE_DATE } from '@/storybook/fixtures'
+import { STORYBOOK_REFERENCE_DATE } from '@/storybook/fixture-data'
+import { MatchMediaState } from '@/storybook/fixtures'
 
 import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
 

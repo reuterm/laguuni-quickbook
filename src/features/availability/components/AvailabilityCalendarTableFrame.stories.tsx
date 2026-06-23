@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { createAvailabilitySlot } from '@/storybook/fixtures'
+import { createAvailabilitySlot } from '@/storybook/fixture-data'
 import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame'
 import { AvailabilityCapacityChip } from './availability-badge'
 

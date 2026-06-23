@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { BOOKABLE_DAY_GROUPS, noop } from '@/storybook/fixtures'
+import { BOOKABLE_DAY_GROUPS, noop } from '@/storybook/fixture-data'
 
 import { AvailabilityDayGroups } from './AvailabilityDayGroups'
 

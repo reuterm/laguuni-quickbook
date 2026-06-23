@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { createBookingSheetState, noop, noopAsync } from '@/storybook/fixtures'
+import {
+  createBookingSheetState,
+  noop,
+  noopAsync,
+} from '@/storybook/fixture-data'
 
 import { BookingSheetFlow } from './BookingSheetFlow'
 
