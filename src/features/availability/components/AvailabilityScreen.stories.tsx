@@ -6,8 +6,10 @@ import { createStorybookLaguuniHandlers } from '../../../../.storybook/laguuni-h
 
 import { AvailabilityScreen } from './AvailabilityScreen'
 
-const storybookLaguuniHandlers = createStorybookLaguuniHandlers('booking-enabled')
-const paymentRequiredHandlers = createStorybookLaguuniHandlers('payment-required')
+const storybookLaguuniHandlers =
+  createStorybookLaguuniHandlers('booking-enabled')
+const paymentRequiredHandlers =
+  createStorybookLaguuniHandlers('payment-required')
 const failedBookingHandlers = createStorybookLaguuniHandlers('failed-booking')
 const successfulBookingSettings = {
   ...BOOKING_ENABLED_SETTINGS,
@@ -60,7 +62,7 @@ export const PaymentRequired: Story = {
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
-    await userEvent.click(canvas.getAllByRole('button', { name: 'Book' })[0]!)
+    await userEvent.click(getFirstBookButton(canvas))
     await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
 
     await expect(
@@ -86,7 +88,7 @@ export const FailedBooking: Story = {
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
-    await userEvent.click(canvas.getAllByRole('button', { name: 'Book' })[0]!)
+    await userEvent.click(getFirstBookButton(canvas))
     await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
 
     await expect(
@@ -109,11 +111,23 @@ export const SuccessfulBooking: Story = {
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
-    await userEvent.click(canvas.getAllByRole('button', { name: 'Book' })[0]!)
+    await userEvent.click(getFirstBookButton(canvas))
     await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
 
     await expect(
       page.findByRole('heading', { name: 'Booking confirmed' }),
     ).resolves.toBeInTheDocument()
   },
+}
+
+function getFirstBookButton(
+  canvas: Pick<ReturnType<typeof within>, 'getAllByRole'>,
+) {
+  const firstBookButton = canvas.getAllByRole('button', { name: 'Book' })[0]
+
+  if (firstBookButton === undefined) {
+    throw new Error('Expected at least one Book button')
+  }
+
+  return firstBookButton
 }

@@ -1,4 +1,7 @@
-import { DEFAULT_USER_SETTINGS, type UserSettings } from '../src/domain/settings'
+import {
+  DEFAULT_USER_SETTINGS,
+  type UserSettings,
+} from '../src/domain/settings'
 import { READ_ONLY_NOTICE_STORAGE_KEY } from '../src/features/availability/read-only-notice-storage'
 import { DIAGNOSTICS_STORAGE_KEY } from '../src/features/diagnostics/logs'
 import {

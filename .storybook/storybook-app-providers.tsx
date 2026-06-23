@@ -64,6 +64,8 @@ function SeededStateBoundary({
   children: React.ReactNode
   parameters: StorybookParameters
 }) {
+  const [originalStorybookStorage] = useState(() => window.localStorage)
+
   useState(() => {
     installStorybookStorage(storybookStorage)
     clearPersistedStorybookState(storybookStorage)
@@ -84,8 +86,9 @@ function SeededStateBoundary({
   useEffect(() => {
     return () => {
       clearPersistedStorybookState(storybookStorage)
+      installStorybookStorage(originalStorybookStorage)
     }
-  }, [])
+  }, [originalStorybookStorage])
 
   return children
 }

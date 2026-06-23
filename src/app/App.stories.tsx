@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { createStorybookLaguuniHandlers } from '../../.storybook/laguuni-handlers'
 import { BOOKING_ENABLED_SETTINGS } from '../storybook/fixtures'
 import App from './App'
-import { createStorybookLaguuniHandlers } from '../../.storybook/laguuni-handlers'
 
 const storybookLaguuniHandlers = createStorybookLaguuniHandlers()
 
