@@ -32,7 +32,6 @@
   "include": ["src", "tests"],
   "exclude": [
     "src/**/*.stories.ts",
-    "src/**/*.stories.tsx",
-    "src/storybook/**/*"
+    "src/**/*.stories.tsx"
   ]
 }
