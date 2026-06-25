@@ -30,8 +30,5 @@
     }
   },
   "include": ["src", "tests"],
-  "exclude": [
-    "src/**/*.stories.ts",
-    "src/**/*.stories.tsx"
-  ]
+  "exclude": ["src/**/*.stories.ts", "src/**/*.stories.tsx"]
 }
