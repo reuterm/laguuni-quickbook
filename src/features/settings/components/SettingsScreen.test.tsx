@@ -23,8 +23,9 @@ describe('Settings screen integration', () => {
 
   it('persists settings locally and restores the saved default cable', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     setInputValue('Name', 'Test User')
@@ -41,7 +42,7 @@ describe('Settings screen integration', () => {
 
     cleanup()
 
-    renderApp()
+    renderApp({ storage })
 
     expect(screen.getByRole('tab', { name: 'Easy' })).toHaveAttribute(
       'aria-selected',
@@ -115,10 +116,11 @@ describe('Settings screen integration', () => {
 
   it('surfaces when corrupted local settings were reset to safe defaults', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    writeCorruptedSettings()
+    writeCorruptedSettings(undefined, storage)
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     expect(screen.getByRole('alert')).toHaveTextContent(
@@ -130,15 +132,16 @@ describe('Settings screen integration', () => {
   it('exports all retained diagnostics logs from settings', async () => {
     const user = userEvent.setup()
     const writeText = vi.fn(async () => {})
+    const storage = createMemoryStorage()
 
-    enableDeveloperMode()
+    enableDeveloperMode(storage)
     vi.stubGlobal('navigator', {
       clipboard: {
         writeText,
       },
     })
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     expect(screen.getByText('Developer tools')).toBeVisible()
@@ -237,15 +240,16 @@ describe('Settings screen integration', () => {
   it('clears retained diagnostics logs from developer tools', async () => {
     const user = userEvent.setup()
     const writeText = vi.fn(async () => {})
+    const storage = createMemoryStorage()
 
-    enableDeveloperMode()
+    enableDeveloperMode(storage)
     vi.stubGlobal('navigator', {
       clipboard: {
         writeText,
       },
     })
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     await user.click(
