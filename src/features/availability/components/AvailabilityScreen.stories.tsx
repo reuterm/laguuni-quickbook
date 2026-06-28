@@ -138,7 +138,10 @@ export const PaymentRequired: Story = {
     ).resolves.toBeInTheDocument()
     await expect(
       page.findByRole('link', { name: 'Continue to payment' }),
-    ).resolves.toHaveAttribute('href', 'https://example.com/mobilepay')
+    ).resolves.toHaveAttribute(
+      'href',
+      'https://pay.mobilepay.fi/?token=fixture-mobilepay-session',
+    )
   },
 }
 

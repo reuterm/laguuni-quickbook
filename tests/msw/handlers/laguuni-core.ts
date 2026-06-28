@@ -23,7 +23,8 @@ const availabilityFixtureByProductId = {
   '7': easyAvailabilityFixture,
 }
 
-const DEFAULT_PAYMENT_REDIRECT_URL = 'https://example.com/mobilepay'
+const DEFAULT_PAYMENT_REDIRECT_URL =
+  'https://pay.mobilepay.fi/?token=fixture-mobilepay-session'
 
 type BasketState = {
   checkoutCompleted: boolean
