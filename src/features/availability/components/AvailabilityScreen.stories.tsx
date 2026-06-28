@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, userEvent, within } from 'storybook/test'
+import { expect, userEvent, waitFor, within } from 'storybook/test'
 
 import { BOOKING_ENABLED_SETTINGS, noop } from '$storybook/fixture-data'
 import { createStorybookLaguuniParameters } from '../../../../.storybook/laguuni-handlers'
@@ -65,7 +65,7 @@ export const AvailabilityError: Story = {
     const page = within(canvasElement.ownerDocument.body)
 
     await expect(page.findByRole('alert')).resolves.toHaveTextContent(
-      'Fixture outage',
+      'Availability unavailable',
     )
   },
 }
@@ -104,8 +104,9 @@ export const InvalidSavedCode: Story = {
   render: renderAvailabilityScreen,
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
+    const firstBookButton = await getFirstBookButton(canvas)
 
-    await userEvent.click(getFirstBookButton(canvas))
+    await userEvent.click(firstBookButton)
     await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
 
     await expect(
@@ -129,8 +130,9 @@ export const PaymentRequired: Story = {
   render: renderAvailabilityScreen,
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
+    const firstBookButton = await getFirstBookButton(canvas)
 
-    await userEvent.click(getFirstBookButton(canvas))
+    await userEvent.click(firstBookButton)
     await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
 
     await expect(
@@ -157,8 +159,9 @@ export const FailedBooking: Story = {
   render: renderAvailabilityScreen,
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
+    const firstBookButton = await getFirstBookButton(canvas)
 
-    await userEvent.click(getFirstBookButton(canvas))
+    await userEvent.click(firstBookButton)
     await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
 
     await expect(
@@ -181,8 +184,9 @@ export const SuccessfulBooking: Story = {
   render: renderAvailabilityScreen,
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
+    const firstBookButton = await getFirstBookButton(canvas)
 
-    await userEvent.click(getFirstBookButton(canvas))
+    await userEvent.click(firstBookButton)
     await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
 
     await expect(
@@ -191,10 +195,17 @@ export const SuccessfulBooking: Story = {
   },
 }
 
-function getFirstBookButton(
+async function getFirstBookButton(
   canvas: Pick<ReturnType<typeof within>, 'getAllByRole'>,
 ) {
-  const firstBookButton = canvas.getAllByRole('button', { name: 'Book' })[0]
+  let firstBookButton:
+    | ReturnType<typeof canvas.getAllByRole>[number]
+    | undefined
+
+  await waitFor(() => {
+    firstBookButton = canvas.getAllByRole('button', { name: /^Book\b/ })[0]
+    expect(firstBookButton).toBeDefined()
+  })
 
   if (firstBookButton === undefined) {
     throw new Error('Expected at least one Book button')
