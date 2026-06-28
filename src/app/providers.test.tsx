@@ -1,17 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { useEffect } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
-
-import { SETTINGS_STORAGE_KEY, type BrowserStorage } from '../lib/storage/local-storage'
 import { READ_ONLY_NOTICE_STORAGE_KEY } from '../features/availability/read-only-notice-storage'
 import { DIAGNOSTICS_STORAGE_KEY } from '../features/diagnostics/logs'
 import { loadDeveloperModeEnabled } from '../features/settings/developer-mode-storage'
-import { UserSettingsProvider, useUserSettings } from '../features/settings/use-user-settings'
 import {
-  AppProviders,
-  useBrowserStorage,
-  useDiagnostics,
-} from './providers'
+  UserSettingsProvider,
+  useUserSettings,
+} from '../features/settings/use-user-settings'
+import {
+  type BrowserStorage,
+  SETTINGS_STORAGE_KEY,
+} from '../lib/storage/local-storage'
+import { AppProviders, useBrowserStorage, useDiagnostics } from './providers'
 
 describe('AppProviders', () => {
   afterEach(() => {
@@ -77,7 +78,9 @@ describe('AppProviders', () => {
     await waitFor(() => {
       expect(storage.getItem(DIAGNOSTICS_STORAGE_KEY)).not.toBeNull()
     })
-    expect(storage.getItem(DIAGNOSTICS_STORAGE_KEY)).toContain('injected.storage')
+    expect(storage.getItem(DIAGNOSTICS_STORAGE_KEY)).toContain(
+      'injected.storage',
+    )
     expect(window.localStorage.getItem(DIAGNOSTICS_STORAGE_KEY)).toBeNull()
   })
 
@@ -87,7 +90,10 @@ describe('AppProviders', () => {
     })
 
     window.localStorage.setItem(READ_ONLY_NOTICE_STORAGE_KEY, 'false')
-    window.localStorage.setItem('laguuni.quickbook.settings.developer-mode', 'false')
+    window.localStorage.setItem(
+      'laguuni.quickbook.settings.developer-mode',
+      'false',
+    )
 
     render(
       <AppProviders

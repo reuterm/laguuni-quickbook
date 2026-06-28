@@ -10,7 +10,9 @@ export const STORYBOOK_LAGUUNI_API_BASE_URL =
 
 const STORYBOOK_LAGUUNI_HANDLER_SCOPE = '__storybook/laguuni'
 
-export type StorybookLaguuniScenario = 'booking-enabled' | LaguuniCheckoutScenario
+export type StorybookLaguuniScenario =
+  | 'booking-enabled'
+  | LaguuniCheckoutScenario
 
 type CreateStorybookLaguuniHandlersOptions = {
   baseUrl?: string
@@ -36,16 +38,15 @@ export function getStorybookLaguuniHandlerBaseUrl() {
   return `${origin}/${STORYBOOK_LAGUUNI_HANDLER_SCOPE}/:scopeId/:scenario`
 }
 
-export function createStorybookLaguuniHandlers(
-  {
-    baseUrl = getStorybookLaguuniHandlerBaseUrl(),
-    checkoutScenario,
-  }: CreateStorybookLaguuniHandlersOptions = {},
-) {
+export function createStorybookLaguuniHandlers({
+  baseUrl = getStorybookLaguuniHandlerBaseUrl(),
+  checkoutScenario,
+}: CreateStorybookLaguuniHandlersOptions = {}) {
   return createLaguuniApiHandlers(storybookLaguuniHandlerState, {
     baseUrl,
     createBasketToken: createScopedBasketToken,
-    resolveCheckoutScenario: (request) => checkoutScenario ?? readCheckoutScenario(request),
+    resolveCheckoutScenario: (request) =>
+      checkoutScenario ?? readCheckoutScenario(request),
     includeCleanupHandlers: true,
   })
 }
@@ -61,9 +62,8 @@ export function createStorybookLaguuniParameters(
 }
 
 export function pruneStorybookLaguuniScope(scopeId: string) {
-  pruneLaguuniHandlerState(
-    storybookLaguuniHandlerState,
-    (basketToken) => basketToken.startsWith(`${scopeId}::`),
+  pruneLaguuniHandlerState(storybookLaguuniHandlerState, (basketToken) =>
+    basketToken.startsWith(`${scopeId}::`),
   )
 }
 
@@ -71,7 +71,9 @@ function createScopedBasketToken(request: Request): string {
   return `${readStoryScopeId(request)}::${crypto.randomUUID()}`
 }
 
-function readCheckoutScenario(request: Request): LaguuniCheckoutScenario | undefined {
+function readCheckoutScenario(
+  request: Request,
+): LaguuniCheckoutScenario | undefined {
   const scenario = readScopedPathSegment(request, 1)
 
   if (scenario === 'payment-required' || scenario === 'failed-booking') {

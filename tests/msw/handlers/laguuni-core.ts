@@ -45,7 +45,9 @@ type SharedLaguuniHandlerOptions = {
   createBasketToken?: (request: Request) => string
   includeCleanupHandlers?: boolean
   paymentRedirectUrl?: string
-  resolveCheckoutScenario?: (request: Request) => LaguuniCheckoutScenario | undefined
+  resolveCheckoutScenario?: (
+    request: Request,
+  ) => LaguuniCheckoutScenario | undefined
 }
 
 export function createLaguuniHandlerState(): LaguuniHandlerState {
@@ -81,15 +83,18 @@ export function createLaguuniApiHandlers(
     resolveCheckoutScenario,
   }: SharedLaguuniHandlerOptions = {},
 ) {
-  return createSharedLaguuniHandlers(state, compactSharedHandlerOptions({
-    baseUrl,
-    basketToken,
-    checkoutScenario,
-    createBasketToken,
-    includeCleanupHandlers,
-    paymentRedirectUrl,
-    resolveCheckoutScenario,
-  }))
+  return createSharedLaguuniHandlers(
+    state,
+    compactSharedHandlerOptions({
+      baseUrl,
+      basketToken,
+      checkoutScenario,
+      createBasketToken,
+      includeCleanupHandlers,
+      paymentRedirectUrl,
+      resolveCheckoutScenario,
+    }),
+  )
 }
 
 export function getDefaultLaguuniHandlerBaseUrl() {

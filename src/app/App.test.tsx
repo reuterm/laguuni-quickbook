@@ -2,9 +2,7 @@ import { cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import {
-  READ_ONLY_NOTICE_STORAGE_KEY,
-} from '../features/availability/read-only-notice-storage'
+import { READ_ONLY_NOTICE_STORAGE_KEY } from '../features/availability/read-only-notice-storage'
 import type { BrowserStorage } from '../lib/storage/local-storage'
 import {
   clearPersistedAppState,

@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { useBrowserStorage } from '../src/app/providers'
 import {
-  SETTINGS_STORAGE_KEY,
   type BrowserStorage,
+  SETTINGS_STORAGE_KEY,
 } from '../src/lib/storage/local-storage'
 import { StorybookAppProviders } from './storybook-app-providers'
 
@@ -350,7 +350,6 @@ describe('StorybookAppProviders', () => {
     expect(screen.getByText('storybook@example.com')).toBeVisible()
     expect(screen.queryByText('Mutated User')).not.toBeInTheDocument()
   })
-
 })
 
 let latestStorage: BrowserStorage | null = null
@@ -361,7 +360,11 @@ function StorageProbe() {
 
   return (
     <>
-      <div>{settings?.includes('Storybook User') ? 'Storybook User' : 'Mutated User'}</div>
+      <div>
+        {settings?.includes('Storybook User')
+          ? 'Storybook User'
+          : 'Mutated User'}
+      </div>
       <div>
         {settings?.includes('storybook@example.com')
           ? 'storybook@example.com'

@@ -1,5 +1,5 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { setupServer } from 'msw/node'
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 import checkoutFailureFixture from '../tests/fixtures/laguuni/booking/checkout-failure.json'
 import checkoutPaymentRequiredFixture from '../tests/fixtures/laguuni/booking/checkout-payment-required.json'
@@ -42,30 +42,31 @@ describe('createStorybookLaguuniHandlers', () => {
         price: '26',
       },
     ])
-    await expect(loadBasketItems(baseUrl, secondBasketToken)).resolves.toEqual([])
+    await expect(loadBasketItems(baseUrl, secondBasketToken)).resolves.toEqual(
+      [],
+    )
   })
 
   it.each([
     ['payment-required', checkoutPaymentRequiredFixture],
     ['failed-booking', checkoutFailureFixture],
-  ] satisfies Array<[StorybookLaguuniScenario, unknown]>) (
-    'uses an explicit %s checkout scenario',
-    async (checkoutScenario, expectedResponse) => {
-      server.use(
-        ...createStorybookLaguuniHandlers({
-          baseUrl,
-          checkoutScenario,
-        }),
-      )
+  ] satisfies Array<
+    [StorybookLaguuniScenario, unknown]
+  >)('uses an explicit %s checkout scenario', async (checkoutScenario, expectedResponse) => {
+    server.use(
+      ...createStorybookLaguuniHandlers({
+        baseUrl,
+        checkoutScenario,
+      }),
+    )
 
-      const basketToken = await createBasket(baseUrl)
-      await addReservation(baseUrl, basketToken)
+    const basketToken = await createBasket(baseUrl)
+    await addReservation(baseUrl, basketToken)
 
-      await expect(submitCheckout(baseUrl, basketToken)).resolves.toEqual(
-        expectedResponse,
-      )
-    },
-  )
+    await expect(submitCheckout(baseUrl, basketToken)).resolves.toEqual(
+      expectedResponse,
+    )
+  })
 
   it('prunes completed basket state for a finished Storybook scope', async () => {
     server.use(
@@ -74,15 +75,17 @@ describe('createStorybookLaguuniHandlers', () => {
       }),
     )
 
-    const scopedBaseUrl = `${baseUrl}${new URL(
-      getStorybookLaguuniApiBaseUrl('completed-scope'),
-    ).pathname}`
+    const scopedBaseUrl = `${baseUrl}${
+      new URL(getStorybookLaguuniApiBaseUrl('completed-scope')).pathname
+    }`
     const basketToken = await createBasket(scopedBaseUrl)
 
     await addReservation(scopedBaseUrl, basketToken)
     await submitCheckout(scopedBaseUrl, basketToken)
 
-    await expect(loadBasketItems(scopedBaseUrl, basketToken)).resolves.toEqual([])
+    await expect(loadBasketItems(scopedBaseUrl, basketToken)).resolves.toEqual(
+      [],
+    )
 
     pruneStorybookLaguuniScope('completed-scope')
 

@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
-
-import { SETTINGS_STORAGE_KEY } from '../src/lib/storage/local-storage'
 import { DEVELOPER_MODE_STORAGE_KEY } from '../src/features/settings/developer-mode-storage'
+import { SETTINGS_STORAGE_KEY } from '../src/lib/storage/local-storage'
 import {
   createInMemoryBrowserStorage,
   seedStorybookPersistedState,
@@ -41,7 +40,9 @@ describe('storybook persisted state', () => {
     )
 
     expect(storage.getItem(DEVELOPER_MODE_STORAGE_KEY)).toBe('true')
-    expect(storage.getItem(SETTINGS_STORAGE_KEY)).toContain('storybook@example.com')
+    expect(storage.getItem(SETTINGS_STORAGE_KEY)).toContain(
+      'storybook@example.com',
+    )
     expect(storage.getItem(SETTINGS_STORAGE_KEY)).toContain('Storybook User')
     expect(window.localStorage.getItem(SETTINGS_STORAGE_KEY)).toContain(
       'window@example.com',
