@@ -30,17 +30,48 @@ export function getStorybookLaguuniApiBaseUrl(
   scopeId = 'default',
   scenario: StorybookLaguuniScenario = 'booking-enabled',
 ) {
-  const origin = globalThis.location?.origin ?? STORYBOOK_LAGUUNI_API_BASE_URL
-
-  return `${origin}/${STORYBOOK_LAGUUNI_HANDLER_SCOPE}/${encodeURIComponent(
+  return `${getStorybookLaguuniOrigin()}/${STORYBOOK_LAGUUNI_HANDLER_SCOPE}/${encodeURIComponent(
     scopeId,
   )}/${scenario}`
 }
 
 export function getStorybookLaguuniHandlerBaseUrl() {
-  const origin = globalThis.location?.origin ?? STORYBOOK_LAGUUNI_API_BASE_URL
+  return `${getStorybookLaguuniOrigin()}/${STORYBOOK_LAGUUNI_HANDLER_SCOPE}/:scopeId/:scenario`
+}
 
-  return `${origin}/${STORYBOOK_LAGUUNI_HANDLER_SCOPE}/:scopeId/:scenario`
+export function getStorybookLaguuniOrigin() {
+  return globalThis.location?.origin ?? STORYBOOK_LAGUUNI_API_BASE_URL
+}
+
+export function createStorybookScopedFetchImplementation(
+  scopeId = 'default',
+  scenario: StorybookLaguuniScenario = 'booking-enabled',
+  fetchImplementation: typeof fetch = globalThis.fetch.bind(globalThis),
+): typeof fetch {
+  const scopedBaseUrl = new URL(
+    getStorybookLaguuniApiBaseUrl(scopeId, scenario),
+  )
+
+  return (input, init) => {
+    const requestUrl = new URL(
+      input instanceof Request ? input.url : String(input),
+    )
+
+    if (
+      requestUrl.origin === scopedBaseUrl.origin &&
+      requestUrl.pathname.startsWith('/api/')
+    ) {
+      requestUrl.pathname = `${scopedBaseUrl.pathname}${requestUrl.pathname}`
+
+      if (input instanceof Request) {
+        return fetchImplementation(new Request(requestUrl, input), init)
+      }
+
+      return fetchImplementation(requestUrl, init)
+    }
+
+    return fetchImplementation(input, init)
+  }
 }
 
 export function createStorybookLaguuniHandlers({

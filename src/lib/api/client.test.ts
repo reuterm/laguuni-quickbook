@@ -56,7 +56,7 @@ describe('FetchHttpClient', () => {
     expect(fetchImplementation).toHaveBeenCalledOnce()
   })
 
-  it('preserves scoped base-url path prefixes for app api requests', async () => {
+  it('resolves absolute-style paths from the api origin root', async () => {
     const fetchImplementation: typeof fetch = vi.fn(
       async (input: string | URL | Request) => {
         return new Response(JSON.stringify({ url: String(input) }), {
@@ -66,8 +66,7 @@ describe('FetchHttpClient', () => {
     )
 
     const client = new FetchHttpClient({
-      baseUrl:
-        'http://localhost:6006/__storybook/laguuni/availability-screen--read-only/booking-enabled',
+      baseUrl: 'https://host/prefix',
       fetchImplementation,
     })
 
@@ -76,18 +75,11 @@ describe('FetchHttpClient', () => {
         decoder(value) {
           return value as { url: string }
         },
-        path: '/api/laguuni/products/6/availabledates/2026-05-01.json',
-        query: {
-          count: 1,
-          field: 'hourlyfrom',
-          mode: 'hours',
-          required_resources: true,
-          resource_count: 1,
-        },
+        path: '/api/test.json',
       }),
     ).resolves.toEqual({
       data: {
-        url: 'http://localhost:6006/__storybook/laguuni/availability-screen--read-only/booking-enabled/api/laguuni/products/6/availabledates/2026-05-01.json?count=1&field=hourlyfrom&mode=hours&required_resources=true&resource_count=1',
+        url: 'https://host/api/test.json',
       },
       status: 200,
     })

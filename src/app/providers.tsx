@@ -32,6 +32,7 @@ type AppProvidersProps = PropsWithChildren<{
   apiBaseUrl: string
   appVersion: string
   availabilityReferenceDate?: Date | undefined
+  fetchImplementation?: typeof fetch
   storage: BrowserStorage
 }>
 
@@ -39,6 +40,7 @@ export function AppProviders({
   apiBaseUrl,
   appVersion,
   availabilityReferenceDate,
+  fetchImplementation,
   storage,
   children,
 }: AppProvidersProps) {
@@ -47,7 +49,8 @@ export function AppProviders({
     const api = new LaguuniApiClient({
       client: new FetchHttpClient({
         baseUrl: apiBaseUrl,
-        fetchImplementation: globalThis.fetch.bind(globalThis),
+        fetchImplementation:
+          fetchImplementation ?? globalThis.fetch.bind(globalThis),
       }),
     })
     const settingsStore = new LocalSettingsStore({
@@ -69,7 +72,13 @@ export function AppProviders({
       diagnostics,
       settingsStore,
     }
-  }, [apiBaseUrl, appVersion, availabilityReferenceDate, storage])
+  }, [
+    apiBaseUrl,
+    appVersion,
+    availabilityReferenceDate,
+    fetchImplementation,
+    storage,
+  ])
 
   return (
     <AppDependenciesContext.Provider value={dependencies}>

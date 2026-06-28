@@ -5,7 +5,8 @@ import { AppProviders } from '../src/app/providers'
 import { AvailabilityScopeProvider } from '../src/features/availability/use-availability-scope'
 import { UserSettingsProvider } from '../src/features/settings/use-user-settings'
 import {
-  getStorybookLaguuniApiBaseUrl,
+  createStorybookScopedFetchImplementation,
+  getStorybookLaguuniOrigin,
   type StorybookLaguuniScenario,
 } from './laguuni-handlers'
 import {
@@ -81,12 +82,16 @@ function SeededStateBoundary({
 
   return (
     <AppProviders
-      apiBaseUrl={getStorybookLaguuniApiBaseUrl(apiScopeId, storybookScenario)}
+      apiBaseUrl={getStorybookLaguuniOrigin()}
       appVersion={parameters.appVersion ?? DEFAULT_APP_VERSION}
       availabilityReferenceDate={
         parameters.availabilityReferenceDate ??
         DEFAULT_AVAILABILITY_REFERENCE_DATE
       }
+      fetchImplementation={createStorybookScopedFetchImplementation(
+        apiScopeId,
+        storybookScenario,
+      )}
       storage={storage}
     >
       <UserSettingsProvider>

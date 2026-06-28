@@ -101,8 +101,7 @@ function buildUrl(
   path: string,
   query: Record<string, QueryValue | undefined> | undefined,
 ): string {
-  const resolvedPath = path.startsWith('/') ? path.slice(1) : path
-  const url = new URL(resolvedPath, `${baseUrl}/`)
+  const url = new URL(path, `${baseUrl}/`)
 
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value !== undefined) {

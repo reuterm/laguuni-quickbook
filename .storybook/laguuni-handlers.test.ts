@@ -1,10 +1,19 @@
 import { setupServer } from 'msw/node'
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
 
 import checkoutFailureFixture from '../tests/fixtures/laguuni/booking/checkout-failure.json'
 import checkoutPaymentRequiredFixture from '../tests/fixtures/laguuni/booking/checkout-payment-required.json'
 import {
   createStorybookLaguuniHandlers,
+  createStorybookScopedFetchImplementation,
   getStorybookLaguuniApiBaseUrl,
   pruneStorybookLaguuniScope,
   type StorybookLaguuniScenario,
@@ -19,6 +28,7 @@ beforeAll(() => {
 
 afterEach(() => {
   server.resetHandlers()
+  vi.unstubAllGlobals()
 })
 
 afterAll(() => {
@@ -118,6 +128,29 @@ describe('createStorybookLaguuniHandlers', () => {
       errorCode: 'GENERAL_ERROR',
       errorMessage: 'Fixture outage',
       status: 'error',
+    })
+  })
+
+  it('rewrites Storybook api requests onto scoped msw handlers', async () => {
+    server.use(
+      ...createStorybookLaguuniHandlers({
+        baseUrl: `${baseUrl}/__storybook/laguuni/:scopeId/:scenario`,
+      }),
+    )
+    vi.stubGlobal('location', new URL(baseUrl))
+
+    const scopedFetch = createStorybookScopedFetchImplementation(
+      'availability-screen--payment-required',
+      'payment-required',
+      fetch,
+    )
+    const response = await scopedFetch(
+      `${baseUrl}/api/laguuni/fi_FI/rest/post/mobilepayhandler/fixture-payment-token.json?method=Create&domain=shop.laguuniin.fi`,
+    )
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({
+      redirectUrl: 'https://pay.mobilepay.fi/?token=fixture-mobilepay-session',
     })
   })
 
