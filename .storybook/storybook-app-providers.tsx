@@ -1,4 +1,5 @@
 import type { Decorator } from '@storybook/react'
+import { useState } from 'react'
 
 import { AppProviders } from '../src/app/providers'
 import { AvailabilityScopeProvider } from '../src/features/availability/use-availability-scope'
@@ -9,6 +10,7 @@ import {
 } from './laguuni-handlers'
 import {
   createInMemoryBrowserStorage,
+  createStorybookPersistedStateIdentity,
   type StorybookPersistedStateSeed,
   seedStorybookPersistedState,
 } from './storybook-persisted-state'
@@ -30,10 +32,19 @@ const DEFAULT_AVAILABILITY_REFERENCE_DATE = new Date('2026-05-14T12:00:00')
 export const StorybookAppProviders: Decorator = (Story, context) => {
   const parameters = context.parameters as StorybookParameters
   const storybookScenario = parameters.laguuni?.scenario ?? 'booking-enabled'
+  const persistedStateIdentity = createStorybookPersistedStateIdentity(
+    context.id,
+    {
+      developerMode: parameters.developerMode,
+      seedCorruptedSettings: parameters.seedCorruptedSettings,
+      settings: parameters.settings,
+    },
+  )
 
   return (
     <SeededStateBoundary
       apiScopeId={context.id}
+      key={persistedStateIdentity}
       parameters={parameters}
       storybookScenario={storybookScenario}
     >
@@ -53,16 +64,20 @@ function SeededStateBoundary({
   parameters: StorybookParameters
   storybookScenario: StorybookLaguuniScenario
 }) {
-  const storage = createInMemoryBrowserStorage()
+  const [storage] = useState(() => {
+    const nextStorage = createInMemoryBrowserStorage()
 
-  seedStorybookPersistedState(
-    {
-      developerMode: parameters.developerMode,
-      seedCorruptedSettings: parameters.seedCorruptedSettings,
-      settings: parameters.settings,
-    },
-    storage,
-  )
+    seedStorybookPersistedState(
+      {
+        developerMode: parameters.developerMode,
+        seedCorruptedSettings: parameters.seedCorruptedSettings,
+        settings: parameters.settings,
+      },
+      nextStorage,
+    )
+
+    return nextStorage
+  })
 
   return (
     <AppProviders
@@ -75,11 +90,7 @@ function SeededStateBoundary({
       storage={storage}
     >
       <UserSettingsProvider>
-        <AvailabilityScopeProvider>
-          <div className="min-h-svh w-full max-w-7xl px-4 py-6 sm:px-6">
-            {children()}
-          </div>
-        </AvailabilityScopeProvider>
+        <AvailabilityScopeProvider>{children()}</AvailabilityScopeProvider>
       </UserSettingsProvider>
     </AppProviders>
   )

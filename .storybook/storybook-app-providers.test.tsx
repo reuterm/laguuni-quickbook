@@ -1,7 +1,15 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { useState } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { useBrowserStorage } from '../src/app/providers'
+import {
+  loadReadOnlyNoticeDismissed,
+  saveReadOnlyNoticeDismissed,
+} from '../src/features/availability/read-only-notice-storage'
+import { useAvailabilityScope } from '../src/features/availability/use-availability-scope'
+import { useDeveloperMode } from '../src/features/settings/use-developer-mode'
+import { useUserSettings } from '../src/features/settings/use-user-settings'
 import {
   type BrowserStorage,
   SETTINGS_STORAGE_KEY,
@@ -14,7 +22,7 @@ describe('StorybookAppProviders', () => {
     latestStorage = null
   })
 
-  it('replaces storage for the same story when seeded values stay the same but settings gets a new object identity', () => {
+  it('keeps the same storage instance for same-story rerenders when persisted-state identity is unchanged', () => {
     const Story = () => <StorageProbe />
     const firstParameters = {
       settings: {
@@ -46,178 +54,49 @@ describe('StorybookAppProviders', () => {
       }),
     )
 
-    const secondRender = StorybookAppProviders(Story, {
-      id: 'availability--same-story',
-      parameters: {
-        settings: {
-          email: 'storybook@example.com',
-          name: 'Storybook User',
+    rerender(
+      StorybookAppProviders(Story, {
+        id: 'availability--same-story',
+        parameters: {
+          settings: {
+            email: 'storybook@example.com',
+            name: 'Storybook User',
+          },
         },
-      },
-    } as never)
-
-    rerender(secondRender)
-
-    expect(latestStorage).not.toBe(firstStorage)
-    expect(screen.getByText('Storybook User')).toBeVisible()
-    expect(screen.getByText('storybook@example.com')).toBeVisible()
-  })
-
-  it('replaces storage for the same story when settings property order changes but values stay the same', () => {
-    const Story = () => <StorageProbe />
-
-    const firstRender = StorybookAppProviders(Story, {
-      id: 'availability--same-story-order',
-      parameters: {
-        settings: {
-          email: 'storybook@example.com',
-          name: 'Storybook User',
-        },
-      },
-    } as never)
-
-    const { rerender } = render(firstRender)
-    const firstStorage = latestStorage
-
-    expect(firstStorage).not.toBeNull()
-
-    latestStorage?.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({
-        availabilityView: 'cards',
-        defaultCable: null,
-        email: 'mutated@example.com',
-        name: 'Mutated User',
-        phone: '',
-        seasonPassCode: '',
-        version: 1,
-      }),
+      } as never),
     )
 
-    const secondRender = StorybookAppProviders(Story, {
-      id: 'availability--same-story-order',
-      parameters: {
-        settings: {
-          name: 'Storybook User',
-          email: 'storybook@example.com',
-        },
-      },
-    } as never)
-
-    rerender(secondRender)
-
-    expect(latestStorage).not.toBe(firstStorage)
-    expect(screen.getByText('Storybook User')).toBeVisible()
-    expect(screen.getByText('storybook@example.com')).toBeVisible()
-  })
-
-  it('replaces storage for the same story when partial settings and expanded equivalent settings seed the same stored values', () => {
-    const Story = () => <StorageProbe />
-
-    const firstRender = StorybookAppProviders(Story, {
-      id: 'availability--same-story-defaults',
-      parameters: {
-        settings: {
-          name: 'Storybook User',
-        },
-      },
-    } as never)
-
-    const { rerender } = render(firstRender)
-    const firstStorage = latestStorage
-
-    expect(firstStorage).not.toBeNull()
-
-    latestStorage?.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({
-        availabilityView: 'cards',
-        defaultCable: null,
-        email: 'mutated@example.com',
-        name: 'Mutated User',
-        phone: '',
-        seasonPassCode: '',
-        version: 1,
-      }),
-    )
-
-    const secondRender = StorybookAppProviders(Story, {
-      id: 'availability--same-story-defaults',
-      parameters: {
-        settings: {
-          availabilityView: 'cards',
-          defaultCable: null,
-          email: '',
-          name: 'Storybook User',
-          phone: '',
-          seasonPassCode: '',
-        },
-      },
-    } as never)
-
-    rerender(secondRender)
-
-    expect(latestStorage).not.toBe(firstStorage)
-    expect(screen.getByText('Storybook User')).toBeVisible()
-    expect(screen.getByText('mutated@example.com')).toBeVisible()
-  })
-
-  it('replaces storage for the same story when corrupted settings mode ignores different settings payloads', () => {
-    const Story = () => <StorageProbe />
-
-    const firstRender = StorybookAppProviders(Story, {
-      id: 'availability--corrupted-settings',
-      parameters: {
-        seedCorruptedSettings: true,
-        settings: {
-          name: 'Storybook User',
-        },
-      },
-    } as never)
-
-    const { rerender } = render(firstRender)
-    const firstStorage = latestStorage
-
-    expect(firstStorage).not.toBeNull()
-
-    latestStorage?.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({
-        availabilityView: 'cards',
-        defaultCable: null,
-        email: 'mutated@example.com',
-        name: 'Mutated User',
-        phone: '',
-        seasonPassCode: '',
-        version: 1,
-      }),
-    )
-
-    const secondRender = StorybookAppProviders(Story, {
-      id: 'availability--corrupted-settings',
-      parameters: {
-        seedCorruptedSettings: true,
-        settings: {
-          email: 'different@example.com',
-          name: 'Different User',
-        },
-      },
-    } as never)
-
-    rerender(secondRender)
-
-    expect(latestStorage).not.toBe(firstStorage)
+    expect(latestStorage).toBe(firstStorage)
     expect(screen.getByText('Mutated User')).toBeVisible()
     expect(screen.getByText('mutated@example.com')).toBeVisible()
   })
 
-  it('replaces storage for the same story when only appVersion changes', () => {
+  it('renders stories directly without an implicit shared content frame', () => {
+    const Story = () => <div data-testid="story-content">Story content</div>
+
+    render(
+      StorybookAppProviders(Story, {
+        id: 'availability--centered-layout',
+        parameters: {},
+      } as never),
+    )
+
+    const storyContent = screen.getByTestId('story-content')
+    const frame = storyContent.parentElement
+
+    expect(frame).not.toBeNull()
+    expect(frame?.className).not.toContain('min-h-svh')
+    expect(frame?.className).not.toContain('max-w-7xl')
+    expect(frame?.className).not.toContain('px-4')
+    expect(frame?.className).not.toContain('py-6')
+  })
+
+  it('keeps the same storage instance when parameter object shape changes but canonical persisted-state identity is unchanged', () => {
     const Story = () => <StorageProbe />
 
     const firstRender = StorybookAppProviders(Story, {
-      id: 'availability--app-version',
+      id: 'availability--same-story-defaults',
       parameters: {
-        appVersion: 'storybook-a',
         settings: {
           name: 'Storybook User',
         },
@@ -242,113 +121,170 @@ describe('StorybookAppProviders', () => {
       }),
     )
 
-    const secondRender = StorybookAppProviders(Story, {
-      id: 'availability--app-version',
-      parameters: {
-        appVersion: 'storybook-b',
-        settings: {
-          name: 'Storybook User',
+    rerender(
+      StorybookAppProviders(Story, {
+        id: 'availability--same-story-defaults',
+        parameters: {
+          settings: {
+            availabilityView: 'cards',
+            defaultCable: null,
+            email: '',
+            name: 'Storybook User',
+            phone: '',
+            seasonPassCode: '',
+          },
         },
-      },
-    } as never)
-
-    rerender(secondRender)
-
-    expect(latestStorage).not.toBe(firstStorage)
-    expect(screen.getByText('Storybook User')).toBeVisible()
-    expect(screen.getByText('mutated@example.com')).toBeVisible()
-  })
-
-  it('replaces storage for the same story when only availabilityReferenceDate changes', () => {
-    const Story = () => <StorageProbe />
-
-    const firstRender = StorybookAppProviders(Story, {
-      id: 'availability--reference-date',
-      parameters: {
-        availabilityReferenceDate: new Date('2026-05-14T12:00:00Z'),
-        settings: {
-          name: 'Storybook User',
-        },
-      },
-    } as never)
-
-    const { rerender } = render(firstRender)
-    const firstStorage = latestStorage
-
-    expect(firstStorage).not.toBeNull()
-
-    latestStorage?.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({
-        availabilityView: 'cards',
-        defaultCable: null,
-        email: 'mutated@example.com',
-        name: 'Mutated User',
-        phone: '',
-        seasonPassCode: '',
-        version: 1,
-      }),
+      } as never),
     )
 
-    const secondRender = StorybookAppProviders(Story, {
-      id: 'availability--reference-date',
-      parameters: {
-        availabilityReferenceDate: new Date('2026-06-14T12:00:00Z'),
-        settings: {
-          name: 'Storybook User',
-        },
-      },
-    } as never)
-
-    rerender(secondRender)
-
-    expect(latestStorage).not.toBe(firstStorage)
-    expect(screen.getByText('Storybook User')).toBeVisible()
+    expect(latestStorage).toBe(firstStorage)
+    expect(screen.getByText('Mutated User')).toBeVisible()
     expect(screen.getByText('mutated@example.com')).toBeVisible()
   })
 
-  it('creates a fresh storage instance for each story identity even with identical seeded parameters', () => {
-    const Story = () => <StorageProbe />
+  it('keeps coherent storage-backed hook state on same-identity rerenders', () => {
+    const Story = () => <PersistedStateProbe />
     const parameters = {
+      developerMode: false,
       settings: {
+        defaultCable: 'easy',
         email: 'storybook@example.com',
         name: 'Storybook User',
       },
     }
 
+    const { rerender } = render(
+      StorybookAppProviders(Story, {
+        id: 'availability--same-identity-hooks',
+        parameters,
+      } as never),
+    )
+
+    expect(screen.getByText('name:Storybook User')).toBeVisible()
+    expect(screen.getByText('email:storybook@example.com')).toBeVisible()
+    expect(screen.getByText('developer-mode:false')).toBeVisible()
+    expect(screen.getByText('selected-cable:easy')).toBeVisible()
+    expect(screen.getByText('notice-dismissed:false')).toBeVisible()
+
+    pressMutationButton()
+
+    expect(screen.getByText('name:Mutated User')).toBeVisible()
+    expect(screen.getByText('email:mutated@example.com')).toBeVisible()
+    expect(screen.getByText('developer-mode:true')).toBeVisible()
+    expect(screen.getByText('selected-cable:pro')).toBeVisible()
+    expect(screen.getByText('notice-dismissed:true')).toBeVisible()
+
+    rerender(
+      StorybookAppProviders(Story, {
+        id: 'availability--same-identity-hooks',
+        parameters: {
+          developerMode: false,
+          settings: {
+            email: 'storybook@example.com',
+            name: 'Storybook User',
+            defaultCable: 'easy',
+          },
+        },
+      } as never),
+    )
+
+    expect(screen.getByText('name:Mutated User')).toBeVisible()
+    expect(screen.getByText('email:mutated@example.com')).toBeVisible()
+    expect(screen.getByText('developer-mode:true')).toBeVisible()
+    expect(screen.getByText('selected-cable:pro')).toBeVisible()
+    expect(screen.getByText('notice-dismissed:true')).toBeVisible()
+  })
+
+  it('reloads storage-backed hook state when seeded persisted-state changes for the same story', () => {
+    const Story = () => <PersistedStateProbe />
+
     const firstRender = StorybookAppProviders(Story, {
-      id: 'availability--first-story',
-      parameters,
+      id: 'availability--seed-change',
+      parameters: {
+        developerMode: false,
+        settings: {
+          defaultCable: 'easy',
+          email: 'first@example.com',
+          name: 'First User',
+        },
+      },
     } as never)
 
     const { rerender } = render(firstRender)
 
-    expect(screen.getByText('Storybook User')).toBeVisible()
-    expect(screen.getByText('storybook@example.com')).toBeVisible()
+    expect(screen.getByText('name:First User')).toBeVisible()
+    expect(screen.getByText('email:first@example.com')).toBeVisible()
+    expect(screen.getByText('developer-mode:false')).toBeVisible()
+    expect(screen.getByText('selected-cable:easy')).toBeVisible()
+    expect(screen.getByText('notice-dismissed:false')).toBeVisible()
 
-    latestStorage?.setItem(
-      SETTINGS_STORAGE_KEY,
-      JSON.stringify({
-        availabilityView: 'cards',
-        defaultCable: null,
-        email: 'mutated@example.com',
-        name: 'Mutated User',
-        phone: '',
-        seasonPassCode: '',
-        version: 1,
-      }),
+    pressMutationButton()
+
+    rerender(
+      StorybookAppProviders(Story, {
+        id: 'availability--seed-change',
+        parameters: {
+          developerMode: true,
+          settings: {
+            defaultCable: 'hietsu',
+            email: 'second@example.com',
+            name: 'Second User',
+          },
+        },
+      } as never),
     )
 
-    const secondRender = StorybookAppProviders(Story, {
-      id: 'availability--second-story',
-      parameters,
-    } as never)
+    expect(screen.getByText('name:Second User')).toBeVisible()
+    expect(screen.getByText('email:second@example.com')).toBeVisible()
+    expect(screen.getByText('developer-mode:true')).toBeVisible()
+    expect(screen.getByText('selected-cable:hietsu')).toBeVisible()
+    expect(screen.getByText('notice-dismissed:false')).toBeVisible()
+  })
 
-    rerender(secondRender)
+  it('resets storage-backed hook state when switching stories with the same seed', () => {
+    const Story = () => <PersistedStateProbe />
+    const parameters = {
+      developerMode: false,
+      settings: {
+        defaultCable: 'easy',
+        email: 'storybook@example.com',
+        name: 'Storybook User',
+      },
+    }
 
-    expect(screen.getByText('Storybook User')).toBeVisible()
-    expect(screen.getByText('storybook@example.com')).toBeVisible()
-    expect(screen.queryByText('Mutated User')).not.toBeInTheDocument()
+    const { rerender } = render(
+      StorybookAppProviders(Story, {
+        id: 'availability--first-seeded-story',
+        parameters,
+      } as never),
+    )
+
+    expect(screen.getByText('name:Storybook User')).toBeVisible()
+    expect(screen.getByText('email:storybook@example.com')).toBeVisible()
+    expect(screen.getByText('developer-mode:false')).toBeVisible()
+    expect(screen.getByText('selected-cable:easy')).toBeVisible()
+    expect(screen.getByText('notice-dismissed:false')).toBeVisible()
+
+    pressMutationButton()
+
+    expect(screen.getByText('name:Mutated User')).toBeVisible()
+    expect(screen.getByText('email:mutated@example.com')).toBeVisible()
+    expect(screen.getByText('developer-mode:true')).toBeVisible()
+    expect(screen.getByText('selected-cable:pro')).toBeVisible()
+    expect(screen.getByText('notice-dismissed:true')).toBeVisible()
+
+    rerender(
+      StorybookAppProviders(Story, {
+        id: 'availability--second-seeded-story',
+        parameters,
+      } as never),
+    )
+
+    expect(screen.getByText('name:Storybook User')).toBeVisible()
+    expect(screen.getByText('email:storybook@example.com')).toBeVisible()
+    expect(screen.getByText('developer-mode:false')).toBeVisible()
+    expect(screen.getByText('selected-cable:easy')).toBeVisible()
+    expect(screen.getByText('notice-dismissed:false')).toBeVisible()
   })
 })
 
@@ -371,5 +307,50 @@ function StorageProbe() {
           : 'mutated@example.com'}
       </div>
     </>
+  )
+}
+
+function PersistedStateProbe() {
+  const storage = useBrowserStorage()
+  const { settings, saveSettings } = useUserSettings()
+  const { developerModeEnabled, registerVersionTap } = useDeveloperMode()
+  const { selectedCable, selectCable } = useAvailabilityScope()
+  const [isNoticeDismissed, setIsNoticeDismissed] = useState(() =>
+    loadReadOnlyNoticeDismissed(storage),
+  )
+
+  function mutateState() {
+    saveSettings({
+      ...settings,
+      email: 'mutated@example.com',
+      name: 'Mutated User',
+    })
+
+    for (let tapCount = 0; tapCount < 7; tapCount += 1) {
+      registerVersionTap()
+    }
+
+    selectCable('pro')
+    saveReadOnlyNoticeDismissed(true, storage)
+    setIsNoticeDismissed(true)
+  }
+
+  return (
+    <>
+      <div>{`name:${settings.name}`}</div>
+      <div>{`email:${settings.email}`}</div>
+      <div>{`developer-mode:${developerModeEnabled}`}</div>
+      <div>{`selected-cable:${selectedCable}`}</div>
+      <div>{`notice-dismissed:${isNoticeDismissed}`}</div>
+      <button type="button" onClick={mutateState}>
+        Mutate persisted state consumers
+      </button>
+    </>
+  )
+}
+
+function pressMutationButton() {
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Mutate persisted state consumers' }),
   )
 }
