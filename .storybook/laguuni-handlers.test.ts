@@ -93,6 +93,34 @@ describe('createStorybookLaguuniHandlers', () => {
     })
   })
 
+  it('lets scenario-specific availability handlers override the shared default handler', async () => {
+    server.use(
+      ...createStorybookLaguuniHandlers({
+        baseUrl: `${baseUrl}/__storybook/laguuni/:scopeId/:scenario`,
+      }),
+    )
+
+    const scopedBaseUrl = `${baseUrl}${
+      new URL(
+        getStorybookLaguuniApiBaseUrl(
+          'availability-error-scope',
+          'availability-error',
+        ),
+      ).pathname
+    }`
+
+    const response = await fetch(
+      `${scopedBaseUrl}/api/laguuni/products/7/availabledates/2026-05-14.json?count=1&field=hourlyfrom&mode=hours&required_resources=true&resource_count=1`,
+    )
+
+    expect(response.status).toBe(500)
+    await expect(response.json()).resolves.toEqual({
+      errorCode: 'GENERAL_ERROR',
+      errorMessage: 'Fixture outage',
+      status: 'error',
+    })
+  })
+
   it('prunes completed basket state for a finished Storybook scope', async () => {
     server.use(
       ...createStorybookLaguuniHandlers({

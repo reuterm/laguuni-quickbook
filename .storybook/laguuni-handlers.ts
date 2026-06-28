@@ -47,16 +47,7 @@ export function createStorybookLaguuniHandlers({
   baseUrl = getStorybookLaguuniHandlerBaseUrl(),
   checkoutScenario,
 }: CreateStorybookLaguuniHandlersOptions = {}) {
-  const handlers = createLaguuniApiHandlers(storybookLaguuniHandlerState, {
-    baseUrl,
-    createBasketToken: createScopedBasketToken,
-    resolveCheckoutScenario: (request) =>
-      checkoutScenario ?? readCheckoutScenario(request),
-    includeCleanupHandlers: true,
-  })
-
   return [
-    ...handlers,
     http.get(
       `${baseUrl}/api/laguuni/products/:productId/availabledates/:anchorDate.json`,
       async ({ request }) => {
@@ -97,6 +88,13 @@ export function createStorybookLaguuniHandlers({
         )
       },
     ),
+    ...createLaguuniApiHandlers(storybookLaguuniHandlerState, {
+      baseUrl,
+      createBasketToken: createScopedBasketToken,
+      resolveCheckoutScenario: (request) =>
+        checkoutScenario ?? readCheckoutScenario(request),
+      includeCleanupHandlers: true,
+    }),
   ]
 }
 
