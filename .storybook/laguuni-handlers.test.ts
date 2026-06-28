@@ -68,6 +68,29 @@ describe('createStorybookLaguuniHandlers', () => {
     )
   })
 
+  it('uses an explicit invalid-code scenario', async () => {
+    server.use(
+      ...createStorybookLaguuniHandlers({
+        baseUrl: `${baseUrl}/__storybook/laguuni/:scopeId/:scenario`,
+      }),
+    )
+
+    const scopedBaseUrl = `${baseUrl}${
+      new URL(getStorybookLaguuniApiBaseUrl('invalid-code-scope', 'invalid-code')).pathname
+    }`
+
+    const response = await fetch(
+      `${scopedBaseUrl}/api/laguuni/discounts/INVALID/public.json`,
+    )
+
+    expect(response.status).toBe(404)
+    await expect(response.json()).resolves.toEqual({
+      errorCode: 'GENERAL_ERROR',
+      errorMessage: 'Antamasi koodi on virheellinen.',
+      status: 'error',
+    })
+  })
+
   it('prunes completed basket state for a finished Storybook scope', async () => {
     server.use(
       ...createStorybookLaguuniHandlers({

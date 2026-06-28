@@ -14,7 +14,7 @@ describe('StorybookAppProviders', () => {
     latestStorage = null
   })
 
-  it('does not replace storage for the same story when seeded values stay the same but settings gets a new object identity', () => {
+  it('replaces storage for the same story when seeded values stay the same but settings gets a new object identity', () => {
     const Story = () => <StorageProbe />
     const firstParameters = {
       settings: {
@@ -58,12 +58,12 @@ describe('StorybookAppProviders', () => {
 
     rerender(secondRender)
 
-    expect(latestStorage).toBe(firstStorage)
-    expect(screen.getByText('Mutated User')).toBeVisible()
-    expect(screen.getByText('mutated@example.com')).toBeVisible()
+    expect(latestStorage).not.toBe(firstStorage)
+    expect(screen.getByText('Storybook User')).toBeVisible()
+    expect(screen.getByText('storybook@example.com')).toBeVisible()
   })
 
-  it('keeps the same storage for the same story when settings property order changes but values stay the same', () => {
+  it('replaces storage for the same story when settings property order changes but values stay the same', () => {
     const Story = () => <StorageProbe />
 
     const firstRender = StorybookAppProviders(Story, {
@@ -106,12 +106,12 @@ describe('StorybookAppProviders', () => {
 
     rerender(secondRender)
 
-    expect(latestStorage).toBe(firstStorage)
-    expect(screen.getByText('Mutated User')).toBeVisible()
-    expect(screen.getByText('mutated@example.com')).toBeVisible()
+    expect(latestStorage).not.toBe(firstStorage)
+    expect(screen.getByText('Storybook User')).toBeVisible()
+    expect(screen.getByText('storybook@example.com')).toBeVisible()
   })
 
-  it('keeps the same storage for the same story when partial settings and expanded equivalent settings seed the same stored values', () => {
+  it('replaces storage for the same story when partial settings and expanded equivalent settings seed the same stored values', () => {
     const Story = () => <StorageProbe />
 
     const firstRender = StorybookAppProviders(Story, {
@@ -157,12 +157,12 @@ describe('StorybookAppProviders', () => {
 
     rerender(secondRender)
 
-    expect(latestStorage).toBe(firstStorage)
-    expect(screen.getByText('Mutated User')).toBeVisible()
+    expect(latestStorage).not.toBe(firstStorage)
+    expect(screen.getByText('Storybook User')).toBeVisible()
     expect(screen.getByText('mutated@example.com')).toBeVisible()
   })
 
-  it('keeps the same storage for the same story when corrupted settings mode ignores different settings payloads', () => {
+  it('replaces storage for the same story when corrupted settings mode ignores different settings payloads', () => {
     const Story = () => <StorageProbe />
 
     const firstRender = StorybookAppProviders(Story, {
@@ -206,12 +206,12 @@ describe('StorybookAppProviders', () => {
 
     rerender(secondRender)
 
-    expect(latestStorage).toBe(firstStorage)
+    expect(latestStorage).not.toBe(firstStorage)
     expect(screen.getByText('Mutated User')).toBeVisible()
     expect(screen.getByText('mutated@example.com')).toBeVisible()
   })
 
-  it('keeps the same storage for the same story when only appVersion changes', () => {
+  it('replaces storage for the same story when only appVersion changes', () => {
     const Story = () => <StorageProbe />
 
     const firstRender = StorybookAppProviders(Story, {
@@ -254,12 +254,12 @@ describe('StorybookAppProviders', () => {
 
     rerender(secondRender)
 
-    expect(latestStorage).toBe(firstStorage)
-    expect(screen.getByText('Mutated User')).toBeVisible()
+    expect(latestStorage).not.toBe(firstStorage)
+    expect(screen.getByText('Storybook User')).toBeVisible()
     expect(screen.getByText('mutated@example.com')).toBeVisible()
   })
 
-  it('keeps the same storage for the same story when only availabilityReferenceDate changes', () => {
+  it('replaces storage for the same story when only availabilityReferenceDate changes', () => {
     const Story = () => <StorageProbe />
 
     const firstRender = StorybookAppProviders(Story, {
@@ -302,8 +302,8 @@ describe('StorybookAppProviders', () => {
 
     rerender(secondRender)
 
-    expect(latestStorage).toBe(firstStorage)
-    expect(screen.getByText('Mutated User')).toBeVisible()
+    expect(latestStorage).not.toBe(firstStorage)
+    expect(screen.getByText('Storybook User')).toBeVisible()
     expect(screen.getByText('mutated@example.com')).toBeVisible()
   })
 

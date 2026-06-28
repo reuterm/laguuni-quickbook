@@ -1,3 +1,5 @@
+import { HttpResponse, delay, http } from 'msw'
+
 import {
   createLaguuniApiHandlers,
   createLaguuniHandlerState,
@@ -12,7 +14,10 @@ const STORYBOOK_LAGUUNI_HANDLER_SCOPE = '__storybook/laguuni'
 
 export type StorybookLaguuniScenario =
   | 'booking-enabled'
+  | 'availability-error'
+  | 'availability-loading'
   | LaguuniCheckoutScenario
+  | 'invalid-code'
 
 type CreateStorybookLaguuniHandlersOptions = {
   baseUrl?: string
@@ -42,13 +47,57 @@ export function createStorybookLaguuniHandlers({
   baseUrl = getStorybookLaguuniHandlerBaseUrl(),
   checkoutScenario,
 }: CreateStorybookLaguuniHandlersOptions = {}) {
-  return createLaguuniApiHandlers(storybookLaguuniHandlerState, {
+  const handlers = createLaguuniApiHandlers(storybookLaguuniHandlerState, {
     baseUrl,
     createBasketToken: createScopedBasketToken,
     resolveCheckoutScenario: (request) =>
       checkoutScenario ?? readCheckoutScenario(request),
     includeCleanupHandlers: true,
   })
+
+  return [
+    ...handlers,
+    http.get(
+      `${baseUrl}/api/laguuni/products/:productId/availabledates/:anchorDate.json`,
+      async ({ request }) => {
+        const scenario = readStoryScenario(request)
+
+        if (scenario === 'availability-loading') {
+          await delay(3000)
+        }
+
+        if (scenario === 'availability-error') {
+          return HttpResponse.json(
+            {
+              errorCode: 'GENERAL_ERROR',
+              errorMessage: 'Fixture outage',
+              status: 'error',
+            },
+            { status: 500 },
+          )
+        }
+
+        return undefined
+      },
+    ),
+    http.get(
+      `${baseUrl}/api/laguuni/discounts/:code/public.json`,
+      ({ request }) => {
+        if (readStoryScenario(request) !== 'invalid-code') {
+          return undefined
+        }
+
+        return HttpResponse.json(
+          {
+            errorCode: 'GENERAL_ERROR',
+            errorMessage: 'Antamasi koodi on virheellinen.',
+            status: 'error',
+          },
+          { status: 404 },
+        )
+      },
+    ),
+  ]
 }
 
 export function createStorybookLaguuniParameters(
@@ -57,7 +106,7 @@ export function createStorybookLaguuniParameters(
   return scenario === 'booking-enabled'
     ? undefined
     : {
-        checkoutScenario: scenario,
+        scenario,
       }
 }
 
@@ -74,13 +123,17 @@ function createScopedBasketToken(request: Request): string {
 function readCheckoutScenario(
   request: Request,
 ): LaguuniCheckoutScenario | undefined {
-  const scenario = readScopedPathSegment(request, 1)
+  const scenario = readStoryScenario(request)
 
   if (scenario === 'payment-required' || scenario === 'failed-booking') {
     return scenario
   }
 
   return undefined
+}
+
+function readStoryScenario(request: Request): StorybookLaguuniScenario | undefined {
+  return readScopedPathSegment(request, 1) as StorybookLaguuniScenario | undefined
 }
 
 function readStoryScopeId(request: Request): string {

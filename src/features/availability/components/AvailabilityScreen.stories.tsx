@@ -40,6 +40,67 @@ export const BookingEnabled: Story = {
   },
 }
 
+export const AvailabilityError: Story = {
+  args: {
+    isOnline: true,
+    onOpenSettings: noop,
+  },
+  parameters: {
+    laguuni: createStorybookLaguuniParameters('availability-error'),
+    settings: BOOKING_ENABLED_SETTINGS,
+  },
+  play: async ({ canvasElement }) => {
+    const page = within(canvasElement.ownerDocument.body)
+
+    await expect(page.findByRole('alert')).resolves.toHaveTextContent(
+      'Fixture outage',
+    )
+  },
+}
+
+export const AvailabilityLoading: Story = {
+  args: {
+    isOnline: true,
+    onOpenSettings: noop,
+  },
+  parameters: {
+    laguuni: createStorybookLaguuniParameters('availability-loading'),
+    settings: BOOKING_ENABLED_SETTINGS,
+  },
+  play: async ({ canvasElement }) => {
+    const page = within(canvasElement.ownerDocument.body)
+
+    await expect(page.findByText('Loading availability…')).resolves.toBeInTheDocument()
+  },
+}
+
+export const InvalidSavedCode: Story = {
+  args: {
+    isOnline: true,
+    onOpenSettings: noop,
+  },
+  parameters: {
+    laguuni: createStorybookLaguuniParameters('invalid-code'),
+    settings: {
+      ...BOOKING_ENABLED_SETTINGS,
+      seasonPassCode: 'INVALID',
+    },
+  },
+  play: async ({ canvas, canvasElement }) => {
+    const page = within(canvasElement.ownerDocument.body)
+
+    await userEvent.click(getFirstBookButton(canvas))
+    await userEvent.click(page.getByRole('button', { name: 'Confirm booking' }))
+
+    await expect(
+      page.findByRole('heading', { name: 'Booking failed' }),
+    ).resolves.toBeInTheDocument()
+    await expect(page.findByRole('alert')).resolves.toHaveTextContent(
+      'The saved season pass code was not accepted.',
+    )
+  },
+}
+
 export const PaymentRequired: Story = {
   args: {
     isOnline: true,
