@@ -2,13 +2,10 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, userEvent, within } from 'storybook/test'
 
 import { BOOKING_ENABLED_SETTINGS, noop } from '$storybook/fixture-data'
-import { createStorybookLaguuniHandlers } from '../../../../.storybook/laguuni-handlers'
+import { createStorybookLaguuniParameters } from '../../../../.storybook/laguuni-handlers'
 
 import { AvailabilityScreen } from './AvailabilityScreen'
 
-const paymentRequiredHandlers =
-  createStorybookLaguuniHandlers('payment-required')
-const failedBookingHandlers = createStorybookLaguuniHandlers('failed-booking')
 const successfulBookingSettings = {
   ...BOOKING_ENABLED_SETTINGS,
   seasonPassCode: 'FIXTURE-DISCOUNT',
@@ -49,9 +46,7 @@ export const PaymentRequired: Story = {
     onOpenSettings: noop,
   },
   parameters: {
-    msw: {
-      handlers: paymentRequiredHandlers,
-    },
+    laguuni: createStorybookLaguuniParameters('payment-required'),
     settings: BOOKING_ENABLED_SETTINGS,
   },
   play: async ({ canvas, canvasElement }) => {
@@ -75,9 +70,7 @@ export const FailedBooking: Story = {
     onOpenSettings: noop,
   },
   parameters: {
-    msw: {
-      handlers: failedBookingHandlers,
-    },
+    laguuni: createStorybookLaguuniParameters('failed-booking'),
     settings: BOOKING_ENABLED_SETTINGS,
   },
   play: async ({ canvas, canvasElement }) => {

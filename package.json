@@ -7,10 +7,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:all": "pnpm build && storybook build",
     "lint": "biome check .",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",
+    "typecheck": "tsc -b && tsc -p tsconfig.storybook.json",
     "test": "vitest run",
     "test:watch": "vitest"
   },

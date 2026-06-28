@@ -27,6 +27,7 @@ const DEFAULT_PAYMENT_REDIRECT_URL = 'https://example.com/mobilepay'
 
 type BasketState = {
   checkoutCompleted: boolean
+  checkoutScenario: LaguuniCheckoutScenario | null
   hasZeroTotalCode: boolean
   hasReservation: boolean
 }
@@ -35,11 +36,16 @@ type LaguuniHandlerState = {
   basketStateByToken: Map<string, BasketState>
 }
 
+export type LaguuniCheckoutScenario = 'failed-booking' | 'payment-required'
+
 type SharedLaguuniHandlerOptions = {
   baseUrl?: string
   basketToken?: string
+  checkoutScenario?: LaguuniCheckoutScenario
+  createBasketToken?: (request: Request) => string
   includeCleanupHandlers?: boolean
   paymentRedirectUrl?: string
+  resolveCheckoutScenario?: (request: Request) => LaguuniCheckoutScenario | undefined
 }
 
 export function createLaguuniHandlerState(): LaguuniHandlerState {
@@ -52,21 +58,38 @@ export function resetLaguuniHandlerState(state: LaguuniHandlerState) {
   state.basketStateByToken.clear()
 }
 
+export function pruneLaguuniHandlerState(
+  state: LaguuniHandlerState,
+  shouldDeleteBasketToken: (basketToken: string) => boolean,
+) {
+  for (const basketToken of state.basketStateByToken.keys()) {
+    if (shouldDeleteBasketToken(basketToken)) {
+      state.basketStateByToken.delete(basketToken)
+    }
+  }
+}
+
 export function createLaguuniApiHandlers(
   state: LaguuniHandlerState,
   {
     baseUrl = DEFAULT_LAGUUNI_API_BASE_URL,
     basketToken = basketFixture,
+    checkoutScenario,
+    createBasketToken,
     includeCleanupHandlers = false,
     paymentRedirectUrl = DEFAULT_PAYMENT_REDIRECT_URL,
+    resolveCheckoutScenario,
   }: SharedLaguuniHandlerOptions = {},
 ) {
-  return createSharedLaguuniHandlers(state, {
+  return createSharedLaguuniHandlers(state, compactSharedHandlerOptions({
     baseUrl,
     basketToken,
+    checkoutScenario,
+    createBasketToken,
     includeCleanupHandlers,
     paymentRedirectUrl,
-  })
+    resolveCheckoutScenario,
+  }))
 }
 
 export function getDefaultLaguuniHandlerBaseUrl() {
@@ -82,15 +105,27 @@ function createSharedLaguuniHandlers(
   {
     baseUrl = DEFAULT_LAGUUNI_API_BASE_URL,
     basketToken = basketFixture,
+    checkoutScenario,
+    createBasketToken,
     includeCleanupHandlers = false,
     paymentRedirectUrl = DEFAULT_PAYMENT_REDIRECT_URL,
+    resolveCheckoutScenario,
   }: SharedLaguuniHandlerOptions = {},
 ) {
   const normalizedBaseUrl = normalizeApiBaseUrl(baseUrl)
   const handlers = [
-    http.get(`${normalizedBaseUrl}/api/laguuni/baskets.json`, () =>
-      HttpResponse.json(basketToken),
-    ),
+    http.get(`${normalizedBaseUrl}/api/laguuni/baskets.json`, ({ request }) => {
+      const nextBasketToken = createBasketToken?.(request) ?? basketToken
+      const nextCheckoutScenario =
+        resolveCheckoutScenario?.(request) ?? checkoutScenario
+
+      if (nextCheckoutScenario !== undefined) {
+        getBasketState(state, nextBasketToken).checkoutScenario =
+          nextCheckoutScenario
+      }
+
+      return HttpResponse.json(nextBasketToken)
+    }),
     http.get(
       `${normalizedBaseUrl}/api/laguuni/products/:productId/availabledates/:anchorDate.json`,
       ({ params, request }) => {
@@ -229,11 +264,11 @@ function createSharedLaguuniHandlers(
         const basketState = getBasketState(state, requestBasketToken)
         basketState.checkoutCompleted = true
 
-        if (requestBasketToken === 'fixture-basket-payment') {
+        if (basketState.checkoutScenario === 'payment-required') {
           return HttpResponse.json(checkoutPaymentRequiredFixture)
         }
 
-        if (requestBasketToken === 'fixture-basket-failure') {
+        if (basketState.checkoutScenario === 'failed-booking') {
           return HttpResponse.json(checkoutFailureFixture)
         }
 
@@ -322,6 +357,7 @@ function getBasketState(
 
   const nextState: BasketState = {
     checkoutCompleted: false,
+    checkoutScenario: null,
     hasReservation: false,
     hasZeroTotalCode: false,
   }
@@ -410,4 +446,20 @@ function isStorefrontDate(value: unknown): value is string {
 
 function isStorefrontTime(value: unknown): value is string {
   return typeof value === 'string' && /^\d{2}\.\d{2}$/.test(value)
+}
+
+function compactSharedHandlerOptions(options: {
+  baseUrl?: string | undefined
+  basketToken?: string | undefined
+  checkoutScenario?: LaguuniCheckoutScenario | undefined
+  createBasketToken?: ((request: Request) => string) | undefined
+  includeCleanupHandlers?: boolean | undefined
+  paymentRedirectUrl?: string | undefined
+  resolveCheckoutScenario?:
+    | ((request: Request) => LaguuniCheckoutScenario | undefined)
+    | undefined
+}) {
+  return Object.fromEntries(
+    Object.entries(options).filter(([, value]) => value !== undefined),
+  ) as SharedLaguuniHandlerOptions
 }

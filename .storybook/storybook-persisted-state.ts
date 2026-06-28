@@ -14,7 +14,87 @@ import {
   SETTINGS_STORAGE_KEY,
 } from '../src/lib/storage/local-storage'
 
-export function clearPersistedStorybookState(storage: BrowserStorage) {
+export type StorybookPersistedStateSeed = {
+  developerMode?: boolean
+  seedCorruptedSettings?: boolean
+  settings?: Partial<UserSettings>
+}
+
+type CanonicalStorybookPersistedStateSeed = {
+  developerMode: boolean
+  seedCorruptedSettings: boolean
+  settings: UserSettings | null
+}
+
+export function createInMemoryBrowserStorage(
+  initialEntries: Record<string, string> = {},
+): BrowserStorage {
+  const values = new Map(Object.entries(initialEntries))
+
+  return {
+    getItem(key) {
+      return values.get(key) ?? null
+    },
+    removeItem(key) {
+      values.delete(key)
+    },
+    setItem(key, value) {
+      values.set(key, value)
+    },
+  }
+}
+
+export function seedStorybookPersistedState(
+  {
+    developerMode = false,
+    seedCorruptedSettings = false,
+    settings,
+  }: StorybookPersistedStateSeed,
+  storage: BrowserStorage,
+) {
+  clearPersistedStorybookState(storage)
+
+  if (seedCorruptedSettings) {
+    writeStorybookCorruptedSettings(storage)
+  } else if (settings) {
+    saveStorybookUserSettings(settings, storage)
+  }
+
+  if (developerMode) {
+    enableStorybookDeveloperMode(storage)
+  }
+}
+
+export function createStorybookPersistedStateIdentity(
+  storyId: string,
+  seed: StorybookPersistedStateSeed,
+): string {
+  return JSON.stringify({
+    storyId,
+    persistedState: getCanonicalStorybookPersistedStateSeed(seed),
+  })
+}
+
+function getCanonicalStorybookPersistedStateSeed({
+  developerMode = false,
+  seedCorruptedSettings = false,
+  settings,
+}: StorybookPersistedStateSeed): CanonicalStorybookPersistedStateSeed {
+  return {
+    developerMode,
+    seedCorruptedSettings,
+    settings: seedCorruptedSettings
+      ? null
+      : settings === undefined
+        ? null
+        : {
+            ...DEFAULT_USER_SETTINGS,
+            ...settings,
+          },
+  }
+}
+
+function clearPersistedStorybookState(storage: BrowserStorage) {
   storage.removeItem(DEVELOPER_MODE_STORAGE_KEY)
   storage.removeItem(DIAGNOSTICS_STORAGE_KEY)
   storage.removeItem(READ_ONLY_NOTICE_STORAGE_KEY)

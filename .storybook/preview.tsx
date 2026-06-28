@@ -4,7 +4,7 @@ import { initialize, mswLoader } from 'msw-storybook-addon'
 import '../src/app/App.css'
 import {
   createStorybookLaguuniHandlers,
-  resetStorybookLaguuniHandlerState,
+  pruneStorybookLaguuniScope,
 } from './laguuni-handlers'
 import { StorybookAppProviders } from './storybook-app-providers'
 
@@ -15,8 +15,10 @@ initialize({
 })
 
 const preview: Preview = {
-  async beforeEach() {
-    resetStorybookLaguuniHandlerState()
+  async beforeEach(context) {
+    return () => {
+      pruneStorybookLaguuniScope(context.id)
+    }
   },
   decorators: [StorybookAppProviders],
   loaders: [mswLoader],
