@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { READ_ONLY_NOTICE_STORAGE_KEY } from '../features/availability/read-only-notice-storage'
-import type { BrowserStorage } from '../lib/storage/local-storage'
 import {
   clearPersistedAppState,
   saveUserSettings,
 } from '../test/persisted-state'
+import { createMemoryStorage } from '../test/create-memory-storage'
 import { renderApp } from '../test/render-app'
 
 describe('App', () => {
@@ -52,9 +52,11 @@ describe('App', () => {
 
   it('persists the dismissed read-only notice across remounts without enabling booking', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     expect(
@@ -78,6 +80,7 @@ describe('App', () => {
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     expect(
@@ -125,15 +128,17 @@ describe('App', () => {
 
   it('shows booking actions once the required profile details are saved and lets users switch cables', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
-    })
+    }, storage)
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     expect(
@@ -156,16 +161,18 @@ describe('App', () => {
 
   it('books an available slot and surfaces success', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
       seasonPassCode: 'FIXTURE-DISCOUNT',
-    })
+    }, storage)
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     await openFirstBookingSheet(user)
@@ -184,16 +191,18 @@ describe('App', () => {
 
   it('opens the existing booking sheet from a calendar availability badge', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       availabilityView: 'calendar',
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
-    })
+    }, storage)
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     const calendarButtons = await screen.findAllByRole('button', {
@@ -216,24 +225,6 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 })
-
-function createMemoryStorage(
-  initialEntries: Record<string, string> = {},
-): BrowserStorage {
-  const values = new Map(Object.entries(initialEntries))
-
-  return {
-    getItem(key) {
-      return values.get(key) ?? null
-    },
-    removeItem(key) {
-      values.delete(key)
-    },
-    setItem(key, value) {
-      values.set(key, value)
-    },
-  }
-}
 
 async function openFirstBookingSheet(user: ReturnType<typeof userEvent.setup>) {
   const bookButtons = await screen.findAllByRole('button', {

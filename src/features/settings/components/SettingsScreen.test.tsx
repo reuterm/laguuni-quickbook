@@ -2,12 +2,12 @@ import { cleanup, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { BrowserStorage } from '../../../lib/storage/local-storage'
 import {
   clearPersistedAppState,
   enableDeveloperMode,
   writeCorruptedSettings,
 } from '../../../test/persisted-state'
+import { createMemoryStorage } from '../../../test/create-memory-storage'
 import { renderApp } from '../../../test/render-app'
 import { DEVELOPER_MODE_STORAGE_KEY } from '../developer-mode-storage'
 
@@ -278,22 +278,4 @@ function setInputValue(label: string, value: string) {
   fireEvent.change(screen.getByLabelText(label), {
     target: { value },
   })
-}
-
-function createMemoryStorage(
-  initialEntries: Record<string, string> = {},
-): BrowserStorage {
-  const values = new Map(Object.entries(initialEntries))
-
-  return {
-    getItem(key) {
-      return values.get(key) ?? null
-    },
-    removeItem(key) {
-      values.delete(key)
-    },
-    setItem(key, value) {
-      values.set(key, value)
-    },
-  }
 }

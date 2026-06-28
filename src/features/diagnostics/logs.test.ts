@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { createMemoryStorage } from '../../test/create-memory-storage'
 import { LocalDiagnosticsStore } from './logs'
 
 describe('LocalDiagnosticsStore', () => {
@@ -208,21 +209,5 @@ function createFixedIdFactory(values: readonly string[]) {
 
     index += 1
     return value
-  }
-}
-
-function createMemoryStorage() {
-  const values = new Map<string, string>()
-
-  return {
-    getItem(key: string) {
-      return values.get(key) ?? null
-    },
-    removeItem(key: string) {
-      values.delete(key)
-    },
-    setItem(key: string, value: string) {
-      values.set(key, value)
-    },
   }
 }
