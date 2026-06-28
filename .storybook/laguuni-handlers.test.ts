@@ -76,7 +76,9 @@ describe('createStorybookLaguuniHandlers', () => {
     )
 
     const scopedBaseUrl = `${baseUrl}${
-      new URL(getStorybookLaguuniApiBaseUrl('invalid-code-scope', 'invalid-code')).pathname
+      new URL(
+        getStorybookLaguuniApiBaseUrl('invalid-code-scope', 'invalid-code'),
+      ).pathname
     }`
 
     const response = await fetch(

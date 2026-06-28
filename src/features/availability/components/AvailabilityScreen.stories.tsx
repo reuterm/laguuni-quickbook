@@ -70,7 +70,9 @@ export const AvailabilityLoading: Story = {
   play: async ({ canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
-    await expect(page.findByText('Loading availability…')).resolves.toBeInTheDocument()
+    await expect(
+      page.findByText('Loading availability…'),
+    ).resolves.toBeInTheDocument()
   },
 }
 

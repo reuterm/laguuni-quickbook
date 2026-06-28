@@ -1,4 +1,4 @@
-import { HttpResponse, delay, http } from 'msw'
+import { delay, HttpResponse, http } from 'msw'
 
 import {
   createLaguuniApiHandlers,
@@ -132,8 +132,12 @@ function readCheckoutScenario(
   return undefined
 }
 
-function readStoryScenario(request: Request): StorybookLaguuniScenario | undefined {
-  return readScopedPathSegment(request, 1) as StorybookLaguuniScenario | undefined
+function readStoryScenario(
+  request: Request,
+): StorybookLaguuniScenario | undefined {
+  return readScopedPathSegment(request, 1) as
+    | StorybookLaguuniScenario
+    | undefined
 }
 
 function readStoryScopeId(request: Request): string {
