@@ -8,7 +8,7 @@ type RenderAppOptions = {
   apiBaseUrl?: string
   appVersion?: string
   availabilityReferenceDate?: Date
-  storage?: BrowserStorage
+  storage: BrowserStorage
 }
 
 const DEFAULT_API_BASE_URL = 'https://shop.laguuniin.fi'
@@ -19,16 +19,14 @@ export function renderApp({
   appVersion = DEFAULT_APP_VERSION,
   availabilityReferenceDate,
   storage,
-}: RenderAppOptions = {}) {
-  const providerProps = {
-    apiBaseUrl,
-    appVersion,
-    availabilityReferenceDate,
-    ...(storage ? { storage } : {}),
-  }
-
+}: RenderAppOptions) {
   return render(
-    <AppProviders {...providerProps}>
+    <AppProviders
+      apiBaseUrl={apiBaseUrl}
+      appVersion={appVersion}
+      availabilityReferenceDate={availabilityReferenceDate}
+      storage={storage}
+    >
       <App />
     </AppProviders>,
   )

@@ -64,8 +64,9 @@ describe('Settings screen integration', () => {
 
   it('maps the stored cards preference back to the Auto label', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('tab', { name: 'Auto' }))
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
@@ -84,8 +85,9 @@ describe('Settings screen integration', () => {
 
   it('does not override the current cable after changing the saved default in-session', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('tab', { name: 'Easy' }))
     await user.click(screen.getByRole('button', { name: 'Settings' }))
     await user.selectOptions(screen.getByLabelText('Default cable'), 'pro')
@@ -103,8 +105,9 @@ describe('Settings screen integration', () => {
 
   it('discards unsaved edits when the sheet closes', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
     await user.type(screen.getByLabelText('Name'), 'Unsaved draft')
     await user.click(screen.getByRole('button', { name: 'Close' }))
@@ -173,8 +176,9 @@ describe('Settings screen integration', () => {
 
   it('keeps developer tools hidden until developer mode is enabled', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     expect(screen.queryByText('Developer tools')).not.toBeInTheDocument()
@@ -199,8 +203,9 @@ describe('Settings screen integration', () => {
 
   it('persists developer mode until it is disabled', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     const versionButton = screen.getByRole('button', {

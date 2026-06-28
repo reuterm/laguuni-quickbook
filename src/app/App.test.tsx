@@ -18,9 +18,11 @@ describe('App', () => {
 
   it('shows read-only availability and an optional settings path before booking is configured', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     expect(

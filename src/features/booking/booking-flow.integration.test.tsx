@@ -14,6 +14,7 @@ import {
   clearPersistedAppState,
   saveUserSettings,
 } from '../../test/persisted-state'
+import { createMemoryStorage } from '../../test/create-memory-storage'
 import { renderApp } from '../../test/render-app'
 
 const TEST_API_BASE_URL = normalizeApiBaseUrl(DEFAULT_LAGUUNI_API_BASE_URL)
@@ -46,7 +47,7 @@ describe('booking flow integration', () => {
   })
 
   it('keeps the availability overview read-only until booking details are saved', async () => {
-    renderApp()
+    renderApp({ storage: createMemoryStorage() })
 
     expect(
       screen.getByText(
@@ -61,12 +62,13 @@ describe('booking flow integration', () => {
   it('shows a failure state when checkout returns an error', async () => {
     const user = userEvent.setup()
     const deletedBasketTokens: Array<string> = []
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
-    })
+    }, storage)
     server.use(
       http.post(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
@@ -81,7 +83,7 @@ describe('booking flow integration', () => {
       ),
     )
 
-    renderApp()
+    renderApp({ storage })
     await confirmFirstBooking(user)
 
     expect(
@@ -102,12 +104,13 @@ describe('booking flow integration', () => {
     const user = userEvent.setup()
     const deletedBasketTokens: Array<string> = []
     const cancelledPaymentTokens: Array<string> = []
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
-    })
+    }, storage)
     server.use(
       http.post(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
@@ -133,7 +136,7 @@ describe('booking flow integration', () => {
       ),
     )
 
-    renderApp()
+    renderApp({ storage })
     await confirmFirstBooking(user)
 
     expect(
@@ -162,12 +165,13 @@ describe('booking flow integration', () => {
     const cancelledPaymentTokens: Array<string> = []
     const deletedBasketTokens: Array<string> = []
     let hasDeletedBasket = false
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
-    })
+    }, storage)
     server.use(
       http.post(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
@@ -213,6 +217,7 @@ describe('booking flow integration', () => {
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     await expectCapacityLabel('3')
@@ -237,12 +242,13 @@ describe('booking flow integration', () => {
     const user = userEvent.setup()
     const deletedBasketTokens: Array<string> = []
     let hasDeletedBasket = false
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
-    })
+    }, storage)
     server.use(
       http.post(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
@@ -277,6 +283,7 @@ describe('booking flow integration', () => {
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     await expectCapacityLabel('3')
@@ -298,12 +305,13 @@ describe('booking flow integration', () => {
 
   it('allows dismissing a failed booking status', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
-    })
+    }, storage)
     server.use(
       http.post(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
@@ -319,7 +327,7 @@ describe('booking flow integration', () => {
       ),
     )
 
-    renderApp()
+    renderApp({ storage })
     await confirmFirstBooking(user)
 
     expect(
@@ -335,15 +343,16 @@ describe('booking flow integration', () => {
 
   it('shows a successful booking status', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
       seasonPassCode: 'FIXTURE-DISCOUNT',
-    })
+    }, storage)
 
-    renderApp()
+    renderApp({ storage })
     await confirmFirstBooking(user)
 
     expect(
@@ -354,13 +363,14 @@ describe('booking flow integration', () => {
   it('allows dismissing the confirmation sheet without submitting a booking', async () => {
     const user = userEvent.setup()
     const orderRequests: Array<string> = []
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
       seasonPassCode: 'FIXTURE-DISCOUNT',
-    })
+    }, storage)
     server.use(
       http.post(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
@@ -374,7 +384,7 @@ describe('booking flow integration', () => {
       ),
     )
 
-    renderApp()
+    renderApp({ storage })
     await clickFirstBookButton(user)
 
     expect(
@@ -391,15 +401,16 @@ describe('booking flow integration', () => {
 
   it('auto-dismisses the success sheet after the success delay', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
       seasonPassCode: 'FIXTURE-DISCOUNT',
-    })
+    }, storage)
 
-    renderApp()
+    renderApp({ storage })
     await confirmFirstBooking(user)
 
     expect(
@@ -419,13 +430,14 @@ describe('booking flow integration', () => {
   it('refreshes the availability overview after a completed booking', async () => {
     const user = userEvent.setup()
     let availabilityRequestCount = 0
+    const storage = createMemoryStorage()
 
     saveUserSettings({
       email: 'test@example.com',
       name: 'Test User',
       phone: '+358401234567',
       seasonPassCode: 'FIXTURE-DISCOUNT',
-    })
+    }, storage)
     server.use(
       http.get(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/products/:productId/availabletimes/:date.json`,
@@ -474,6 +486,7 @@ describe('booking flow integration', () => {
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     await expectCapacityLabel('3')
