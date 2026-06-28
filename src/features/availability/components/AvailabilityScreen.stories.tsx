@@ -3,6 +3,7 @@ import { expect, userEvent, within } from 'storybook/test'
 
 import { BOOKING_ENABLED_SETTINGS, noop } from '$storybook/fixture-data'
 import { createStorybookLaguuniParameters } from '../../../../.storybook/laguuni-handlers'
+import { StorybookAppFrame } from '../../../../.storybook/StorybookAppFrame'
 
 import { AvailabilityScreen } from './AvailabilityScreen'
 
@@ -23,11 +24,20 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
+function renderAvailabilityScreen(args: Story['args']) {
+  return (
+    <StorybookAppFrame>
+      <AvailabilityScreen {...args} />
+    </StorybookAppFrame>
+  )
+}
+
 export const ReadOnly: Story = {
   args: {
     isOnline: true,
     onOpenSettings: noop,
   },
+  render: renderAvailabilityScreen,
 }
 
 export const BookingEnabled: Story = {
@@ -38,6 +48,7 @@ export const BookingEnabled: Story = {
   parameters: {
     settings: BOOKING_ENABLED_SETTINGS,
   },
+  render: renderAvailabilityScreen,
 }
 
 export const AvailabilityError: Story = {
@@ -49,6 +60,7 @@ export const AvailabilityError: Story = {
     laguuni: createStorybookLaguuniParameters('availability-error'),
     settings: BOOKING_ENABLED_SETTINGS,
   },
+  render: renderAvailabilityScreen,
   play: async ({ canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
@@ -67,6 +79,7 @@ export const AvailabilityLoading: Story = {
     laguuni: createStorybookLaguuniParameters('availability-loading'),
     settings: BOOKING_ENABLED_SETTINGS,
   },
+  render: renderAvailabilityScreen,
   play: async ({ canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
@@ -88,6 +101,7 @@ export const InvalidSavedCode: Story = {
       seasonPassCode: 'INVALID',
     },
   },
+  render: renderAvailabilityScreen,
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
@@ -112,6 +126,7 @@ export const PaymentRequired: Story = {
     laguuni: createStorybookLaguuniParameters('payment-required'),
     settings: BOOKING_ENABLED_SETTINGS,
   },
+  render: renderAvailabilityScreen,
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
@@ -136,6 +151,7 @@ export const FailedBooking: Story = {
     laguuni: createStorybookLaguuniParameters('failed-booking'),
     settings: BOOKING_ENABLED_SETTINGS,
   },
+  render: renderAvailabilityScreen,
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
@@ -159,6 +175,7 @@ export const SuccessfulBooking: Story = {
   parameters: {
     settings: successfulBookingSettings,
   },
+  render: renderAvailabilityScreen,
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
 
