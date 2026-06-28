@@ -1,15 +1,14 @@
 import type { Decorator } from '@storybook/react'
-import { useMemo } from 'react'
+import { useState } from 'react'
 
 import { AppProviders } from '../src/app/providers'
-import type { BrowserStorage } from '../src/lib/storage/local-storage'
 import { AvailabilityScopeProvider } from '../src/features/availability/use-availability-scope'
 import { UserSettingsProvider } from '../src/features/settings/use-user-settings'
 import { getStorybookLaguuniApiBaseUrl } from './laguuni-handlers'
 import {
+  createInMemoryBrowserStorage,
   createStorybookPersistedStateIdentity,
   type StorybookPersistedStateSeed,
-  createInMemoryBrowserStorage,
   seedStorybookPersistedState,
 } from './storybook-persisted-state'
 
@@ -32,13 +31,13 @@ const DEFAULT_AVAILABILITY_REFERENCE_DATE = new Date('2026-05-14T12:00:00')
 export const StorybookAppProviders: Decorator = (Story, context) => {
   const parameters = context.parameters as StorybookParameters
   const seededStateIdentity = createSeededStateIdentity(context.id, parameters)
-  const storybookScenario = parameters.laguuni?.checkoutScenario ?? 'booking-enabled'
+  const storybookScenario =
+    parameters.laguuni?.checkoutScenario ?? 'booking-enabled'
 
   return (
     <SeededStateBoundary
       key={seededStateIdentity}
       apiScopeId={context.id}
-      identity={seededStateIdentity}
       parameters={parameters}
       storybookScenario={storybookScenario}
     >
@@ -50,17 +49,15 @@ export const StorybookAppProviders: Decorator = (Story, context) => {
 function SeededStateBoundary({
   children,
   apiScopeId,
-  identity,
   parameters,
   storybookScenario,
 }: {
   children: () => React.ReactNode
   apiScopeId: string
-  identity: SeededStateIdentity
   parameters: StorybookParameters
   storybookScenario: 'booking-enabled' | 'failed-booking' | 'payment-required'
 }) {
-  const storage = useMemo(() => {
+  const [storage] = useState(() => {
     const nextStorage = createInMemoryBrowserStorage()
 
     seedStorybookPersistedState(
@@ -73,7 +70,7 @@ function SeededStateBoundary({
     )
 
     return nextStorage
-  }, [identity])
+  })
 
   return (
     <AppProviders
