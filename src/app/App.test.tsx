@@ -1,7 +1,11 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
+import {
+  READ_ONLY_NOTICE_STORAGE_KEY,
+} from '../features/availability/read-only-notice-storage'
+import type { BrowserStorage } from '../lib/storage/local-storage'
 import {
   clearPersistedAppState,
   saveUserSettings,
@@ -86,6 +90,39 @@ describe('App', () => {
     expect(
       screen.queryByRole('button', { name: 'Book' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('reads the read-only notice dismissal from injected storage instead of window.localStorage', async () => {
+    window.localStorage.setItem(READ_ONLY_NOTICE_STORAGE_KEY, 'true')
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage: createMemoryStorage(),
+    })
+
+    expect(
+      await screen.findByText(
+        /Save your name, phone, and email in Settings to reveal booking actions\./,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('writes the read-only notice dismissal to injected storage instead of window.localStorage', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
+    })
+
+    await screen.findByRole('button', { name: 'Dismiss notice' })
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }))
+
+    await waitFor(() => {
+      expect(storage.getItem(READ_ONLY_NOTICE_STORAGE_KEY)).toBe('true')
+    })
+    expect(window.localStorage.getItem(READ_ONLY_NOTICE_STORAGE_KEY)).toBeNull()
   })
 
   it('shows booking actions once the required profile details are saved and lets users switch cables', async () => {
@@ -181,6 +218,24 @@ describe('App', () => {
     ).toBeInTheDocument()
   })
 })
+
+function createMemoryStorage(
+  initialEntries: Record<string, string> = {},
+): BrowserStorage {
+  const values = new Map(Object.entries(initialEntries))
+
+  return {
+    getItem(key) {
+      return values.get(key) ?? null
+    },
+    removeItem(key) {
+      values.delete(key)
+    },
+    setItem(key, value) {
+      values.set(key, value)
+    },
+  }
+}
 
 async function openFirstBookingSheet(user: ReturnType<typeof userEvent.setup>) {
   const bookButtons = await screen.findAllByRole('button', {

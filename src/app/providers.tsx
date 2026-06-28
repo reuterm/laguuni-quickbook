@@ -11,6 +11,7 @@ import {
 import { FetchHttpClient } from '../lib/api/client'
 import { type LaguuniApi, LaguuniApiClient } from '../lib/api/laguuni-api'
 import {
+  type BrowserStorage,
   createBrowserStorage,
   LocalSettingsStore,
   type UserSettingsStore,
@@ -21,6 +22,7 @@ type AppDependencies = {
   appVersion: string
   availabilityReferenceDate?: Date | undefined
   bookingService: BookingService
+  browserStorage: BrowserStorage
   diagnostics: Diagnostics
   settingsStore: UserSettingsStore
 }
@@ -31,16 +33,18 @@ type AppProvidersProps = PropsWithChildren<{
   apiBaseUrl: string
   appVersion: string
   availabilityReferenceDate?: Date | undefined
+  storage?: BrowserStorage
 }>
 
 export function AppProviders({
   apiBaseUrl,
   appVersion,
   availabilityReferenceDate,
+  storage,
   children,
 }: AppProvidersProps) {
   const dependencies = useMemo<AppDependencies>(() => {
-    const browserStorage = createBrowserStorage()
+    const browserStorage = storage ?? createBrowserStorage()
     const api = new LaguuniApiClient({
       client: new FetchHttpClient({
         baseUrl: apiBaseUrl,
@@ -59,13 +63,14 @@ export function AppProviders({
       api,
       appVersion,
       availabilityReferenceDate,
+      browserStorage,
       bookingService: new DefaultBookingService({
         api,
       }),
       diagnostics,
       settingsStore,
     }
-  }, [apiBaseUrl, appVersion, availabilityReferenceDate])
+  }, [apiBaseUrl, appVersion, availabilityReferenceDate, storage])
 
   return (
     <AppDependenciesContext.Provider value={dependencies}>
@@ -106,4 +111,8 @@ export function useUserSettingsStore(): UserSettingsStore {
 
 export function useDiagnostics(): Diagnostics {
   return useAppDependencies().diagnostics
+}
+
+export function useBrowserStorage(): BrowserStorage {
+  return useAppDependencies().browserStorage
 }

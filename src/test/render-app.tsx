@@ -2,11 +2,13 @@ import { render } from '@testing-library/react'
 
 import App from '../app/App'
 import { AppProviders } from '../app/providers'
+import type { BrowserStorage } from '../lib/storage/local-storage'
 
 type RenderAppOptions = {
   apiBaseUrl?: string
   appVersion?: string
   availabilityReferenceDate?: Date
+  storage?: BrowserStorage
 }
 
 const DEFAULT_API_BASE_URL = 'https://shop.laguuniin.fi'
@@ -16,13 +18,17 @@ export function renderApp({
   apiBaseUrl = DEFAULT_API_BASE_URL,
   appVersion = DEFAULT_APP_VERSION,
   availabilityReferenceDate,
+  storage,
 }: RenderAppOptions = {}) {
+  const providerProps = {
+    apiBaseUrl,
+    appVersion,
+    availabilityReferenceDate,
+    ...(storage ? { storage } : {}),
+  }
+
   return render(
-    <AppProviders
-      apiBaseUrl={apiBaseUrl}
-      appVersion={appVersion}
-      availabilityReferenceDate={availabilityReferenceDate}
-    >
+    <AppProviders {...providerProps}>
       <App />
     </AppProviders>,
   )

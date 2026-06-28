@@ -2,12 +2,14 @@ import { cleanup, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { BrowserStorage } from '../../../lib/storage/local-storage'
 import {
   clearPersistedAppState,
   enableDeveloperMode,
   writeCorruptedSettings,
 } from '../../../test/persisted-state'
 import { renderApp } from '../../../test/render-app'
+import { DEVELOPER_MODE_STORAGE_KEY } from '../developer-mode-storage'
 
 describe('Settings screen integration', () => {
   beforeEach(() => {
@@ -220,6 +222,18 @@ describe('Settings screen integration', () => {
     expect(screen.queryByText('Developer tools')).not.toBeInTheDocument()
   })
 
+  it('reads developer mode from injected storage instead of window.localStorage', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+
+    window.localStorage.setItem(DEVELOPER_MODE_STORAGE_KEY, 'true')
+
+    renderApp({ storage })
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    expect(screen.queryByText('Developer tools')).not.toBeInTheDocument()
+  })
+
   it('clears retained diagnostics logs from developer tools', async () => {
     const user = userEvent.setup()
     const writeText = vi.fn(async () => {})
@@ -264,4 +278,22 @@ function setInputValue(label: string, value: string) {
   fireEvent.change(screen.getByLabelText(label), {
     target: { value },
   })
+}
+
+function createMemoryStorage(
+  initialEntries: Record<string, string> = {},
+): BrowserStorage {
+  const values = new Map(Object.entries(initialEntries))
+
+  return {
+    getItem(key) {
+      return values.get(key) ?? null
+    },
+    removeItem(key) {
+      values.delete(key)
+    },
+    setItem(key, value) {
+      values.set(key, value)
+    },
+  }
 }
