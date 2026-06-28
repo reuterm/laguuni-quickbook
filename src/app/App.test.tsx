@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { READ_ONLY_NOTICE_STORAGE_KEY } from '../features/availability/read-only-notice-storage'
+import { createMemoryStorage } from '../test/create-memory-storage'
 import {
   clearPersistedAppState,
   saveUserSettings,
 } from '../test/persisted-state'
-import { createMemoryStorage } from '../test/create-memory-storage'
 import { renderApp } from '../test/render-app'
 
 describe('App', () => {
@@ -132,11 +132,14 @@ describe('App', () => {
     const user = userEvent.setup()
     const storage = createMemoryStorage()
 
-    saveUserSettings({
-      email: 'test@example.com',
-      name: 'Test User',
-      phone: '+358401234567',
-    }, storage)
+    saveUserSettings(
+      {
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '+358401234567',
+      },
+      storage,
+    )
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
@@ -165,12 +168,15 @@ describe('App', () => {
     const user = userEvent.setup()
     const storage = createMemoryStorage()
 
-    saveUserSettings({
-      email: 'test@example.com',
-      name: 'Test User',
-      phone: '+358401234567',
-      seasonPassCode: 'FIXTURE-DISCOUNT',
-    }, storage)
+    saveUserSettings(
+      {
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '+358401234567',
+        seasonPassCode: 'FIXTURE-DISCOUNT',
+      },
+      storage,
+    )
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
@@ -195,12 +201,15 @@ describe('App', () => {
     const user = userEvent.setup()
     const storage = createMemoryStorage()
 
-    saveUserSettings({
-      availabilityView: 'calendar',
-      email: 'test@example.com',
-      name: 'Test User',
-      phone: '+358401234567',
-    }, storage)
+    saveUserSettings(
+      {
+        availabilityView: 'calendar',
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '+358401234567',
+      },
+      storage,
+    )
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),

@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { UserSettings } from '../../domain/settings'
 import { createMemoryStorage } from '../../test/create-memory-storage'
-import {
-  LocalSettingsStore,
-  SETTINGS_STORAGE_KEY,
-} from './local-storage'
+import { LocalSettingsStore, SETTINGS_STORAGE_KEY } from './local-storage'
 
 const FIXTURE_SETTINGS: UserSettings = {
   availabilityView: 'calendar',

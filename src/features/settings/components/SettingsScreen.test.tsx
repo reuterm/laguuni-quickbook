@@ -1,13 +1,12 @@
 import { cleanup, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { createMemoryStorage } from '../../../test/create-memory-storage'
 import {
   clearPersistedAppState,
   enableDeveloperMode,
   writeCorruptedSettings,
 } from '../../../test/persisted-state'
-import { createMemoryStorage } from '../../../test/create-memory-storage'
 import { renderApp } from '../../../test/render-app'
 import { DEVELOPER_MODE_STORAGE_KEY } from '../developer-mode-storage'
 

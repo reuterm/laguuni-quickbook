@@ -12,7 +12,6 @@ import { FetchHttpClient } from '../lib/api/client'
 import { type LaguuniApi, LaguuniApiClient } from '../lib/api/laguuni-api'
 import {
   type BrowserStorage,
-  createBrowserStorage,
   LocalSettingsStore,
   type UserSettingsStore,
 } from '../lib/storage/local-storage'
@@ -33,7 +32,7 @@ type AppProvidersProps = PropsWithChildren<{
   apiBaseUrl: string
   appVersion: string
   availabilityReferenceDate?: Date | undefined
-  storage?: BrowserStorage
+  storage: BrowserStorage
 }>
 
 export function AppProviders({
@@ -44,7 +43,7 @@ export function AppProviders({
   children,
 }: AppProvidersProps) {
   const dependencies = useMemo<AppDependencies>(() => {
-    const browserStorage = storage ?? createBrowserStorage()
+    const browserStorage = storage
     const api = new LaguuniApiClient({
       client: new FetchHttpClient({
         baseUrl: apiBaseUrl,

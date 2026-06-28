@@ -137,6 +137,7 @@ function TestDiagnosticsProvider({ children }: { children: ReactNode }) {
     <AppProviders
       apiBaseUrl="https://shop.laguuniin.fi"
       appVersion="test-version"
+      storage={window.localStorage}
     >
       {children}
     </AppProviders>
