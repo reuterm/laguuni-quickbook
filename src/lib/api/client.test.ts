@@ -55,4 +55,41 @@ describe('FetchHttpClient', () => {
 
     expect(fetchImplementation).toHaveBeenCalledOnce()
   })
+
+  it('preserves scoped base-url path prefixes for app api requests', async () => {
+    const fetchImplementation: typeof fetch = vi.fn(
+      async (input: string | URL | Request) => {
+        return new Response(JSON.stringify({ url: String(input) }), {
+          status: 200,
+        })
+      },
+    )
+
+    const client = new FetchHttpClient({
+      baseUrl:
+        'http://localhost:6006/__storybook/laguuni/availability-screen--read-only/booking-enabled',
+      fetchImplementation,
+    })
+
+    await expect(
+      client.request({
+        decoder(value) {
+          return value as { url: string }
+        },
+        path: '/api/laguuni/products/6/availabledates/2026-05-01.json',
+        query: {
+          count: 1,
+          field: 'hourlyfrom',
+          mode: 'hours',
+          required_resources: true,
+          resource_count: 1,
+        },
+      }),
+    ).resolves.toEqual({
+      data: {
+        url: 'http://localhost:6006/__storybook/laguuni/availability-screen--read-only/booking-enabled/api/laguuni/products/6/availabledates/2026-05-01.json?count=1&field=hourlyfrom&mode=hours&required_resources=true&resource_count=1',
+      },
+      status: 200,
+    })
+  })
 })
