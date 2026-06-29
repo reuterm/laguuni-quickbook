@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { STORYBOOK_REFERENCE_DATE } from '$storybook/fixture-data'
-import { MatchMediaState } from '$storybook/fixtures'
+import { withMatchMedia } from '$storybook/fixtures'
 
+import { AVAILABILITY_CALENDAR_BREAKPOINT_QUERY } from '../availability-calendar'
 import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
 
 const meta = {
@@ -15,11 +16,10 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
+  decorators: [withMatchMedia(AVAILABILITY_CALENDAR_BREAKPOINT_QUERY, true)],
   render: () => (
-    <MatchMediaState matches>
-      <AvailabilityCalendarLoadingGrid
-        availabilityReferenceDate={STORYBOOK_REFERENCE_DATE}
-      />
-    </MatchMediaState>
+    <AvailabilityCalendarLoadingGrid
+      availabilityReferenceDate={STORYBOOK_REFERENCE_DATE}
+    />
   ),
 }

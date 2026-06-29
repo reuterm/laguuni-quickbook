@@ -4,13 +4,13 @@ import { useMemo, useState } from 'react'
 import { AppProviders } from '../src/app/providers'
 import { AvailabilityScopeProvider } from '../src/features/availability/use-availability-scope'
 import { UserSettingsProvider } from '../src/features/settings/use-user-settings'
+import { createMemoryStorage } from '../src/lib/storage/memory-storage'
 import {
   createStorybookScopedFetchImplementation,
   getStorybookLaguuniOrigin,
   type StorybookLaguuniScenario,
 } from './laguuni-handlers'
 import {
-  createInMemoryBrowserStorage,
   createStorybookPersistedStateIdentity,
   type StorybookPersistedStateSeed,
   seedStorybookPersistedState,
@@ -66,7 +66,7 @@ function SeededStateBoundary({
   storybookScenario: StorybookLaguuniScenario
 }) {
   const [storage] = useState(() => {
-    const nextStorage = createInMemoryBrowserStorage()
+    const nextStorage = createMemoryStorage()
 
     seedStorybookPersistedState(
       {
