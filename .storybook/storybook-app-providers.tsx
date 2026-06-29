@@ -1,5 +1,5 @@
 import type { Decorator } from '@storybook/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { AppProviders } from '../src/app/providers'
 import { AvailabilityScopeProvider } from '../src/features/availability/use-availability-scope'
@@ -79,6 +79,11 @@ function SeededStateBoundary({
 
     return nextStorage
   })
+  const fetchImplementation = useMemo(
+    () =>
+      createStorybookScopedFetchImplementation(apiScopeId, storybookScenario),
+    [apiScopeId, storybookScenario],
+  )
 
   return (
     <AppProviders
@@ -88,10 +93,7 @@ function SeededStateBoundary({
         parameters.availabilityReferenceDate ??
         DEFAULT_AVAILABILITY_REFERENCE_DATE
       }
-      fetchImplementation={createStorybookScopedFetchImplementation(
-        apiScopeId,
-        storybookScenario,
-      )}
+      fetchImplementation={fetchImplementation}
       storage={storage}
     >
       <UserSettingsProvider>

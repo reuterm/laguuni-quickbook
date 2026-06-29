@@ -1,8 +1,11 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { useState } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import {
+  useBookingService,
   useBrowserStorage,
+  useLaguuniApi,
   useReadOnlyNoticeStore,
 } from '../src/app/providers'
 import { useAvailabilityScope } from '../src/features/availability/use-availability-scope'
@@ -12,12 +15,15 @@ import {
   type BrowserStorage,
   SETTINGS_STORAGE_KEY,
 } from '../src/lib/storage/local-storage'
+import { server } from '../tests/msw/server'
+import { createStorybookLaguuniHandlers } from './laguuni-handlers'
 import { StorybookAppProviders } from './storybook-app-providers'
 
 describe('StorybookAppProviders', () => {
   afterEach(() => {
     cleanup()
     latestStorage = null
+    latestBookingService = null
   })
 
   it('keeps the same storage instance for same-story rerenders when persisted-state identity is unchanged', () => {
@@ -284,9 +290,94 @@ describe('StorybookAppProviders', () => {
     expect(screen.getByText('selected-cable:easy')).toBeVisible()
     expect(screen.getByText('notice-dismissed:false')).toBeVisible()
   })
+
+  it('keeps provider-owned dependency identity stable on same-story rerenders when scenario is unchanged', () => {
+    const Story = () => <BookingServiceProbe />
+
+    const { rerender } = render(
+      StorybookAppProviders(Story, {
+        id: 'availability--stable-fetch-identity',
+        parameters: {
+          laguuni: {
+            scenario: 'booking-enabled',
+          },
+          settings: {
+            name: 'Storybook User',
+          },
+        },
+      } as never),
+    )
+
+    const firstBookingService = latestBookingService
+
+    expect(firstBookingService).not.toBeNull()
+
+    rerender(
+      StorybookAppProviders(Story, {
+        id: 'availability--stable-fetch-identity',
+        parameters: {
+          laguuni: {
+            scenario: 'booking-enabled',
+          },
+          settings: {
+            availabilityView: 'cards',
+            defaultCable: null,
+            email: '',
+            name: 'Storybook User',
+            phone: '',
+            seasonPassCode: '',
+          },
+        },
+      } as never),
+    )
+
+    expect(latestBookingService).toBe(firstBookingService)
+  })
+
+  it('updates scoped fetch behavior when scenario changes for the same story', async () => {
+    const userStoryId = 'availability--scenario-change'
+    const Story = () => <CodeLookupProbe />
+
+    server.use(...createStorybookLaguuniHandlers())
+
+    const { rerender } = render(
+      StorybookAppProviders(Story, {
+        id: userStoryId,
+        parameters: {
+          laguuni: {
+            scenario: 'booking-enabled',
+          },
+        },
+      } as never),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lookup code' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('status:accepted:discount')).toBeVisible()
+    })
+
+    rerender(
+      StorybookAppProviders(Story, {
+        id: userStoryId,
+        parameters: {
+          laguuni: {
+            scenario: 'invalid-code',
+          },
+        },
+      } as never),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Lookup code' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('status:invalid:GENERAL_ERROR')).toBeVisible()
+    })
+  })
 })
 
 let latestStorage: BrowserStorage | null = null
+let latestBookingService: ReturnType<typeof useBookingService> | null = null
 
 function StorageProbe() {
   latestStorage = useBrowserStorage()
@@ -304,6 +395,44 @@ function StorageProbe() {
           ? 'storybook@example.com'
           : 'mutated@example.com'}
       </div>
+    </>
+  )
+}
+
+function BookingServiceProbe() {
+  latestBookingService = useBookingService()
+
+  return null
+}
+
+function CodeLookupProbe() {
+  const api = useLaguuniApi()
+  const [status, setStatus] = useState('idle')
+
+  async function lookupCode() {
+    try {
+      const result = await api.lookupCode({ code: 'FIXTURE-DISCOUNT' })
+
+      if (result.status === 'invalid') {
+        setStatus(`invalid:${result.errorCode}`)
+
+        return
+      }
+
+      setStatus(`accepted:${result.source}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'unknown-error'
+
+      setStatus(`error:${message}`)
+    }
+  }
+
+  return (
+    <>
+      <div>{`status:${status}`}</div>
+      <button type="button" onClick={lookupCode}>
+        Lookup code
+      </button>
     </>
   )
 }
