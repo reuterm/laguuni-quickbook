@@ -137,6 +137,8 @@ function TestDiagnosticsProvider({ children }: { children: ReactNode }) {
     <AppProviders
       apiBaseUrl="https://shop.laguuniin.fi"
       appVersion="test-version"
+      fetchImplementation={globalThis.fetch.bind(globalThis)}
+      storage={window.localStorage}
     >
       {children}
     </AppProviders>

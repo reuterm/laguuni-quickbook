@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { localDate } from '../../../tests/local-date'
 import type { LaguuniApi } from '../../lib/api/laguuni-api'
+import { createMemoryStorage } from '../../test/create-memory-storage'
 import { LocalDiagnosticsStore } from '../diagnostics/logs'
 import { DefaultBookingService } from './booking-service'
 
@@ -655,20 +656,4 @@ function createTrace() {
   })
 
   return diagnostics.beginTrace({ name: 'booking' })
-}
-
-function createMemoryStorage() {
-  const values = new Map<string, string>()
-
-  return {
-    getItem(key: string) {
-      return values.get(key) ?? null
-    },
-    removeItem(key: string) {
-      values.delete(key)
-    },
-    setItem(key: string, value: string) {
-      values.set(key, value)
-    },
-  }
 }

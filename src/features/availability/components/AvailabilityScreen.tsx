@@ -14,15 +14,12 @@ import {
   useAvailabilityReferenceDate,
   useDiagnostics,
   useLaguuniApi,
+  useReadOnlyNoticeStore,
 } from '../../../app/providers'
 import { getCableById } from '../../../domain/cable'
 import { BookingSheetFlow } from '../../booking/components/BookingSheetFlow'
 import { useBookingSheetController } from '../../booking/use-booking-sheet-controller'
 import { exportDiagnosticsForTrace } from '../../diagnostics/export'
-import {
-  loadReadOnlyNoticeDismissed,
-  saveReadOnlyNoticeDismissed,
-} from '../read-only-notice-storage'
 import { useAvailabilityOverview } from '../use-availability-overview'
 import { useAvailabilityScope } from '../use-availability-scope'
 import { AvailabilityCableSelector } from './AvailabilityCableSelector'
@@ -41,8 +38,9 @@ export function AvailabilityScreen({
   const api = useLaguuniApi()
   const diagnostics = useDiagnostics()
   const availabilityReferenceDate = useAvailabilityReferenceDate()
+  const readOnlyNoticeStore = useReadOnlyNoticeStore()
   const [isReadOnlyNoticeDismissed, setIsReadOnlyNoticeDismissed] = useState(
-    () => loadReadOnlyNoticeDismissed(),
+    () => readOnlyNoticeStore.isDismissed(),
   )
   const { selectedCable, selectCable } = useAvailabilityScope()
   const activeCable = getCableById(selectedCable)
@@ -73,9 +71,9 @@ export function AvailabilityScreen({
   })
 
   const handleDismissReadOnlyNotice = useCallback(() => {
-    saveReadOnlyNoticeDismissed(true)
+    readOnlyNoticeStore.dismiss()
     setIsReadOnlyNoticeDismissed(true)
-  }, [])
+  }, [readOnlyNoticeStore])
   const showReadOnlyNotice =
     isOnline && !isBookingReady && !isReadOnlyNoticeDismissed
   const bookingActionProps = getAvailabilityBookingActionProps(

@@ -1,13 +1,14 @@
 import { cleanup, fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
+import { createMemoryStorage } from '../../../test/create-memory-storage'
 import {
   clearPersistedAppState,
   enableDeveloperMode,
   writeCorruptedSettings,
 } from '../../../test/persisted-state'
 import { renderApp } from '../../../test/render-app'
+import { DEVELOPER_MODE_STORAGE_KEY } from '../developer-mode-storage'
 
 describe('Settings screen integration', () => {
   beforeEach(() => {
@@ -21,8 +22,9 @@ describe('Settings screen integration', () => {
 
   it('persists settings locally and restores the saved default cable', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     setInputValue('Name', 'Test User')
@@ -39,7 +41,7 @@ describe('Settings screen integration', () => {
 
     cleanup()
 
-    renderApp()
+    renderApp({ storage })
 
     expect(screen.getByRole('tab', { name: 'Easy' })).toHaveAttribute(
       'aria-selected',
@@ -61,8 +63,9 @@ describe('Settings screen integration', () => {
 
   it('maps the stored cards preference back to the Auto label', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
     await user.click(screen.getByRole('tab', { name: 'Auto' }))
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
@@ -81,8 +84,9 @@ describe('Settings screen integration', () => {
 
   it('does not override the current cable after changing the saved default in-session', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('tab', { name: 'Easy' }))
     await user.click(screen.getByRole('button', { name: 'Settings' }))
     await user.selectOptions(screen.getByLabelText('Default cable'), 'pro')
@@ -100,8 +104,9 @@ describe('Settings screen integration', () => {
 
   it('discards unsaved edits when the sheet closes', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
     await user.type(screen.getByLabelText('Name'), 'Unsaved draft')
     await user.click(screen.getByRole('button', { name: 'Close' }))
@@ -113,10 +118,11 @@ describe('Settings screen integration', () => {
 
   it('surfaces when corrupted local settings were reset to safe defaults', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    writeCorruptedSettings()
+    writeCorruptedSettings(undefined, storage)
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     expect(screen.getByRole('alert')).toHaveTextContent(
@@ -128,15 +134,16 @@ describe('Settings screen integration', () => {
   it('exports all retained diagnostics logs from settings', async () => {
     const user = userEvent.setup()
     const writeText = vi.fn(async () => {})
+    const storage = createMemoryStorage()
 
-    enableDeveloperMode()
+    enableDeveloperMode(storage)
     vi.stubGlobal('navigator', {
       clipboard: {
         writeText,
       },
     })
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     expect(screen.getByText('Developer tools')).toBeVisible()
@@ -168,8 +175,9 @@ describe('Settings screen integration', () => {
 
   it('keeps developer tools hidden until developer mode is enabled', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     expect(screen.queryByText('Developer tools')).not.toBeInTheDocument()
@@ -194,8 +202,9 @@ describe('Settings screen integration', () => {
 
   it('persists developer mode until it is disabled', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     const versionButton = screen.getByRole('button', {
@@ -220,18 +229,31 @@ describe('Settings screen integration', () => {
     expect(screen.queryByText('Developer tools')).not.toBeInTheDocument()
   })
 
+  it('reads developer mode from injected storage instead of window.localStorage', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+
+    window.localStorage.setItem(DEVELOPER_MODE_STORAGE_KEY, 'true')
+
+    renderApp({ storage })
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    expect(screen.queryByText('Developer tools')).not.toBeInTheDocument()
+  })
+
   it('clears retained diagnostics logs from developer tools', async () => {
     const user = userEvent.setup()
     const writeText = vi.fn(async () => {})
+    const storage = createMemoryStorage()
 
-    enableDeveloperMode()
+    enableDeveloperMode(storage)
     vi.stubGlobal('navigator', {
       clipboard: {
         writeText,
       },
     })
 
-    renderApp()
+    renderApp({ storage })
     await user.click(screen.getByRole('button', { name: 'Settings' }))
 
     await user.click(

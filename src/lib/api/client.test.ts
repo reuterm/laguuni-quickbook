@@ -55,4 +55,33 @@ describe('FetchHttpClient', () => {
 
     expect(fetchImplementation).toHaveBeenCalledOnce()
   })
+
+  it('resolves absolute-style paths from the api origin root', async () => {
+    const fetchImplementation: typeof fetch = vi.fn(
+      async (input: string | URL | Request) => {
+        return new Response(JSON.stringify({ url: String(input) }), {
+          status: 200,
+        })
+      },
+    )
+
+    const client = new FetchHttpClient({
+      baseUrl: 'https://host/prefix',
+      fetchImplementation,
+    })
+
+    await expect(
+      client.request({
+        decoder(value) {
+          return value as { url: string }
+        },
+        path: '/api/test.json',
+      }),
+    ).resolves.toEqual({
+      data: {
+        url: 'https://host/api/test.json',
+      },
+      status: 200,
+    })
+  })
 })

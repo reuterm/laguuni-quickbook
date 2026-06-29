@@ -1,7 +1,9 @@
-import { cleanup, screen } from '@testing-library/react'
+import { cleanup, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
+import { READ_ONLY_NOTICE_STORAGE_KEY } from '../features/availability/read-only-notice-storage'
+import { createMemoryStorage } from '../test/create-memory-storage'
 import {
   clearPersistedAppState,
   saveUserSettings,
@@ -16,9 +18,11 @@ describe('App', () => {
 
   it('shows read-only availability and an optional settings path before booking is configured', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     expect(
@@ -50,9 +54,11 @@ describe('App', () => {
 
   it('persists the dismissed read-only notice across remounts without enabling booking', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     expect(
@@ -76,6 +82,7 @@ describe('App', () => {
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     expect(
@@ -88,17 +95,55 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('shows booking actions once the required profile details are saved and lets users switch cables', async () => {
-    const user = userEvent.setup()
-
-    saveUserSettings({
-      email: 'test@example.com',
-      name: 'Test User',
-      phone: '+358401234567',
-    })
+  it('reads the read-only notice dismissal from injected storage instead of window.localStorage', async () => {
+    window.localStorage.setItem(READ_ONLY_NOTICE_STORAGE_KEY, 'true')
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage: createMemoryStorage(),
+    })
+
+    expect(
+      await screen.findByText(
+        /Save your name, phone, and email in Settings to reveal booking actions\./,
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('writes the read-only notice dismissal to injected storage instead of window.localStorage', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
+    })
+
+    await screen.findByRole('button', { name: 'Dismiss notice' })
+    await user.click(screen.getByRole('button', { name: 'Dismiss notice' }))
+
+    await waitFor(() => {
+      expect(storage.getItem(READ_ONLY_NOTICE_STORAGE_KEY)).toBe('true')
+    })
+    expect(window.localStorage.getItem(READ_ONLY_NOTICE_STORAGE_KEY)).toBeNull()
+  })
+
+  it('shows booking actions once the required profile details are saved and lets users switch cables', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+
+    saveUserSettings(
+      {
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '+358401234567',
+      },
+      storage,
+    )
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     expect(
@@ -121,16 +166,21 @@ describe('App', () => {
 
   it('books an available slot and surfaces success', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    saveUserSettings({
-      email: 'test@example.com',
-      name: 'Test User',
-      phone: '+358401234567',
-      seasonPassCode: 'FIXTURE-DISCOUNT',
-    })
+    saveUserSettings(
+      {
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '+358401234567',
+        seasonPassCode: 'FIXTURE-DISCOUNT',
+      },
+      storage,
+    )
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     await openFirstBookingSheet(user)
@@ -149,16 +199,21 @@ describe('App', () => {
 
   it('opens the existing booking sheet from a calendar availability badge', async () => {
     const user = userEvent.setup()
+    const storage = createMemoryStorage()
 
-    saveUserSettings({
-      availabilityView: 'calendar',
-      email: 'test@example.com',
-      name: 'Test User',
-      phone: '+358401234567',
-    })
+    saveUserSettings(
+      {
+        availabilityView: 'calendar',
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '+358401234567',
+      },
+      storage,
+    )
 
     renderApp({
       availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
     })
 
     const calendarButtons = await screen.findAllByRole('button', {

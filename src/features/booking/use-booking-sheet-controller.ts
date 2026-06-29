@@ -49,6 +49,13 @@ export function useBookingSheetController({
   const submitInFlightRef = useRef(false)
   const completedSubmissionRef = useRef<BookingFlowSubmission | null>(null)
 
+  const takeCompletedSubmission = useCallback(() => {
+    const completedSubmission = completedSubmissionRef.current
+    completedSubmissionRef.current = null
+
+    return completedSubmission
+  }, [])
+
   const finalizeCompletedSubmission = useCallback(
     async (submission: BookingFlowSubmission): Promise<void> => {
       if (submission.result.status !== 'success') {
@@ -81,8 +88,7 @@ export function useBookingSheetController({
       return
     }
 
-    const completedSubmission = completedSubmissionRef.current
-    completedSubmissionRef.current = null
+    const completedSubmission = takeCompletedSubmission()
 
     setBookingSheetState({ status: 'closed' })
 
@@ -94,10 +100,10 @@ export function useBookingSheetController({
     }
 
     void finalizeDismissedSubmission(completedSubmission)
-  }, [finalizeDismissedSubmission])
+  }, [finalizeDismissedSubmission, takeCompletedSubmission])
 
   const releaseAbandonedCompletedSubmission = useCallback(() => {
-    const completedSubmission = completedSubmissionRef.current
+    const completedSubmission = takeCompletedSubmission()
 
     if (
       completedSubmission === null ||
@@ -107,7 +113,7 @@ export function useBookingSheetController({
     }
 
     void completedSubmission.releaseReservation()
-  }, [])
+  }, [takeCompletedSubmission])
 
   const requestBooking = useCallback((selection: BookingSlotSelection) => {
     setBookingSheetState((currentState) => {

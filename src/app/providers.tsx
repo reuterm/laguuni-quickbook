@@ -1,5 +1,8 @@
 import { createContext, type PropsWithChildren, use, useMemo } from 'react'
-
+import {
+  LocalReadOnlyNoticeStore,
+  type ReadOnlyNoticeStore,
+} from '../features/availability/read-only-notice-storage'
 import {
   type BookingService,
   DefaultBookingService,
@@ -11,7 +14,7 @@ import {
 import { FetchHttpClient } from '../lib/api/client'
 import { type LaguuniApi, LaguuniApiClient } from '../lib/api/laguuni-api'
 import {
-  createBrowserStorage,
+  type BrowserStorage,
   LocalSettingsStore,
   type UserSettingsStore,
 } from '../lib/storage/local-storage'
@@ -21,7 +24,9 @@ type AppDependencies = {
   appVersion: string
   availabilityReferenceDate?: Date | undefined
   bookingService: BookingService
+  browserStorage: BrowserStorage
   diagnostics: Diagnostics
+  readOnlyNoticeStore: ReadOnlyNoticeStore
   settingsStore: UserSettingsStore
 }
 
@@ -31,20 +36,24 @@ type AppProvidersProps = PropsWithChildren<{
   apiBaseUrl: string
   appVersion: string
   availabilityReferenceDate?: Date | undefined
+  fetchImplementation: typeof fetch
+  storage: BrowserStorage
 }>
 
 export function AppProviders({
   apiBaseUrl,
   appVersion,
   availabilityReferenceDate,
+  fetchImplementation,
+  storage,
   children,
 }: AppProvidersProps) {
   const dependencies = useMemo<AppDependencies>(() => {
-    const browserStorage = createBrowserStorage()
+    const browserStorage = storage
     const api = new LaguuniApiClient({
       client: new FetchHttpClient({
         baseUrl: apiBaseUrl,
-        fetchImplementation: globalThis.fetch.bind(globalThis),
+        fetchImplementation,
       }),
     })
     const settingsStore = new LocalSettingsStore({
@@ -54,18 +63,29 @@ export function AppProviders({
       appVersion,
       storage: browserStorage,
     })
+    const readOnlyNoticeStore = new LocalReadOnlyNoticeStore({
+      storage: browserStorage,
+    })
 
     return {
       api,
       appVersion,
       availabilityReferenceDate,
+      browserStorage,
       bookingService: new DefaultBookingService({
         api,
       }),
       diagnostics,
+      readOnlyNoticeStore,
       settingsStore,
     }
-  }, [apiBaseUrl, appVersion, availabilityReferenceDate])
+  }, [
+    apiBaseUrl,
+    appVersion,
+    availabilityReferenceDate,
+    fetchImplementation,
+    storage,
+  ])
 
   return (
     <AppDependenciesContext.Provider value={dependencies}>
@@ -106,4 +126,12 @@ export function useUserSettingsStore(): UserSettingsStore {
 
 export function useDiagnostics(): Diagnostics {
   return useAppDependencies().diagnostics
+}
+
+export function useReadOnlyNoticeStore(): ReadOnlyNoticeStore {
+  return useAppDependencies().readOnlyNoticeStore
+}
+
+export function useBrowserStorage(): BrowserStorage {
+  return useAppDependencies().browserStorage
 }

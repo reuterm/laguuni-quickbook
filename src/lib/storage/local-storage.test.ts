@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import type { UserSettings } from '../../domain/settings'
-import {
-  type BrowserStorage,
-  LocalSettingsStore,
-  SETTINGS_STORAGE_KEY,
-} from './local-storage'
+import { createMemoryStorage } from '../../test/create-memory-storage'
+import { LocalSettingsStore, SETTINGS_STORAGE_KEY } from './local-storage'
 
 const FIXTURE_SETTINGS: UserSettings = {
   availabilityView: 'calendar',
@@ -159,21 +156,3 @@ describe('LocalSettingsStore', () => {
     })
   })
 })
-
-function createMemoryStorage(
-  initialEntries: Record<string, string> = {},
-): BrowserStorage {
-  const values = new Map(Object.entries(initialEntries))
-
-  return {
-    getItem(key) {
-      return values.get(key) ?? null
-    },
-    removeItem(key) {
-      values.delete(key)
-    },
-    setItem(key, value) {
-      values.set(key, value)
-    },
-  }
-}

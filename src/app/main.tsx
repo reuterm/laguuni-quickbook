@@ -1,6 +1,7 @@
 import { registerSW } from 'virtual:pwa-register'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { createBrowserStorage } from '../lib/storage/local-storage'
 
 import App from './App'
 import './App.css'
@@ -26,6 +27,8 @@ createRoot(rootElement).render(
     <AppProviders
       apiBaseUrl={appConfig.apiBaseUrl}
       appVersion={appConfig.appVersion}
+      fetchImplementation={globalThis.fetch.bind(globalThis)}
+      storage={createBrowserStorage()}
     >
       <App />
     </AppProviders>
