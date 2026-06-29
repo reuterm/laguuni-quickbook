@@ -1,10 +1,6 @@
+import { clearKnownPersistedState } from '../app/persisted-state'
 import { DEFAULT_USER_SETTINGS, type UserSettings } from '../domain/settings'
-import { READ_ONLY_NOTICE_STORAGE_KEY } from '../features/availability/read-only-notice-storage'
-import { DIAGNOSTICS_STORAGE_KEY } from '../features/diagnostics/logs'
-import {
-  DEVELOPER_MODE_STORAGE_KEY,
-  saveDeveloperModeEnabled,
-} from '../features/settings/developer-mode-storage'
+import { saveDeveloperModeEnabled } from '../features/settings/developer-mode-storage'
 import {
   type BrowserStorage,
   LocalSettingsStore,
@@ -14,10 +10,7 @@ import {
 export function clearPersistedAppState(
   storage: BrowserStorage = window.localStorage,
 ) {
-  storage.removeItem(DEVELOPER_MODE_STORAGE_KEY)
-  storage.removeItem(DIAGNOSTICS_STORAGE_KEY)
-  storage.removeItem(READ_ONLY_NOTICE_STORAGE_KEY)
-  storage.removeItem(SETTINGS_STORAGE_KEY)
+  clearKnownPersistedState(storage)
 }
 
 export function saveUserSettings(

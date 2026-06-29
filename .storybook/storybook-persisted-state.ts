@@ -1,13 +1,9 @@
+import { clearKnownPersistedState } from '../src/app/persisted-state'
 import {
   DEFAULT_USER_SETTINGS,
   type UserSettings,
 } from '../src/domain/settings'
-import { READ_ONLY_NOTICE_STORAGE_KEY } from '../src/features/availability/read-only-notice-storage'
-import { DIAGNOSTICS_STORAGE_KEY } from '../src/features/diagnostics/logs'
-import {
-  DEVELOPER_MODE_STORAGE_KEY,
-  saveDeveloperModeEnabled,
-} from '../src/features/settings/developer-mode-storage'
+import { saveDeveloperModeEnabled } from '../src/features/settings/developer-mode-storage'
 import {
   type BrowserStorage,
   LocalSettingsStore,
@@ -26,24 +22,6 @@ type CanonicalStorybookPersistedStateSeed = {
   settings: UserSettings | null
 }
 
-export function createInMemoryBrowserStorage(
-  initialEntries: Record<string, string> = {},
-): BrowserStorage {
-  const values = new Map(Object.entries(initialEntries))
-
-  return {
-    getItem(key) {
-      return values.get(key) ?? null
-    },
-    removeItem(key) {
-      values.delete(key)
-    },
-    setItem(key, value) {
-      values.set(key, value)
-    },
-  }
-}
-
 export function seedStorybookPersistedState(
   {
     developerMode = false,
@@ -52,7 +30,7 @@ export function seedStorybookPersistedState(
   }: StorybookPersistedStateSeed,
   storage: BrowserStorage,
 ) {
-  clearPersistedStorybookState(storage)
+  clearKnownPersistedState(storage)
 
   if (seedCorruptedSettings) {
     writeStorybookCorruptedSettings(storage)
@@ -92,13 +70,6 @@ function getCanonicalStorybookPersistedStateSeed({
             ...settings,
           },
   }
-}
-
-function clearPersistedStorybookState(storage: BrowserStorage) {
-  storage.removeItem(DEVELOPER_MODE_STORAGE_KEY)
-  storage.removeItem(DIAGNOSTICS_STORAGE_KEY)
-  storage.removeItem(READ_ONLY_NOTICE_STORAGE_KEY)
-  storage.removeItem(SETTINGS_STORAGE_KEY)
 }
 
 export function saveStorybookUserSettings(

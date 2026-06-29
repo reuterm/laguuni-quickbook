@@ -1,13 +1,12 @@
 import { createContext, type PropsWithChildren, use, useMemo } from 'react'
-
+import {
+  LocalReadOnlyNoticeStore,
+  type ReadOnlyNoticeStore,
+} from '../features/availability/read-only-notice-storage'
 import {
   type BookingService,
   DefaultBookingService,
 } from '../features/booking/booking-service'
-import {
-  type ReadOnlyNoticeStore,
-  LocalReadOnlyNoticeStore,
-} from '../features/availability/read-only-notice-storage'
 import {
   type Diagnostics,
   LocalDiagnosticsStore,
