@@ -1,12 +1,10 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { useState } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { useBrowserStorage } from '../src/app/providers'
 import {
-  loadReadOnlyNoticeDismissed,
-  saveReadOnlyNoticeDismissed,
-} from '../src/features/availability/read-only-notice-storage'
+  useBrowserStorage,
+  useReadOnlyNoticeStore,
+} from '../src/app/providers'
 import { useAvailabilityScope } from '../src/features/availability/use-availability-scope'
 import { useDeveloperMode } from '../src/features/settings/use-developer-mode'
 import { useUserSettings } from '../src/features/settings/use-user-settings'
@@ -311,13 +309,10 @@ function StorageProbe() {
 }
 
 function PersistedStateProbe() {
-  const storage = useBrowserStorage()
+  const readOnlyNoticeStore = useReadOnlyNoticeStore()
   const { settings, saveSettings } = useUserSettings()
   const { developerModeEnabled, registerVersionTap } = useDeveloperMode()
   const { selectedCable, selectCable } = useAvailabilityScope()
-  const [isNoticeDismissed, setIsNoticeDismissed] = useState(() =>
-    loadReadOnlyNoticeDismissed(storage),
-  )
 
   function mutateState() {
     saveSettings({
@@ -331,8 +326,7 @@ function PersistedStateProbe() {
     }
 
     selectCable('pro')
-    saveReadOnlyNoticeDismissed(true, storage)
-    setIsNoticeDismissed(true)
+    readOnlyNoticeStore.dismiss()
   }
 
   return (
@@ -341,7 +335,7 @@ function PersistedStateProbe() {
       <div>{`email:${settings.email}`}</div>
       <div>{`developer-mode:${developerModeEnabled}`}</div>
       <div>{`selected-cable:${selectedCable}`}</div>
-      <div>{`notice-dismissed:${isNoticeDismissed}`}</div>
+      <div>{`notice-dismissed:${readOnlyNoticeStore.isDismissed()}`}</div>
       <button type="button" onClick={mutateState}>
         Mutate persisted state consumers
       </button>

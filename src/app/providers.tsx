@@ -5,6 +5,10 @@ import {
   DefaultBookingService,
 } from '../features/booking/booking-service'
 import {
+  type ReadOnlyNoticeStore,
+  LocalReadOnlyNoticeStore,
+} from '../features/availability/read-only-notice-storage'
+import {
   type Diagnostics,
   LocalDiagnosticsStore,
 } from '../features/diagnostics/logs'
@@ -23,6 +27,7 @@ type AppDependencies = {
   bookingService: BookingService
   browserStorage: BrowserStorage
   diagnostics: Diagnostics
+  readOnlyNoticeStore: ReadOnlyNoticeStore
   settingsStore: UserSettingsStore
 }
 
@@ -59,6 +64,9 @@ export function AppProviders({
       appVersion,
       storage: browserStorage,
     })
+    const readOnlyNoticeStore = new LocalReadOnlyNoticeStore({
+      storage: browserStorage,
+    })
 
     return {
       api,
@@ -69,6 +77,7 @@ export function AppProviders({
         api,
       }),
       diagnostics,
+      readOnlyNoticeStore,
       settingsStore,
     }
   }, [
@@ -118,6 +127,10 @@ export function useUserSettingsStore(): UserSettingsStore {
 
 export function useDiagnostics(): Diagnostics {
   return useAppDependencies().diagnostics
+}
+
+export function useReadOnlyNoticeStore(): ReadOnlyNoticeStore {
+  return useAppDependencies().readOnlyNoticeStore
 }
 
 export function useBrowserStorage(): BrowserStorage {

@@ -10,7 +10,12 @@ import {
 } from '../features/settings/use-user-settings'
 import { SETTINGS_STORAGE_KEY } from '../lib/storage/local-storage'
 import { createMemoryStorage } from '../test/create-memory-storage'
-import { AppProviders, useBrowserStorage, useDiagnostics } from './providers'
+import {
+  AppProviders,
+  useBrowserStorage,
+  useDiagnostics,
+  useReadOnlyNoticeStore,
+} from './providers'
 
 describe('AppProviders', () => {
   const fetchImplementation = globalThis.fetch.bind(globalThis)
@@ -136,11 +141,12 @@ function DiagnosticsProbe() {
 
 function StorageProbe() {
   const storage = useBrowserStorage()
+  const readOnlyNoticeStore = useReadOnlyNoticeStore()
 
   return (
     <>
       <div>{`developer-mode:${loadDeveloperModeEnabled(storage)}`}</div>
-      <div>{`read-only-dismissed:${storage.getItem(READ_ONLY_NOTICE_STORAGE_KEY) === 'true'}`}</div>
+      <div>{`read-only-dismissed:${readOnlyNoticeStore.isDismissed()}`}</div>
     </>
   )
 }
