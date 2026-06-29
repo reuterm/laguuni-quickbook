@@ -8,6 +8,7 @@ type RenderAppOptions = {
   apiBaseUrl?: string
   appVersion?: string
   availabilityReferenceDate?: Date
+  fetchImplementation?: typeof fetch
   storage: BrowserStorage
 }
 
@@ -18,6 +19,7 @@ export function renderApp({
   apiBaseUrl = DEFAULT_API_BASE_URL,
   appVersion = DEFAULT_APP_VERSION,
   availabilityReferenceDate,
+  fetchImplementation = globalThis.fetch.bind(globalThis),
   storage,
 }: RenderAppOptions) {
   return render(
@@ -25,6 +27,7 @@ export function renderApp({
       apiBaseUrl={apiBaseUrl}
       appVersion={appVersion}
       availabilityReferenceDate={availabilityReferenceDate}
+      fetchImplementation={fetchImplementation}
       storage={storage}
     >
       <App />

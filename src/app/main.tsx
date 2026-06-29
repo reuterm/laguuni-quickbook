@@ -27,6 +27,7 @@ createRoot(rootElement).render(
     <AppProviders
       apiBaseUrl={appConfig.apiBaseUrl}
       appVersion={appConfig.appVersion}
+      fetchImplementation={globalThis.fetch.bind(globalThis)}
       storage={createBrowserStorage()}
     >
       <App />

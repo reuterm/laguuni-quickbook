@@ -684,6 +684,7 @@ function TestProviders({ children }: { children: React.ReactNode }) {
       apiBaseUrl="https://shop.laguuniin.fi"
       appVersion="test-version"
       availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+      fetchImplementation={globalThis.fetch.bind(globalThis)}
       storage={window.localStorage}
     >
       <UserSettingsProvider>{children}</UserSettingsProvider>

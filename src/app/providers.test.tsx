@@ -13,6 +13,8 @@ import { createMemoryStorage } from '../test/create-memory-storage'
 import { AppProviders, useBrowserStorage, useDiagnostics } from './providers'
 
 describe('AppProviders', () => {
+  const fetchImplementation = globalThis.fetch.bind(globalThis)
+
   afterEach(() => {
     window.localStorage.clear()
   })
@@ -47,6 +49,7 @@ describe('AppProviders', () => {
       <AppProviders
         apiBaseUrl="https://shop.laguuniin.fi"
         appVersion="test-version"
+        fetchImplementation={fetchImplementation}
         storage={storage}
       >
         <UserSettingsProvider>
@@ -67,6 +70,7 @@ describe('AppProviders', () => {
       <AppProviders
         apiBaseUrl="https://shop.laguuniin.fi"
         appVersion="test-version"
+        fetchImplementation={fetchImplementation}
         storage={storage}
       >
         <DiagnosticsProbe />
@@ -97,6 +101,7 @@ describe('AppProviders', () => {
       <AppProviders
         apiBaseUrl="https://shop.laguuniin.fi"
         appVersion="test-version"
+        fetchImplementation={fetchImplementation}
         storage={storage}
       >
         <StorageProbe />
