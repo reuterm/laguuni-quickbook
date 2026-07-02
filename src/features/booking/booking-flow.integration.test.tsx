@@ -351,9 +351,11 @@ describe('booking flow integration', () => {
 
     await user.click(screen.getByRole('button', { name: 'Close' }))
 
-    expect(
-      screen.queryByRole('heading', { name: 'Booking failed' }),
-    ).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('heading', { name: 'Booking failed' }),
+      ).not.toBeInTheDocument()
+    })
   })
 
   it('shows a successful booking status', async () => {
@@ -414,9 +416,11 @@ describe('booking flow integration', () => {
 
     await user.click(screen.getByRole('button', { name: 'Close' }))
 
-    expect(
-      screen.queryByRole('heading', { name: 'Confirm booking' }),
-    ).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('heading', { name: 'Confirm booking' }),
+      ).not.toBeInTheDocument()
+    })
     expect(orderRequests).toHaveLength(0)
   })
 
