@@ -101,13 +101,15 @@ function SheetContent({
   VariantProps<typeof sheetVariants> & {
     showCloseButton?: boolean
   }) {
+  const forceMountProps = forceMount ? { forceMount: true as const } : {}
+
   return (
-    <SheetPortal forceMount={forceMount}>
-      <SheetOverlay forceMount={forceMount} />
+    <SheetPortal {...forceMountProps}>
+      <SheetOverlay {...forceMountProps} />
       <DialogPrimitive.Content
         className={cn(sheetVariants({ className, side }))}
         data-slot="sheet-content"
-        forceMount={forceMount}
+        {...forceMountProps}
         {...props}
       >
         {children}

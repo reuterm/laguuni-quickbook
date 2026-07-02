@@ -37,7 +37,6 @@ export function BookingSheet({
       <SheetContent
         side="bottom"
         className="rounded-t-[2rem] px-5 pb-7 pt-6 sm:mx-auto sm:max-w-lg"
-        forceMount
         showCloseButton={false}
         onEscapeKeyDown={(event) => {
           if (!dismissible) {

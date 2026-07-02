@@ -23,6 +23,7 @@ export const Confirm: Story = {
     children: <BookingConfirmPanel onConfirm={noopAsync} />,
     dismissible: true,
     onDismiss: noop,
+    open: true,
     summary: getBookingSelectionPresentation(createSelection()),
   },
 }

@@ -52,12 +52,12 @@ describe('BookingSheet', () => {
     const onDismiss = vi.fn()
 
     render(
-        <BookingSheet
-          dismissible={false}
-          open
-          onDismiss={onDismiss}
-          summary={selectionSummary}
-        >
+      <BookingSheet
+        dismissible={false}
+        open
+        onDismiss={onDismiss}
+        summary={selectionSummary}
+      >
         <BookingSubmittingPanel selectionLabel={selectionSummary.label} />
       </BookingSheet>,
     )
@@ -115,12 +115,12 @@ describe('BookingSheet', () => {
     const onDismiss = vi.fn()
 
     render(
-        <BookingSheet
-          dismissible={false}
-          open
-          onDismiss={onDismiss}
-          summary={selectionSummary}
-        >
+      <BookingSheet
+        dismissible={false}
+        open
+        onDismiss={onDismiss}
+        summary={selectionSummary}
+      >
         <BookingSubmittingPanel selectionLabel={selectionSummary.label} />
       </BookingSheet>,
     )
