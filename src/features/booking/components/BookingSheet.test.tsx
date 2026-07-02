@@ -22,7 +22,7 @@ afterEach(() => {
 describe('BookingSheet', () => {
   it('renders a confirmation summary before submission', () => {
     render(
-      <BookingSheet onDismiss={() => {}} summary={selectionSummary}>
+      <BookingSheet open onDismiss={() => {}} summary={selectionSummary}>
         <BookingConfirmPanel onConfirm={async () => {}} />
       </BookingSheet>,
     )
@@ -39,7 +39,7 @@ describe('BookingSheet', () => {
 
   it('does not apply spinner styling to the booking label while submitting', () => {
     render(
-      <BookingSheet onDismiss={() => {}} summary={selectionSummary}>
+      <BookingSheet open onDismiss={() => {}} summary={selectionSummary}>
         <BookingSubmittingPanel selectionLabel={selectionSummary.label} />
       </BookingSheet>,
     )
@@ -54,6 +54,7 @@ describe('BookingSheet', () => {
     render(
       <BookingSheet
         dismissible={false}
+        open
         onDismiss={onDismiss}
         summary={selectionSummary}
       >
@@ -78,7 +79,7 @@ describe('BookingSheet', () => {
     const onDismiss = vi.fn()
 
     render(
-      <BookingSheet onDismiss={onDismiss} summary={selectionSummary}>
+      <BookingSheet open onDismiss={onDismiss} summary={selectionSummary}>
         <BookingConfirmPanel onConfirm={async () => {}} />
       </BookingSheet>,
     )
@@ -93,7 +94,7 @@ describe('BookingSheet', () => {
     const onDismiss = vi.fn()
 
     render(
-      <BookingSheet onDismiss={onDismiss} summary={selectionSummary}>
+      <BookingSheet open onDismiss={onDismiss} summary={selectionSummary}>
         <BookingConfirmPanel onConfirm={async () => {}} />
       </BookingSheet>,
     )
@@ -116,6 +117,7 @@ describe('BookingSheet', () => {
     render(
       <BookingSheet
         dismissible={false}
+        open
         onDismiss={onDismiss}
         summary={selectionSummary}
       >

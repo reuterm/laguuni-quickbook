@@ -108,4 +108,55 @@ describe('BookingSheetFlow', () => {
 
     expect(onExportTrace).toHaveBeenCalledWith('trace-failed')
   })
+
+  it('cancels a pending unmount when the booking sheet reopens', () => {
+    const firstState = {
+      selection: {
+        cableId: 'pro',
+        date: localDate('2026-05-20'),
+        endTime: '16:00',
+        startTime: '15:00',
+      },
+      status: 'confirm',
+    } as const
+
+    const reopenedState = {
+      selection: {
+        cableId: 'easy',
+        date: localDate('2026-05-21'),
+        endTime: '11:00',
+        startTime: '10:00',
+      },
+      status: 'confirm',
+    } as const
+
+    const { rerender } = render(
+      <BookingSheetFlow
+        bookingSheetState={firstState}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+      />,
+    )
+
+    rerender(
+      <BookingSheetFlow
+        bookingSheetState={{ status: 'closed' }}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+      />,
+    )
+
+    rerender(
+      <BookingSheetFlow
+        bookingSheetState={reopenedState}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+      />,
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Confirm booking' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Easy')).toBeInTheDocument()
+  })
 })

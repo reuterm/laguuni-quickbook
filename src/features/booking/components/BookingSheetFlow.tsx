@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useRef } from 'react'
 
 import { getBookingSelectionPresentation } from '../booking-selection-label'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
@@ -20,18 +20,30 @@ export function BookingSheetFlow({
   dismissBookingSheet,
   onExportTrace,
 }: BookingSheetFlowProps) {
-  if (bookingSheetState.status === 'closed') {
+  const renderedStateRef = useRef<Exclude<
+    BookingSheetState,
+    { status: 'closed' }
+  > | null>(bookingSheetState.status === 'closed' ? null : bookingSheetState)
+  const open = bookingSheetState.status !== 'closed'
+
+  if (open) {
+    renderedStateRef.current = bookingSheetState
+  }
+
+  const renderedState = renderedStateRef.current
+
+  if (renderedState === null) {
     return null
   }
 
   const selectionSummary = getBookingSelectionPresentation(
-    bookingSheetState.selection,
+    renderedState.selection,
   )
 
   let dismissible = true
   let content: ReactNode
 
-  switch (bookingSheetState.status) {
+  switch (renderedState.status) {
     case 'confirm':
       content = <BookingConfirmPanel onConfirm={confirmBooking} />
       break
@@ -45,9 +57,9 @@ export function BookingSheetFlow({
       content = (
         <BookingResultPanel
           onExportTrace={onExportTrace}
-          result={bookingSheetState.result}
+          result={renderedState.result}
           selectionLabel={selectionSummary.label}
-          traceId={bookingSheetState.traceId}
+          traceId={renderedState.traceId}
         />
       )
       break
@@ -57,6 +69,7 @@ export function BookingSheetFlow({
     <BookingSheet
       dismissible={dismissible}
       onDismiss={dismissBookingSheet}
+      open={open}
       summary={selectionSummary}
     >
       {content}
