@@ -93,6 +93,7 @@ const sheetVariants = cva(
 function SheetContent({
   children,
   className,
+  forceMount,
   side = 'right',
   showCloseButton = true,
   ...props
@@ -101,11 +102,12 @@ function SheetContent({
     showCloseButton?: boolean
   }) {
   return (
-    <SheetPortal>
-      <SheetOverlay />
+    <SheetPortal forceMount={forceMount}>
+      <SheetOverlay forceMount={forceMount} />
       <DialogPrimitive.Content
         className={cn(sheetVariants({ className, side }))}
         data-slot="sheet-content"
+        forceMount={forceMount}
         {...props}
       >
         {children}

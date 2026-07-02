@@ -14,6 +14,7 @@ type BookingSheetProps = {
   children: React.ReactNode
   dismissible?: boolean
   onDismiss: () => void
+  open: boolean
   summary: BookingSelectionPresentation
 }
 
@@ -21,13 +22,14 @@ export function BookingSheet({
   children,
   dismissible = true,
   onDismiss,
+  open,
   summary,
 }: BookingSheetProps) {
   return (
     <Sheet
-      open
-      onOpenChange={(open) => {
-        if (!open && dismissible) {
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && dismissible) {
           onDismiss()
         }
       }}
@@ -35,6 +37,7 @@ export function BookingSheet({
       <SheetContent
         side="bottom"
         className="rounded-t-[2rem] px-5 pb-7 pt-6 sm:mx-auto sm:max-w-lg"
+        forceMount
         showCloseButton={false}
         onEscapeKeyDown={(event) => {
           if (!dismissible) {

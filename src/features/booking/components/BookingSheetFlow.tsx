@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 
 import { getBookingSelectionPresentation } from '../booking-selection-label'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
@@ -14,24 +14,66 @@ type BookingSheetFlowProps = {
   onExportTrace?: ((traceId: string) => Promise<void>) | undefined
 }
 
+export const BOOKING_SHEET_EXIT_DURATION_MS = 250
+
 export function BookingSheetFlow({
   bookingSheetState,
   confirmBooking,
   dismissBookingSheet,
   onExportTrace,
 }: BookingSheetFlowProps) {
-  if (bookingSheetState.status === 'closed') {
+  const [renderedState, setRenderedState] = useState<BookingSheetState>(
+    bookingSheetState,
+  )
+  const renderedStateRef = useRef(renderedState)
+  const closeTimeoutRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    renderedStateRef.current = renderedState
+  }, [renderedState])
+
+  useEffect(() => {
+    if (closeTimeoutRef.current !== null) {
+      window.clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+
+    if (bookingSheetState.status !== 'closed') {
+      setRenderedState(bookingSheetState)
+      return
+    }
+
+    if (renderedStateRef.current.status === 'closed') {
+      return
+    }
+
+    closeTimeoutRef.current = window.setTimeout(() => {
+      setRenderedState({ status: 'closed' })
+      closeTimeoutRef.current = null
+    }, BOOKING_SHEET_EXIT_DURATION_MS)
+  }, [bookingSheetState])
+
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current !== null) {
+        window.clearTimeout(closeTimeoutRef.current)
+        closeTimeoutRef.current = null
+      }
+    }
+  }, [])
+
+  if (renderedState.status === 'closed') {
     return null
   }
 
   const selectionSummary = getBookingSelectionPresentation(
-    bookingSheetState.selection,
+    renderedState.selection,
   )
 
   let dismissible = true
   let content: ReactNode
 
-  switch (bookingSheetState.status) {
+  switch (renderedState.status) {
     case 'confirm':
       content = <BookingConfirmPanel onConfirm={confirmBooking} />
       break
@@ -45,9 +87,9 @@ export function BookingSheetFlow({
       content = (
         <BookingResultPanel
           onExportTrace={onExportTrace}
-          result={bookingSheetState.result}
+          result={renderedState.result}
           selectionLabel={selectionSummary.label}
-          traceId={bookingSheetState.traceId}
+          traceId={renderedState.traceId}
         />
       )
       break
@@ -57,6 +99,7 @@ export function BookingSheetFlow({
     <BookingSheet
       dismissible={dismissible}
       onDismiss={dismissBookingSheet}
+      open={bookingSheetState.status !== 'closed'}
       summary={selectionSummary}
     >
       {content}

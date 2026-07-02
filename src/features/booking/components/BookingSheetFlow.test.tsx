@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { localDate } from '../../../../tests/local-date'
@@ -142,7 +142,9 @@ describe('BookingSheetFlow', () => {
       screen.getByRole('heading', { name: 'Confirm booking' }),
     ).toBeInTheDocument()
 
-    vi.runAllTimers()
+    act(() => {
+      vi.runAllTimers()
+    })
 
     expect(
       screen.queryByRole('heading', { name: 'Booking details' }),
@@ -164,7 +166,7 @@ describe('BookingSheetFlow', () => {
       status: 'confirm',
     } as const
 
-    const { container, rerender } = render(
+    const { rerender } = render(
       <BookingSheetFlow
         bookingSheetState={confirmState}
         confirmBooking={async () => {}}
@@ -180,9 +182,11 @@ describe('BookingSheetFlow', () => {
       />,
     )
 
-    expect(container.querySelector('[data-state="closed"]')).not.toBeNull()
+    expect(document.body.querySelector('[data-state="closed"]')).not.toBeNull()
 
-    vi.runAllTimers()
+    act(() => {
+      vi.runAllTimers()
+    })
     vi.useRealTimers()
   })
 
@@ -233,7 +237,9 @@ describe('BookingSheetFlow', () => {
       />,
     )
 
-    vi.runAllTimers()
+    act(() => {
+      vi.runAllTimers()
+    })
 
     expect(
       screen.getByRole('heading', { name: 'Confirm booking' }),
