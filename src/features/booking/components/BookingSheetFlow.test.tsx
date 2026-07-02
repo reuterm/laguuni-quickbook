@@ -108,4 +108,138 @@ describe('BookingSheetFlow', () => {
 
     expect(onExportTrace).toHaveBeenCalledWith('trace-failed')
   })
+
+  it('keeps the last sheet content mounted briefly after the flow closes', () => {
+    vi.useFakeTimers()
+
+    const confirmState = {
+      selection: {
+        cableId: 'pro',
+        date: localDate('2026-05-20'),
+        endTime: '16:00',
+        startTime: '15:00',
+      },
+      status: 'confirm',
+    } as const
+
+    const { rerender } = render(
+      <BookingSheetFlow
+        bookingSheetState={confirmState}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+      />,
+    )
+
+    rerender(
+      <BookingSheetFlow
+        bookingSheetState={{ status: 'closed' }}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+      />,
+    )
+
+    expect(
+      screen.getByRole('heading', { name: 'Confirm booking' }),
+    ).toBeInTheDocument()
+
+    vi.runAllTimers()
+
+    expect(
+      screen.queryByRole('heading', { name: 'Booking details' }),
+    ).not.toBeInTheDocument()
+
+    vi.useRealTimers()
+  })
+
+  it('renders the preserved sheet as closed before unmounting', () => {
+    vi.useFakeTimers()
+
+    const confirmState = {
+      selection: {
+        cableId: 'pro',
+        date: localDate('2026-05-20'),
+        endTime: '16:00',
+        startTime: '15:00',
+      },
+      status: 'confirm',
+    } as const
+
+    const { container, rerender } = render(
+      <BookingSheetFlow
+        bookingSheetState={confirmState}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+      />,
+    )
+
+    rerender(
+      <BookingSheetFlow
+        bookingSheetState={{ status: 'closed' }}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+      />,
+    )
+
+    expect(container.querySelector('[data-state="closed"]')).not.toBeNull()
+
+    vi.runAllTimers()
+    vi.useRealTimers()
+  })
+
+  it('cancels a pending unmount when the booking sheet reopens', () => {
+    vi.useFakeTimers()
+
+    const firstState = {
+      selection: {
+        cableId: 'pro',
+        date: localDate('2026-05-20'),
+        endTime: '16:00',
+        startTime: '15:00',
+      },
+      status: 'confirm',
+    } as const
+
+    const reopenedState = {
+      selection: {
+        cableId: 'easy',
+        date: localDate('2026-05-21'),
+        endTime: '11:00',
+        startTime: '10:00',
+      },
+      status: 'confirm',
+    } as const
+
+    const { rerender } = render(
+      <BookingSheetFlow
+        bookingSheetState={firstState}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+      />,
+    )
+
+    rerender(
+      <BookingSheetFlow
+        bookingSheetState={{ status: 'closed' }}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+      />,
+    )
+
+    rerender(
+      <BookingSheetFlow
+        bookingSheetState={reopenedState}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+      />,
+    )
+
+    vi.runAllTimers()
+
+    expect(
+      screen.getByRole('heading', { name: 'Confirm booking' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Easy')).toBeInTheDocument()
+
+    vi.useRealTimers()
+  })
 })
