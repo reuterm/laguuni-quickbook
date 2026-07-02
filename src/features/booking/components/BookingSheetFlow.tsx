@@ -20,19 +20,17 @@ export function BookingSheetFlow({
   dismissBookingSheet,
   onExportTrace,
 }: BookingSheetFlowProps) {
-  const lastOpenStateRef = useRef<Exclude<
+  const renderedStateRef = useRef<Exclude<
     BookingSheetState,
     { status: 'closed' }
   > | null>(bookingSheetState.status === 'closed' ? null : bookingSheetState)
+  const open = bookingSheetState.status !== 'closed'
 
-  if (bookingSheetState.status !== 'closed') {
-    lastOpenStateRef.current = bookingSheetState
+  if (open) {
+    renderedStateRef.current = bookingSheetState
   }
 
-  const renderedState =
-    bookingSheetState.status === 'closed'
-      ? lastOpenStateRef.current
-      : bookingSheetState
+  const renderedState = renderedStateRef.current
 
   if (renderedState === null) {
     return null
@@ -71,7 +69,7 @@ export function BookingSheetFlow({
     <BookingSheet
       dismissible={dismissible}
       onDismiss={dismissBookingSheet}
-      open={bookingSheetState.status !== 'closed'}
+      open={open}
       summary={selectionSummary}
     >
       {content}
