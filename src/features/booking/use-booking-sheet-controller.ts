@@ -149,7 +149,9 @@ export function useBookingSheetController({
       })
 
       if (submission.result.status === 'success') {
+        submitInFlightRef.current = false
         await finalizeCompletedSubmission(submission)
+        return
       }
     } finally {
       submitInFlightRef.current = false

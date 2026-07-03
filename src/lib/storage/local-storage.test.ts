@@ -68,6 +68,27 @@ describe('LocalSettingsStore', () => {
     expect(store.loadState().recoveryIssue).toBeNull()
   })
 
+  it('defaults calendar export to disabled for legacy payloads that omit the field', () => {
+    const { calendarExportEnabled: _calendarExportEnabled, ...legacySettings } =
+      FIXTURE_SETTINGS
+    const storage = createMemoryStorage({
+      [SETTINGS_STORAGE_KEY]: JSON.stringify(legacySettings),
+    })
+    const store = new LocalSettingsStore({ storage })
+
+    expect(store.load()).toEqual({
+      ...FIXTURE_SETTINGS,
+      calendarExportEnabled: false,
+    })
+    expect(store.loadState()).toEqual({
+      recoveryIssue: null,
+      settings: {
+        ...FIXTURE_SETTINGS,
+        calendarExportEnabled: false,
+      },
+    })
+  })
+
   it('falls back to defaults for malformed JSON and unsupported versions', () => {
     const invalidJsonStore = new LocalSettingsStore({
       storage: createMemoryStorage({

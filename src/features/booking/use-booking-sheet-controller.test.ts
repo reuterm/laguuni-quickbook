@@ -338,6 +338,66 @@ describe('useBookingSheetController', () => {
     expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
   })
 
+  it('allows dismissing a successful completed state while success finalization is still pending', async () => {
+    let resolveFinalization!: () => void
+    const onBookingFinalized = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveFinalization = resolve
+        }),
+    )
+
+    bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: vi.fn(async () => {}),
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+      traceId: 'trace-success',
+    })
+    mockBookingFlow()
+
+    const { result } = renderHook(() =>
+      useBookingSheetController({ onBookingFinalized }),
+    )
+
+    await act(async () => {
+      await result.current.requestBooking(selection)
+    })
+
+    let confirmationPromise!: Promise<void>
+
+    await act(async () => {
+      confirmationPromise = result.current.confirmBooking()
+    })
+
+    await waitFor(() => {
+      expect(result.current.bookingSheetState).toEqual({
+        result: {
+          orderIdentifier: 'fixture-order-id',
+          status: 'success',
+        },
+        selection,
+        status: 'completed',
+        traceId: 'trace-success',
+      })
+    })
+
+    expect(onBookingFinalized).toHaveBeenCalledOnce()
+
+    act(() => {
+      result.current.dismissBookingSheet()
+    })
+
+    expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
+
+    resolveFinalization()
+
+    await act(async () => {
+      await confirmationPromise
+    })
+  })
+
   it('cleans up failed bookings when dismissed', async () => {
     const onBookingFinalized = vi.fn(async () => {})
 
