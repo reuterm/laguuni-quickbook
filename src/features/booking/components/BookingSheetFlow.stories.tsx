@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { expect } from 'storybook/test'
 
 import {
   createCompletedBookingSheetState,
@@ -66,5 +67,25 @@ export const CompletedPaymentRequired: Story = {
   },
   parameters: {
     settings: CALENDAR_EXPORT_SETTINGS,
+  },
+}
+
+export const CompletedFailedWithCalendarEnabled: Story = {
+  args: {
+    bookingSheetState: createCompletedBookingSheetState('failed'),
+    confirmBooking: noopAsync,
+    dismissBookingSheet: noop,
+    onExportTrace: noopAsync,
+  },
+  parameters: {
+    settings: CALENDAR_EXPORT_SETTINGS,
+  },
+  play: async ({ canvas }) => {
+    await expect(
+      canvas.findByRole('heading', { name: 'Booking failed' }),
+    ).resolves.toBeInTheDocument()
+    expect(
+      canvas.queryByRole('button', { name: 'Add to calendar' }),
+    ).not.toBeInTheDocument()
   },
 }
