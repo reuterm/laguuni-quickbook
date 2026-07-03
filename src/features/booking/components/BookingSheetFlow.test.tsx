@@ -5,12 +5,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '../../../app/providers'
 import { DEFAULT_USER_SETTINGS } from '../../../domain/settings'
 import { UserSettingsProvider } from '../../settings/use-user-settings'
+import type { BrowserStorage } from '../../../lib/storage/local-storage'
 import { SETTINGS_STORAGE_KEY } from '../../../lib/storage/local-storage'
 import { createMemoryStorage } from '../../../test/create-memory-storage'
 import { localDate } from '../../../../tests/local-date'
 import { BookingSheetFlow } from './BookingSheetFlow'
 
-const shareOrDownloadCalendarFileMock = vi.fn(async () => 'downloaded' as const)
+const shareOrDownloadCalendarFileMock = vi.fn(
+  async (_file: File, _options: { text: string; title: string }) =>
+    'downloaded' as const,
+)
 
 vi.mock('../../calendar/calendar-share', () => ({
   shareOrDownloadCalendarFile: (
@@ -167,6 +171,7 @@ describe('BookingSheetFlow', () => {
         <BookingSheetFlow
           bookingSheetState={{
             result: {
+              orderIdentifier: 'fixture-order-id',
               paymentToken: 'fixture-payment-token',
               redirectUrl: 'https://example.com/pay',
               status: 'payment_required',
@@ -285,7 +290,7 @@ function TestProviders({
   storage,
 }: {
   children: React.ReactNode
-  storage: Storage
+  storage: BrowserStorage
 }) {
   return (
     <AppProviders
