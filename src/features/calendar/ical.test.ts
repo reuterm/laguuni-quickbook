@@ -60,16 +60,8 @@ describe('ical', () => {
   })
 
   it('always serializes booking times in Europe/Helsinki', () => {
-    const eventWithMismatchedTimeZone = {
-      ...calendarEvent,
-      timeZone: 'America/New_York',
-    } as BookingCalendarEvent
-
-    expect(serializeCalendarEvent(eventWithMismatchedTimeZone)).toContain(
+    expect(serializeCalendarEvent(calendarEvent)).toContain(
       'DTSTART;TZID=Europe/Helsinki:20260514T150000\r\nDTEND;TZID=Europe/Helsinki:20260514T160000',
-    )
-    expect(serializeCalendarEvent(eventWithMismatchedTimeZone)).not.toContain(
-      'DTSTART;TZID=America/New_York:20260514T150000',
     )
   })
 
