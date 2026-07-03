@@ -11,10 +11,10 @@ import { createMemoryStorage } from '../../../test/create-memory-storage'
 import { localDate } from '../../../../tests/local-date'
 import { BookingSheetFlow } from './BookingSheetFlow'
 
-const shareOrDownloadCalendarFileMock = vi.fn(
-  async (_file: File, _options: { text: string; title: string }) =>
-    'downloaded' as const,
-)
+const shareOrDownloadCalendarFileMock = vi.fn<
+  (_file: File, _options: { text: string; title: string }) =>
+    Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
+>(async () => 'downloaded')
 
 vi.mock('../../calendar/calendar-share', () => ({
   shareOrDownloadCalendarFile: (
@@ -194,6 +194,92 @@ describe('BookingSheetFlow', () => {
     expect(
       screen.queryByRole('button', { name: 'Add to calendar' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('keeps calendar export cancellation neutral in the completed success flow', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage({
+      [SETTINGS_STORAGE_KEY]: JSON.stringify({
+        ...DEFAULT_USER_SETTINGS,
+        calendarExportEnabled: true,
+        version: 1,
+      }),
+    })
+
+    shareOrDownloadCalendarFileMock.mockResolvedValueOnce('cancelled')
+
+    render(
+      <TestProviders storage={storage}>
+        <BookingSheetFlow
+          bookingSheetState={{
+            result: {
+              orderIdentifier: 'fixture-order-id',
+              status: 'success',
+            },
+            selection: {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+            status: 'completed',
+            traceId: 'trace-success-cancelled',
+          }}
+          confirmBooking={async () => {}}
+          dismissBookingSheet={() => {}}
+        />
+      </TestProviders>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
+
+    expect(shareOrDownloadCalendarFileMock).toHaveBeenCalledOnce()
+    expect(
+      screen.queryByText('Could not add this booking to your calendar.'),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows an inline error when calendar export fully fails in the completed success flow', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage({
+      [SETTINGS_STORAGE_KEY]: JSON.stringify({
+        ...DEFAULT_USER_SETTINGS,
+        calendarExportEnabled: true,
+        version: 1,
+      }),
+    })
+
+    shareOrDownloadCalendarFileMock.mockResolvedValueOnce('failed')
+
+    render(
+      <TestProviders storage={storage}>
+        <BookingSheetFlow
+          bookingSheetState={{
+            result: {
+              orderIdentifier: 'fixture-order-id',
+              status: 'success',
+            },
+            selection: {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+            status: 'completed',
+            traceId: 'trace-success-failed',
+          }}
+          confirmBooking={async () => {}}
+          dismissBookingSheet={() => {}}
+        />
+      </TestProviders>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
+
+    expect(shareOrDownloadCalendarFileMock).toHaveBeenCalledOnce()
+    expect(
+      screen.getByText('Could not add this booking to your calendar.'),
+    ).toBeVisible()
   })
 
   it('keeps add to calendar hidden when the calendar export setting is disabled', () => {

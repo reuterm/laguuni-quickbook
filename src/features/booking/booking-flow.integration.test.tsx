@@ -424,9 +424,7 @@ describe('booking flow integration', () => {
     expect(orderRequests).toHaveLength(0)
   })
 
-  it(
-    'auto-dismisses the success sheet after the success delay',
-    async () => {
+  it('keeps the success sheet open until the user dismisses it', async () => {
     const user = userEvent.setup()
     const storage = createMemoryStorage()
 
@@ -447,17 +445,14 @@ describe('booking flow integration', () => {
       await screen.findByRole('heading', { name: 'Booking confirmed' }),
     ).toBeInTheDocument()
 
-      await waitFor(
-        () => {
-          expect(
-            screen.queryByRole('heading', { name: 'Booking confirmed' }),
-          ).not.toBeInTheDocument()
-        },
-        { timeout: 6000 },
-      )
-    },
-    10000,
-  )
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('heading', { name: 'Booking confirmed' }),
+      ).not.toBeInTheDocument()
+    })
+  })
 
   it('refreshes the availability overview after a completed booking', async () => {
     const user = userEvent.setup()

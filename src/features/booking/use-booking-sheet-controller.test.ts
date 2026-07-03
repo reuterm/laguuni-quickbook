@@ -300,8 +300,7 @@ describe('useBookingSheetController', () => {
     })
   })
 
-  it('keeps a successful completed state open long enough for manual follow-up actions', async () => {
-    vi.useFakeTimers()
+  it('keeps a successful completed state open until dismissed manually', async () => {
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: vi.fn(async () => {}),
       result: {
@@ -333,35 +332,7 @@ describe('useBookingSheetController', () => {
     })
 
     act(() => {
-      vi.advanceTimersByTime(1249)
-    })
-
-    expect(result.current.bookingSheetState).toEqual({
-      result: {
-        orderIdentifier: 'fixture-order-id',
-        status: 'success',
-      },
-      selection,
-      status: 'completed',
-      traceId: 'trace-success',
-    })
-
-    act(() => {
-      vi.advanceTimersByTime(3750)
-    })
-
-    expect(result.current.bookingSheetState).toEqual({
-      result: {
-        orderIdentifier: 'fixture-order-id',
-        status: 'success',
-      },
-      selection,
-      status: 'completed',
-      traceId: 'trace-success',
-    })
-
-    act(() => {
-      vi.advanceTimersByTime(1)
+      result.current.dismissBookingSheet()
     })
 
     expect(result.current.bookingSheetState).toEqual({ status: 'closed' })

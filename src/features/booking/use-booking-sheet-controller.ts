@@ -7,8 +7,6 @@ import type {
 import type { BookingFlowSubmission } from './use-booking-flow'
 import { useBookingFlow } from './use-booking-flow'
 
-const SUCCESS_DISMISS_DELAY_MS = 5000
-
 export type BookingSheetState =
   | {
       status: 'closed'
@@ -29,7 +27,6 @@ export type BookingSheetState =
     }
 
 type UseBookingSheetControllerOptions = {
-  successDismissDelayMs?: number
   onBookingFinalized?:
     | ((finalizedBooking: {
         result: BookingFlowResult
@@ -40,7 +37,6 @@ type UseBookingSheetControllerOptions = {
 
 export function useBookingSheetController({
   onBookingFinalized,
-  successDismissDelayMs = SUCCESS_DISMISS_DELAY_MS,
 }: UseBookingSheetControllerOptions = {}) {
   const { isBookingReady, submitBooking } = useBookingFlow()
   const [bookingSheetState, setBookingSheetState] = useState<BookingSheetState>(
@@ -165,23 +161,6 @@ export function useBookingSheetController({
       releaseAbandonedCompletedSubmission()
     }
   }, [releaseAbandonedCompletedSubmission])
-
-  useEffect(() => {
-    if (
-      bookingSheetState.status !== 'completed' ||
-      bookingSheetState.result.status !== 'success'
-    ) {
-      return
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      dismissBookingSheet()
-    }, successDismissDelayMs)
-
-    return () => {
-      window.clearTimeout(timeoutId)
-    }
-  }, [bookingSheetState, dismissBookingSheet, successDismissDelayMs])
 
   return {
     bookingSheetState,
