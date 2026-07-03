@@ -1,7 +1,9 @@
 import { type ReactNode, useRef } from 'react'
-
+import type {
+  BookingFlowResult,
+  BookingSlotSelection,
+} from '../../../domain/booking'
 import { useBookingCalendarAction } from '../../calendar/use-booking-calendar-action'
-import type { BookingFlowResult, BookingSlotSelection } from '../../../domain/booking'
 import { getBookingSelectionPresentation } from '../booking-selection-label'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
 import { BookingConfirmPanel } from './BookingConfirmPanel'

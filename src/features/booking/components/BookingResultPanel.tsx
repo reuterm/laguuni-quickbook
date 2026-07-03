@@ -75,7 +75,7 @@ function BookingResultAction({
 
   useEffect(() => {
     setInlineErrorMessage(calendarErrorMessage ?? null)
-  }, [calendarErrorMessage, traceId])
+  }, [calendarErrorMessage])
 
   if (onAddToCalendar !== undefined) {
     return (

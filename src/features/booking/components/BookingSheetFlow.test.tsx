@@ -1,19 +1,20 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-
+import { localDate } from '../../../../tests/local-date'
 import { AppProviders } from '../../../app/providers'
 import { DEFAULT_USER_SETTINGS } from '../../../domain/settings'
-import { UserSettingsProvider } from '../../settings/use-user-settings'
 import type { BrowserStorage } from '../../../lib/storage/local-storage'
 import { SETTINGS_STORAGE_KEY } from '../../../lib/storage/local-storage'
 import { createMemoryStorage } from '../../../test/create-memory-storage'
-import { localDate } from '../../../../tests/local-date'
+import { UserSettingsProvider } from '../../settings/use-user-settings'
 import { BookingSheetFlow } from './BookingSheetFlow'
 
 const shareOrDownloadCalendarFileMock = vi.fn<
-  (_file: File, _options: { text: string; title: string }) =>
-    Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
+  (
+    _file: File,
+    _options: { text: string; title: string },
+  ) => Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
 >(async () => 'downloaded')
 
 vi.mock('../../calendar/calendar-share', () => ({

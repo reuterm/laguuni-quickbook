@@ -88,6 +88,8 @@ describe('ical', () => {
     expect(file).toBeInstanceOf(File)
     expect(file.name).toBe('laguuni-booking-2026-05-14-1500.ics')
     expect(file.type).toBe('text/calendar;charset=utf-8')
-    await expect(file.text()).resolves.toBe(serializeCalendarEvent(calendarEvent))
+    await expect(file.text()).resolves.toBe(
+      serializeCalendarEvent(calendarEvent),
+    )
   })
 })
