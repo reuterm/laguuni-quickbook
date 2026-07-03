@@ -7,16 +7,20 @@ import { getBookingResultPresentation } from '../booking-result-presentation'
 import { BookingStatePanel } from './BookingStatePanel'
 
 type BookingResultPanelProps = {
+  onAddToCalendar?: (() => Promise<void>) | undefined
   onExportTrace?: ((traceId: string) => Promise<void>) | undefined
   result: BookingFlowResult
   selectionLabel: string
+  showAddToCalendar?: boolean | undefined
   traceId: string
 }
 
 export function BookingResultPanel({
+  onAddToCalendar,
   onExportTrace,
   result,
   selectionLabel,
+  showAddToCalendar,
   traceId,
 }: BookingResultPanelProps) {
   const presentation = getBookingResultPresentation(result, selectionLabel)
@@ -28,6 +32,11 @@ export function BookingResultPanel({
         <BookingResultAction
           key={traceId}
           action={presentation.action}
+          onAddToCalendar={
+            result.status === 'success' && showAddToCalendar
+              ? onAddToCalendar
+              : undefined
+          }
           onExportTrace={onExportTrace}
           traceId={traceId}
         />
@@ -43,15 +52,31 @@ export function BookingResultPanel({
 
 type BookingResultActionProps = {
   action: ReturnType<typeof getBookingResultPresentation>['action']
+  onAddToCalendar?: (() => Promise<void>) | undefined
   onExportTrace?: ((traceId: string) => Promise<void>) | undefined
   traceId: string
 }
 
 function BookingResultAction({
   action,
+  onAddToCalendar,
   onExportTrace,
   traceId,
 }: BookingResultActionProps) {
+  if (onAddToCalendar !== undefined) {
+    return (
+      <Button
+        type="button"
+        className="w-full sm:w-auto"
+        onClick={() => {
+          void onAddToCalendar()
+        }}
+      >
+        Add to calendar
+      </Button>
+    )
+  }
+
   switch (action.kind) {
     case 'payment':
       return (

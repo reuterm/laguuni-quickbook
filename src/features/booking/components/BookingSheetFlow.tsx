@@ -1,5 +1,7 @@
 import { type ReactNode, useRef } from 'react'
 
+import { useBookingCalendarAction } from '../../calendar/use-booking-calendar-action'
+import type { BookingFlowResult, BookingSlotSelection } from '../../../domain/booking'
 import { getBookingSelectionPresentation } from '../booking-selection-label'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
 import { BookingConfirmPanel } from './BookingConfirmPanel'
@@ -55,9 +57,10 @@ export function BookingSheetFlow({
       break
     case 'completed':
       content = (
-        <BookingResultPanel
+        <CompletedBookingResultPanel
           onExportTrace={onExportTrace}
           result={renderedState.result}
+          selection={renderedState.selection}
           selectionLabel={selectionSummary.label}
           traceId={renderedState.traceId}
         />
@@ -74,5 +77,45 @@ export function BookingSheetFlow({
     >
       {content}
     </BookingSheet>
+  )
+}
+
+type CompletedBookingResultPanelProps = {
+  onExportTrace?: ((traceId: string) => Promise<void>) | undefined
+  result: BookingFlowResult
+  selection: BookingSlotSelection
+  selectionLabel: string
+  traceId: string
+}
+
+function CompletedBookingResultPanel({
+  onExportTrace,
+  result,
+  selection,
+  selectionLabel,
+  traceId,
+}: CompletedBookingResultPanelProps) {
+  if (result.status !== 'success') {
+    return (
+      <BookingResultPanel
+        onExportTrace={onExportTrace}
+        result={result}
+        selectionLabel={selectionLabel}
+        traceId={traceId}
+      />
+    )
+  }
+
+  const bookingCalendarAction = useBookingCalendarAction(selection)
+
+  return (
+    <BookingResultPanel
+      onAddToCalendar={bookingCalendarAction.addToCalendar}
+      onExportTrace={onExportTrace}
+      result={result}
+      selectionLabel={selectionLabel}
+      showAddToCalendar={bookingCalendarAction.isEnabled}
+      traceId={traceId}
+    />
   )
 }
