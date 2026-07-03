@@ -106,6 +106,32 @@ function CompletedBookingResultPanel({
     )
   }
 
+  return (
+    <CompletedSuccessfulBookingResultPanel
+      onExportTrace={onExportTrace}
+      result={result}
+      selection={selection}
+      selectionLabel={selectionLabel}
+      traceId={traceId}
+    />
+  )
+}
+
+type CompletedSuccessfulBookingResultPanelProps = {
+  onExportTrace?: ((traceId: string) => Promise<void>) | undefined
+  result: Extract<BookingFlowResult, { status: 'success' }>
+  selection: BookingSlotSelection
+  selectionLabel: string
+  traceId: string
+}
+
+function CompletedSuccessfulBookingResultPanel({
+  onExportTrace,
+  result,
+  selection,
+  selectionLabel,
+  traceId,
+}: CompletedSuccessfulBookingResultPanelProps) {
   const bookingCalendarAction = useBookingCalendarAction(selection)
 
   return (
