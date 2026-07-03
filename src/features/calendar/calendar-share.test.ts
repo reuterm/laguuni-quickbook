@@ -93,6 +93,46 @@ describe('calendar-share', () => {
     ).resolves.toBe('cancelled')
   })
 
+  it('falls back to downloading when native sharing fails unexpectedly', async () => {
+    const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
+      type: 'text/calendar;charset=utf-8',
+    })
+    const share = vi.fn(async () => {
+      throw new Error('share failed')
+    })
+    const createObjectURL = vi.fn(() => 'blob:fixture')
+    const revokeObjectURL = vi.fn()
+    const anchor = {
+      click: vi.fn(),
+      download: '',
+      href: '',
+    } satisfies Pick<HTMLAnchorElement, 'click' | 'download' | 'href'>
+
+    vi.stubGlobal('navigator', {
+      canShare: vi.fn(() => true),
+      share,
+    })
+    vi.stubGlobal('URL', {
+      createObjectURL,
+      revokeObjectURL,
+    })
+    vi.spyOn(document, 'createElement').mockReturnValue(
+      anchor as unknown as HTMLAnchorElement,
+    )
+
+    await expect(
+      shareOrDownloadCalendarFile(file, {
+        text: 'Add this booking to your calendar.',
+        title: 'Add to calendar',
+      }),
+    ).resolves.toBe('downloaded')
+
+    expect(share).toHaveBeenCalledOnce()
+    expect(createObjectURL).toHaveBeenCalledWith(file)
+    expect(anchor.click).toHaveBeenCalledOnce()
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:fixture')
+  })
+
   it('reports an explicit failure when share and fallback both fail', async () => {
     const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
       type: 'text/calendar;charset=utf-8',
@@ -100,10 +140,17 @@ describe('calendar-share', () => {
     const share = vi.fn(async () => {
       throw new Error('share failed')
     })
+    const createObjectURL = vi.fn(() => {
+      throw new Error('download failed')
+    })
 
     vi.stubGlobal('navigator', {
       canShare: vi.fn(() => true),
       share,
+    })
+    vi.stubGlobal('URL', {
+      createObjectURL,
+      revokeObjectURL: vi.fn(),
     })
 
     await expect(
@@ -112,5 +159,8 @@ describe('calendar-share', () => {
         title: 'Add to calendar',
       }),
     ).resolves.toBe('failed')
+
+    expect(share).toHaveBeenCalledOnce()
+    expect(createObjectURL).toHaveBeenCalledWith(file)
   })
 })

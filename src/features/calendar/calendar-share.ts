@@ -9,8 +9,8 @@ export async function shareOrDownloadCalendarFile(
   file: File,
   options: ShareCalendarFileOptions,
 ): Promise<ShareCalendarFileResult> {
-  try {
-    if (canShareCalendarFile(file)) {
+  if (canShareCalendarFile(file)) {
+    try {
       await navigator.share({
         files: [file],
         text: options.text,
@@ -18,14 +18,16 @@ export async function shareOrDownloadCalendarFile(
       })
 
       return 'shared'
+    } catch (error) {
+      if (isShareCancellation(error)) {
+        return 'cancelled'
+      }
     }
+  }
 
+  try {
     return downloadCalendarFile(file)
-  } catch (error) {
-    if (isShareCancellation(error)) {
-      return 'cancelled'
-    }
-
+  } catch {
     return 'failed'
   }
 }
