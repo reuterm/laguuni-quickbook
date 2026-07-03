@@ -214,25 +214,31 @@ export function createBookingResult(
   }
 }
 
+export function createCompletedBookingSheetState(
+  resultStatus: 'success' | 'payment_required' | 'failed',
+): Extract<BookingSheetState, { status: 'completed' }> {
+  const selection = createSelection()
+
+  return {
+    result: createBookingResult(resultStatus),
+    selection,
+    status: 'completed',
+    traceId: `trace-${resultStatus}`,
+  }
+}
+
 export function createBookingSheetState(
   status: BookingSheetState['status'],
 ): BookingSheetState {
-  const selection = createSelection()
-
   switch (status) {
     case 'closed':
       return { status: 'closed' }
     case 'confirm':
-      return { selection, status: 'confirm' }
+      return { selection: createSelection(), status: 'confirm' }
     case 'submitting':
-      return { selection, status: 'submitting' }
+      return { selection: createSelection(), status: 'submitting' }
     case 'completed':
-      return {
-        result: createBookingResult('failed'),
-        selection,
-        status: 'completed',
-        traceId: 'trace-failed',
-      }
+      return createCompletedBookingSheetState('failed')
   }
 }
 

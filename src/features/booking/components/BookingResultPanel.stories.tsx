@@ -28,6 +28,16 @@ export const Success: Story = {
   },
 }
 
+export const SuccessWithCalendarAction: Story = {
+  args: {
+    onAddToCalendar: noopAsync,
+    result: createBookingResult('success'),
+    selectionLabel,
+    showAddToCalendar: true,
+    traceId: 'trace-success-calendar',
+  },
+}
+
 export const PaymentRequired: Story = {
   args: {
     result: createBookingResult('payment_required'),

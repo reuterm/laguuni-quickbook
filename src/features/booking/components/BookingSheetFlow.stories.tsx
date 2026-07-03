@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import {
+  createCompletedBookingSheetState,
   createBookingSheetState,
+  CALENDAR_EXPORT_SETTINGS,
   noop,
   noopAsync,
 } from '$storybook/fixture-data'
@@ -38,9 +40,31 @@ export const Submitting: Story = {
 
 export const Completed: Story = {
   args: {
-    bookingSheetState: createBookingSheetState('completed'),
+    bookingSheetState: createCompletedBookingSheetState('failed'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
     onExportTrace: noopAsync,
+  },
+}
+
+export const CompletedSuccessfulBooking: Story = {
+  args: {
+    bookingSheetState: createCompletedBookingSheetState('success'),
+    confirmBooking: noopAsync,
+    dismissBookingSheet: noop,
+  },
+  parameters: {
+    settings: CALENDAR_EXPORT_SETTINGS,
+  },
+}
+
+export const CompletedPaymentRequired: Story = {
+  args: {
+    bookingSheetState: createCompletedBookingSheetState('payment_required'),
+    confirmBooking: noopAsync,
+    dismissBookingSheet: noop,
+  },
+  parameters: {
+    settings: CALENDAR_EXPORT_SETTINGS,
   },
 }
