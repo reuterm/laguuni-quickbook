@@ -33,7 +33,7 @@ type SettingsScreenProps = {
 
 type EditableField = Exclude<
   keyof UserSettings,
-  'availabilityView' | 'defaultCable'
+  'availabilityView' | 'calendarExportEnabled' | 'defaultCable'
 >
 const NO_DEFAULT_CABLE_VALUE = '__none__'
 
@@ -132,6 +132,15 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
     }))
   }
 
+  function handleCalendarExportEnabledChange(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    setDraftSettings((currentSettings) => ({
+      ...currentSettings,
+      calendarExportEnabled: event.target.checked,
+    }))
+  }
+
   function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     saveSettings(draftSettings)
@@ -224,6 +233,24 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                   calendar layout on every screen size.
                 </p>
               </div>
+
+              <FormField
+                className="space-y-3"
+                htmlFor="calendar-export-enabled"
+                label="Show add-to-calendar action after successful booking"
+                description="When enabled, successful bookings can be exported to your calendar manually."
+                control={(controlProps) => (
+                  <input
+                    {...controlProps}
+                    id="calendar-export-enabled"
+                    name="calendarExportEnabled"
+                    type="checkbox"
+                    className="size-4 rounded border border-border/90 accent-primary"
+                    checked={displayedDraftSettings.calendarExportEnabled}
+                    onChange={handleCalendarExportEnabledChange}
+                  />
+                )}
+              />
 
               <div className="space-y-3">
                 <Button type="submit" className="w-full sm:w-auto">
