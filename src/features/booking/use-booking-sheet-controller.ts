@@ -150,7 +150,12 @@ export function useBookingSheetController({
 
       if (submission.result.status === 'success') {
         submitInFlightRef.current = false
-        await finalizeCompletedSubmission(submission)
+        try {
+          await finalizeCompletedSubmission(submission)
+        } catch {
+          // Successful bookings must stay successful even if follow-up work such
+          // as availability refresh fails after the result is already visible.
+        }
         return
       }
     } finally {

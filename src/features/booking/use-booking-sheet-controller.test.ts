@@ -179,6 +179,47 @@ describe('useBookingSheetController', () => {
     })
   })
 
+  it('does not reject successful bookings when post-booking finalization fails', async () => {
+    const onBookingFinalized = vi.fn(async () => {
+      throw new Error('Fixture refresh failed.')
+    })
+
+    bookingFlowMocks.submitBooking.mockResolvedValue({
+      releaseReservation: vi.fn(async () => {}),
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+      traceId: 'trace-success',
+    })
+    mockBookingFlow()
+
+    const { result } = renderHook(() =>
+      useBookingSheetController({ onBookingFinalized }),
+    )
+
+    await act(async () => {
+      await result.current.requestBooking(selection)
+    })
+
+    await expect(
+      act(async () => {
+        await result.current.confirmBooking()
+      }),
+    ).resolves.toBeUndefined()
+
+    expect(result.current.bookingSheetState).toEqual({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+      selection,
+      status: 'completed',
+      traceId: 'trace-success',
+    })
+    expect(onBookingFinalized).toHaveBeenCalledOnce()
+  })
+
   it('does not call onBookingFinalized for payment-required bookings before dismiss', async () => {
     const onBookingFinalized = vi.fn(async () => {})
 
