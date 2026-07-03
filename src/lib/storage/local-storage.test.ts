@@ -6,6 +6,7 @@ import { LocalSettingsStore, SETTINGS_STORAGE_KEY } from './local-storage'
 
 const FIXTURE_SETTINGS: UserSettings = {
   availabilityView: 'calendar',
+  calendarExportEnabled: true,
   defaultCable: 'easy',
   email: 'test@example.com',
   name: 'Test User',
@@ -21,6 +22,7 @@ describe('LocalSettingsStore', () => {
 
     expect(store.load()).toEqual({
       availabilityView: 'cards',
+      calendarExportEnabled: false,
       defaultCable: null,
       email: '',
       name: '',
@@ -31,6 +33,7 @@ describe('LocalSettingsStore', () => {
       recoveryIssue: null,
       settings: {
         availabilityView: 'cards',
+        calendarExportEnabled: false,
         defaultCable: null,
         email: '',
         name: '',
@@ -82,6 +85,7 @@ describe('LocalSettingsStore', () => {
 
     expect(invalidJsonStore.load()).toEqual({
       availabilityView: 'cards',
+      calendarExportEnabled: false,
       defaultCable: null,
       email: '',
       name: '',
@@ -92,6 +96,7 @@ describe('LocalSettingsStore', () => {
       recoveryIssue: 'invalid-format',
       settings: {
         availabilityView: 'cards',
+        calendarExportEnabled: false,
         defaultCable: null,
         email: '',
         name: '',
@@ -101,6 +106,7 @@ describe('LocalSettingsStore', () => {
     })
     expect(unsupportedVersionStore.load()).toEqual({
       availabilityView: 'cards',
+      calendarExportEnabled: false,
       defaultCable: null,
       email: '',
       name: '',
@@ -111,6 +117,7 @@ describe('LocalSettingsStore', () => {
       recoveryIssue: 'unsupported-version',
       settings: {
         availabilityView: 'cards',
+        calendarExportEnabled: false,
         defaultCable: null,
         email: '',
         name: '',
@@ -126,6 +133,7 @@ describe('LocalSettingsStore', () => {
         [SETTINGS_STORAGE_KEY]: JSON.stringify({
           defaultCable: 'unknown-cable',
           availabilityView: 'grid',
+          calendarExportEnabled: 'yes',
           email: 123,
           name: 'Test User',
           phone: ['invalid'],
@@ -137,6 +145,7 @@ describe('LocalSettingsStore', () => {
 
     expect(store.load()).toEqual({
       availabilityView: 'cards',
+      calendarExportEnabled: false,
       defaultCable: null,
       email: '',
       name: 'Test User',
@@ -147,6 +156,7 @@ describe('LocalSettingsStore', () => {
       recoveryIssue: 'invalid-fields',
       settings: {
         availabilityView: 'cards',
+        calendarExportEnabled: false,
         defaultCable: null,
         email: '',
         name: 'Test User',
