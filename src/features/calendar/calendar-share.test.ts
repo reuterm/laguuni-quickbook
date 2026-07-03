@@ -92,4 +92,25 @@ describe('calendar-share', () => {
       }),
     ).resolves.toBe('cancelled')
   })
+
+  it('treats unexpected share failures as a neutral outcome', async () => {
+    const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
+      type: 'text/calendar;charset=utf-8',
+    })
+    const share = vi.fn(async () => {
+      throw new Error('share failed')
+    })
+
+    vi.stubGlobal('navigator', {
+      canShare: vi.fn(() => true),
+      share,
+    })
+
+    await expect(
+      shareOrDownloadCalendarFile(file, {
+        text: 'Add this booking to your calendar.',
+        title: 'Add to calendar',
+      }),
+    ).resolves.toBe('cancelled')
+  })
 })
