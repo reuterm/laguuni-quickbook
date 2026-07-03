@@ -49,11 +49,43 @@ describe('ical', () => {
         'DTSTART;TZID=Europe/Helsinki:20260514T150000',
         'DTEND;TZID=Europe/Helsinki:20260514T160000',
         'SUMMARY:Wakeboarding - Pro\\, Main\\; Session',
-        'DESCRIPTION:Wakeboarding booking for Pro\\, line 1\\; bring vest\\\\rope.\\nMeet at dock.',
+        'DESCRIPTION:Wakeboarding booking for Pro\\, line 1\\; bring vest\\\\rope.\\nMeet',
+        '  at dock.',
         'LOCATION:Laguuni\\, Helsinki\\; Cable Park',
         'END:VEVENT',
         'END:VCALENDAR',
         '',
+      ].join('\r\n'),
+    )
+  })
+
+  it('always serializes booking times in Europe/Helsinki', () => {
+    const eventWithMismatchedTimeZone = {
+      ...calendarEvent,
+      timeZone: 'America/New_York',
+    } as BookingCalendarEvent
+
+    expect(serializeCalendarEvent(eventWithMismatchedTimeZone)).toContain(
+      'DTSTART;TZID=Europe/Helsinki:20260514T150000\r\nDTEND;TZID=Europe/Helsinki:20260514T160000',
+    )
+    expect(serializeCalendarEvent(eventWithMismatchedTimeZone)).not.toContain(
+      'DTSTART;TZID=America/New_York:20260514T150000',
+    )
+  })
+
+  it('folds long content lines using RFC 5545 continuation format', () => {
+    const longSummaryEvent: BookingCalendarEvent = {
+      ...calendarEvent,
+      description: 'Short description.',
+      location: 'Short location',
+      title:
+        'Wakeboarding booking confirmation for the advanced cable line evening session',
+    }
+
+    expect(serializeCalendarEvent(longSummaryEvent)).toContain(
+      [
+        'SUMMARY:Wakeboarding booking confirmation for the advanced cable line eveni',
+        ' ng session',
       ].join('\r\n'),
     )
   })

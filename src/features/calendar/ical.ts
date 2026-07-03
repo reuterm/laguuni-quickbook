@@ -1,6 +1,8 @@
 import type { BookingCalendarEvent } from './calendar-event'
 
 const CALENDAR_FILE_TYPE = 'text/calendar;charset=utf-8'
+const HELSINKI_TIME_ZONE = 'Europe/Helsinki'
+const MAX_CONTENT_LINE_OCTETS = 75
 
 export function serializeCalendarEvent(event: BookingCalendarEvent): string {
   return [
@@ -10,8 +12,8 @@ export function serializeCalendarEvent(event: BookingCalendarEvent): string {
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VTIMEZONE',
-    'TZID:Europe/Helsinki',
-    'X-LIC-LOCATION:Europe/Helsinki',
+    `TZID:${HELSINKI_TIME_ZONE}`,
+    `X-LIC-LOCATION:${HELSINKI_TIME_ZONE}`,
     'BEGIN:DAYLIGHT',
     'TZOFFSETFROM:+0200',
     'TZOFFSETTO:+0300',
@@ -30,15 +32,17 @@ export function serializeCalendarEvent(event: BookingCalendarEvent): string {
     'BEGIN:VEVENT',
     `UID:${escapeText(event.uid)}`,
     `DTSTAMP:${event.stampUtc}`,
-    `DTSTART;TZID=${event.timeZone}:${event.startsAtLocal}`,
-    `DTEND;TZID=${event.timeZone}:${event.endsAtLocal}`,
+    `DTSTART;TZID=${HELSINKI_TIME_ZONE}:${event.startsAtLocal}`,
+    `DTEND;TZID=${HELSINKI_TIME_ZONE}:${event.endsAtLocal}`,
     `SUMMARY:${escapeText(event.title)}`,
     `DESCRIPTION:${escapeText(event.description)}`,
     `LOCATION:${escapeText(event.location)}`,
     'END:VEVENT',
     'END:VCALENDAR',
     '',
-  ].join('\r\n')
+  ]
+    .flatMap(foldLine)
+    .join('\r\n')
 }
 
 export function createBookingCalendarFile(event: BookingCalendarEvent): File {
@@ -55,4 +59,29 @@ function escapeText(value: string): string {
     .replaceAll('\r\n', '\\n')
     .replaceAll('\n', '\\n')
     .replaceAll('\r', '\\n')
+}
+
+function foldLine(line: string): string[] {
+  const foldedLines: string[] = []
+  let currentLine = ''
+
+  for (const character of line) {
+    const nextLine = currentLine + character
+
+    if (getOctetLength(nextLine) > MAX_CONTENT_LINE_OCTETS) {
+      foldedLines.push(currentLine)
+      currentLine = ` ${character}`
+      continue
+    }
+
+    currentLine = nextLine
+  }
+
+  foldedLines.push(currentLine)
+
+  return foldedLines
+}
+
+function getOctetLength(value: string): number {
+  return new TextEncoder().encode(value).length
 }
