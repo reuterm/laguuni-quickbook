@@ -136,6 +136,7 @@ function CompletedSuccessfulBookingResultPanel({
 
   return (
     <BookingResultPanel
+      calendarErrorMessage={bookingCalendarAction.errorMessage}
       onAddToCalendar={bookingCalendarAction.addToCalendar}
       onExportTrace={onExportTrace}
       result={result}

@@ -1,4 +1,5 @@
 import { Copy } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import type { BookingFlowResult } from '../../../domain/booking'
@@ -7,6 +8,7 @@ import { getBookingResultPresentation } from '../booking-result-presentation'
 import { BookingStatePanel } from './BookingStatePanel'
 
 type BookingResultPanelProps = {
+  calendarErrorMessage?: string | null | undefined
   onAddToCalendar?: (() => Promise<void>) | undefined
   onExportTrace?: ((traceId: string) => Promise<void>) | undefined
   result: BookingFlowResult
@@ -16,6 +18,7 @@ type BookingResultPanelProps = {
 }
 
 export function BookingResultPanel({
+  calendarErrorMessage,
   onAddToCalendar,
   onExportTrace,
   result,
@@ -30,6 +33,7 @@ export function BookingResultPanel({
       body={presentation.body}
       actions={
         <BookingResultAction
+          calendarErrorMessage={calendarErrorMessage}
           key={traceId}
           action={presentation.action}
           onAddToCalendar={
@@ -52,6 +56,7 @@ export function BookingResultPanel({
 
 type BookingResultActionProps = {
   action: ReturnType<typeof getBookingResultPresentation>['action']
+  calendarErrorMessage?: string | null | undefined
   onAddToCalendar?: (() => Promise<void>) | undefined
   onExportTrace?: ((traceId: string) => Promise<void>) | undefined
   traceId: string
@@ -59,21 +64,42 @@ type BookingResultActionProps = {
 
 function BookingResultAction({
   action,
+  calendarErrorMessage,
   onAddToCalendar,
   onExportTrace,
   traceId,
 }: BookingResultActionProps) {
+  const [inlineErrorMessage, setInlineErrorMessage] = useState<string | null>(
+    calendarErrorMessage ?? null,
+  )
+
+  useEffect(() => {
+    setInlineErrorMessage(calendarErrorMessage ?? null)
+  }, [calendarErrorMessage, traceId])
+
   if (onAddToCalendar !== undefined) {
     return (
-      <Button
-        type="button"
-        className="w-full sm:w-auto"
-        onClick={() => {
-          void onAddToCalendar()
-        }}
-      >
-        Add to calendar
-      </Button>
+      <div className="space-y-2">
+        <Button
+          type="button"
+          className="w-full sm:w-auto"
+          onClick={() => {
+            setInlineErrorMessage(null)
+
+            void onAddToCalendar().catch(() => {
+              setInlineErrorMessage(
+                'Could not add this booking to your calendar.',
+              )
+            })
+          }}
+        >
+          Add to calendar
+        </Button>
+
+        {inlineErrorMessage ? (
+          <p className="text-sm text-amber-200">{inlineErrorMessage}</p>
+        ) : null}
+      </div>
     )
   }
 

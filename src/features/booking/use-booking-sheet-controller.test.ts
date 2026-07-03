@@ -300,7 +300,7 @@ describe('useBookingSheetController', () => {
     })
   })
 
-  it('auto-dismisses a successful completed state after the configured delay', async () => {
+  it('keeps a successful completed state open long enough for manual follow-up actions', async () => {
     vi.useFakeTimers()
     bookingFlowMocks.submitBooking.mockResolvedValue({
       releaseReservation: vi.fn(async () => {}),
@@ -312,9 +312,7 @@ describe('useBookingSheetController', () => {
     })
     mockBookingFlow()
 
-    const { result } = renderHook(() =>
-      useBookingSheetController({ successDismissDelayMs: 500 }),
-    )
+    const { result } = renderHook(() => useBookingSheetController())
 
     await act(async () => {
       await result.current.requestBooking(selection)
@@ -335,7 +333,35 @@ describe('useBookingSheetController', () => {
     })
 
     act(() => {
-      vi.advanceTimersByTime(500)
+      vi.advanceTimersByTime(1249)
+    })
+
+    expect(result.current.bookingSheetState).toEqual({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+      selection,
+      status: 'completed',
+      traceId: 'trace-success',
+    })
+
+    act(() => {
+      vi.advanceTimersByTime(3750)
+    })
+
+    expect(result.current.bookingSheetState).toEqual({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+      selection,
+      status: 'completed',
+      traceId: 'trace-success',
+    })
+
+    act(() => {
+      vi.advanceTimersByTime(1)
     })
 
     expect(result.current.bookingSheetState).toEqual({ status: 'closed' })

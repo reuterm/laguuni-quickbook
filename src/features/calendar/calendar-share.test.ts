@@ -93,7 +93,7 @@ describe('calendar-share', () => {
     ).resolves.toBe('cancelled')
   })
 
-  it('treats unexpected share failures as a neutral outcome', async () => {
+  it('reports an explicit failure when share and fallback both fail', async () => {
     const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
       type: 'text/calendar;charset=utf-8',
     })
@@ -111,6 +111,6 @@ describe('calendar-share', () => {
         text: 'Add this booking to your calendar.',
         title: 'Add to calendar',
       }),
-    ).resolves.toBe('cancelled')
+    ).resolves.toBe('failed')
   })
 })

@@ -7,7 +7,7 @@ import type {
 import type { BookingFlowSubmission } from './use-booking-flow'
 import { useBookingFlow } from './use-booking-flow'
 
-const SUCCESS_DISMISS_DELAY_MS = 1250
+const SUCCESS_DISMISS_DELAY_MS = 5000
 
 export type BookingSheetState =
   | {

@@ -32,6 +32,33 @@ describe('BookingResultPanel', () => {
     expect(addToCalendar).toHaveBeenCalledOnce()
   })
 
+  it('shows an inline calendar export error when the action fails', async () => {
+    const user = userEvent.setup()
+    const addToCalendar = vi.fn(async () => {
+      throw new Error('share failed')
+    })
+
+    render(
+      <BookingResultPanel
+        onAddToCalendar={addToCalendar}
+        result={{
+          orderIdentifier: 'fixture-order-id',
+          status: 'success',
+        }}
+        selectionLabel="Pro on Wed 20 May at 15:00-16:00"
+        showAddToCalendar
+        traceId="trace-success"
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
+
+    expect(addToCalendar).toHaveBeenCalledOnce()
+    expect(
+      screen.getByText('Could not add this booking to your calendar.'),
+    ).toBeVisible()
+  })
+
   it('does not show an add to calendar action for non-success results', () => {
     const addToCalendar = vi.fn(async () => {})
 

@@ -3,7 +3,7 @@ type ShareCalendarFileOptions = {
   title: string
 }
 
-type ShareCalendarFileResult = 'shared' | 'downloaded' | 'cancelled'
+type ShareCalendarFileResult = 'shared' | 'downloaded' | 'cancelled' | 'failed'
 
 export async function shareOrDownloadCalendarFile(
   file: File,
@@ -26,7 +26,7 @@ export async function shareOrDownloadCalendarFile(
       return 'cancelled'
     }
 
-    return 'cancelled'
+    return 'failed'
   }
 }
 

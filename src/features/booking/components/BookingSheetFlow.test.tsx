@@ -1,11 +1,27 @@
 import { cleanup, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { AppProviders } from '../../../app/providers'
+import { DEFAULT_USER_SETTINGS } from '../../../domain/settings'
+import { UserSettingsProvider } from '../../settings/use-user-settings'
+import { SETTINGS_STORAGE_KEY } from '../../../lib/storage/local-storage'
+import { createMemoryStorage } from '../../../test/create-memory-storage'
 import { localDate } from '../../../../tests/local-date'
 import { BookingSheetFlow } from './BookingSheetFlow'
 
+const shareOrDownloadCalendarFileMock = vi.fn(async () => 'downloaded' as const)
+
+vi.mock('../../calendar/calendar-share', () => ({
+  shareOrDownloadCalendarFile: (
+    file: File,
+    options: { text: string; title: string },
+  ) => shareOrDownloadCalendarFileMock(file, options),
+}))
+
 afterEach(() => {
   cleanup()
+  shareOrDownloadCalendarFileMock.mockReset()
 })
 
 describe('BookingSheetFlow', () => {
@@ -109,6 +125,109 @@ describe('BookingSheetFlow', () => {
     expect(onExportTrace).toHaveBeenCalledWith('trace-failed')
   })
 
+  it('wires add to calendar only for completed successful bookings', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage({
+      [SETTINGS_STORAGE_KEY]: JSON.stringify({
+        ...DEFAULT_USER_SETTINGS,
+        calendarExportEnabled: true,
+        version: 1,
+      }),
+    })
+
+    const { rerender } = render(
+      <TestProviders storage={storage}>
+        <BookingSheetFlow
+          bookingSheetState={{
+            result: {
+              orderIdentifier: 'fixture-order-id',
+              status: 'success',
+            },
+            selection: {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+            status: 'completed',
+            traceId: 'trace-success',
+          }}
+          confirmBooking={async () => {}}
+          dismissBookingSheet={() => {}}
+        />
+      </TestProviders>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
+
+    expect(shareOrDownloadCalendarFileMock).toHaveBeenCalledOnce()
+
+    rerender(
+      <TestProviders storage={storage}>
+        <BookingSheetFlow
+          bookingSheetState={{
+            result: {
+              paymentToken: 'fixture-payment-token',
+              redirectUrl: 'https://example.com/pay',
+              status: 'payment_required',
+            },
+            selection: {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+            status: 'completed',
+            traceId: 'trace-payment',
+          }}
+          confirmBooking={async () => {}}
+          dismissBookingSheet={() => {}}
+        />
+      </TestProviders>,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Add to calendar' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('keeps add to calendar hidden when the calendar export setting is disabled', () => {
+    const storage = createMemoryStorage({
+      [SETTINGS_STORAGE_KEY]: JSON.stringify({
+        ...DEFAULT_USER_SETTINGS,
+        calendarExportEnabled: false,
+        version: 1,
+      }),
+    })
+
+    render(
+      <TestProviders storage={storage}>
+        <BookingSheetFlow
+          bookingSheetState={{
+            result: {
+              orderIdentifier: 'fixture-order-id',
+              status: 'success',
+            },
+            selection: {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+            status: 'completed',
+            traceId: 'trace-success-disabled',
+          }}
+          confirmBooking={async () => {}}
+          dismissBookingSheet={() => {}}
+        />
+      </TestProviders>,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Add to calendar' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('cancels a pending unmount when the booking sheet reopens', () => {
     const firstState = {
       selection: {
@@ -160,3 +279,22 @@ describe('BookingSheetFlow', () => {
     expect(screen.getByText('Easy')).toBeInTheDocument()
   })
 })
+
+function TestProviders({
+  children,
+  storage,
+}: {
+  children: React.ReactNode
+  storage: Storage
+}) {
+  return (
+    <AppProviders
+      apiBaseUrl="https://shop.laguuniin.fi"
+      appVersion="test-version"
+      fetchImplementation={globalThis.fetch.bind(globalThis)}
+      storage={storage}
+    >
+      <UserSettingsProvider>{children}</UserSettingsProvider>
+    </AppProviders>
+  )
+}
