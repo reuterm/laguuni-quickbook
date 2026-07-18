@@ -1,5 +1,10 @@
 import type { BookingSlotSelection } from '../../domain/booking'
 import { getCableById } from '../../domain/cable'
+import {
+  addCalendarDays,
+  formatLocalDate,
+  parseLocalDate,
+} from '../../lib/date'
 
 export type BookingCalendarEvent = {
   description: string
@@ -21,7 +26,11 @@ export function createBookingCalendarEvent(
 ): BookingCalendarEvent {
   const cable = getCableById(selection.cableId)
   const startsAtLocal = toCalendarDateTime(selection.date, selection.startTime)
-  const endsAtLocal = toCalendarDateTime(selection.date, selection.endTime)
+  const endDate =
+    selection.endTime <= selection.startTime
+      ? formatLocalDate(addCalendarDays(parseLocalDate(selection.date), 1))
+      : selection.date
+  const endsAtLocal = toCalendarDateTime(endDate, selection.endTime)
 
   return {
     description: `Wakeboarding booking for ${cable.label} on ${selection.date} at ${selection.startTime}-${selection.endTime}.`,

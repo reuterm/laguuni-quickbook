@@ -41,4 +41,19 @@ describe('calendar-event', () => {
       createBookingCalendarEvent(selection, 'fixture-order-id').stampUtc,
     ).toBe('20260501T102030Z')
   })
+
+  it('uses the following local date when a booking ends at midnight', () => {
+    const event = createBookingCalendarEvent(
+      {
+        cableId: 'pro',
+        date: localDate('2026-06-02'),
+        endTime: '00:00',
+        startTime: '23:00',
+      },
+      'fixture-order-id',
+    )
+
+    expect(event.startsAtLocal).toBe('20260602T230000')
+    expect(event.endsAtLocal).toBe('20260603T000000')
+  })
 })
