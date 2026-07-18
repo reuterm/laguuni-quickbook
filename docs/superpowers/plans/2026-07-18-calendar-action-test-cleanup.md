@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make successful booking results select the Add to calendar UI action and remove tests that only cover the former optional-callback behavior.
+**Goal:** Make successful booking results select the Add to calendar UI action, require the calendar and diagnostics callbacks throughout the result flow, and remove tests that only cover the former optional-callback behavior.
 
-**Architecture:** `getBookingResultPresentation()` remains the single source of truth for which result action renders. `BookingResultPanel` receives required calendar and diagnostics callbacks, while its focused tests exercise the selected action; `BookingSheetFlow` only verifies calendar export is wired for a successful completed booking.
+**Architecture:** `getBookingResultPresentation()` remains the single source of truth for which result action renders. `BookingResultPanel` and `BookingSheetFlow` receive required calendar and diagnostics callbacks, and focused tests exercise selected actions rather than callback availability; `BookingSheetFlow` only verifies calendar export is wired for a successful completed booking.
 
 **Tech Stack:** TypeScript, React, Vitest, Testing Library
 
@@ -152,4 +152,68 @@ Expected: PASS.
 ```bash
 git add src/features/booking/components/BookingSheetFlow.test.tsx
 git commit -m "test: simplify calendar flow coverage"
+```
+
+### Task 4: Require diagnostics export throughout the booking flow
+
+**Files:**
+- Modify: `src/features/booking/components/BookingSheetFlow.tsx:14-152`
+- Modify: `src/features/booking/components/BookingResultPanel.tsx:51-98`
+- Modify: `src/features/booking/components/BookingSheetFlow.test.tsx:26-334`
+
+**Interfaces:**
+- Consumes: `onExportTrace: (traceId: string) => Promise<void>` supplied by `AvailabilityScreen`.
+- Produces: `BookingSheetFlow`, its completed-result helper props, and `BookingResultPanel` action rendering that require the diagnostics callback and always render diagnostics copying for failed results.
+
+- [ ] **Step 1: Update flow tests to provide the required callback**
+
+For every `BookingSheetFlow` fixture that does not assert trace export, add:
+
+```tsx
+onExportTrace={async () => {}}
+```
+
+Keep the existing `onExportTrace` spy in the diagnostics wiring test.
+
+- [ ] **Step 2: Run type checking to verify the current contract fails**
+
+Run: `npm run typecheck`
+
+Expected: FAIL because `BookingSheetFlow` and its helper components pass their optional `onExportTrace` prop to `BookingResultPanel`, which now requires it.
+
+- [ ] **Step 3: Require diagnostics export at every flow boundary**
+
+In `BookingSheetFlow.tsx`, change each optional callback declaration:
+
+```ts
+onExportTrace?: ((traceId: string) => Promise<void>) | undefined
+```
+
+to:
+
+```ts
+onExportTrace: (traceId: string) => Promise<void>
+```
+
+Apply this to `BookingSheetFlowProps`, `CompletedBookingResultPanelProps`, and `CompletedSuccessfulBookingResultPanelProps`.
+
+In `BookingResultPanel.tsx`, remove the unreachable optional-callback guard in the `copy-diagnostics` action:
+
+```tsx
+if (onExportTrace === undefined) {
+  return null
+}
+```
+
+- [ ] **Step 4: Verify the completed contract**
+
+Run: `npm test -- src/features/booking/booking-result-presentation.test.ts src/features/booking/components/BookingResultPanel.test.tsx src/features/booking/components/BookingSheetFlow.test.tsx && npm run typecheck`
+
+Expected: PASS. The affected suites pass and TypeScript reports no callback-contract errors.
+
+- [ ] **Step 5: Commit the required diagnostics callback change**
+
+```bash
+git add src/features/booking/components/BookingResultPanel.tsx src/features/booking/components/BookingSheetFlow.tsx src/features/booking/components/BookingSheetFlow.test.tsx
+git commit -m "refactor: require booking diagnostics export"
 ```
