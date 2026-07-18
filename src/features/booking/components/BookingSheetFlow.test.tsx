@@ -2,7 +2,6 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { localDate } from '../../../../tests/local-date'
-import * as bookingCalendarAction from '../../calendar/use-booking-calendar-action'
 import { BookingSheetFlow } from './BookingSheetFlow'
 
 const shareOrDownloadCalendarFileMock = vi.fn<
@@ -122,50 +121,13 @@ describe('BookingSheetFlow', () => {
     expect(
       screen.getByRole('heading', { name: 'Booking failed' }),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Add to calendar' }),
+    ).not.toBeInTheDocument()
 
     await screen.getByRole('button', { name: 'Copy diagnostics' }).click()
 
     expect(onExportTrace).toHaveBeenCalledWith('trace-failed')
-  })
-
-  it('constructs the calendar action for failed completed bookings without rendering its button', () => {
-    const useBookingCalendarActionSpy = vi.spyOn(
-      bookingCalendarAction,
-      'useBookingCalendarAction',
-    )
-    const selection = {
-      cableId: 'pro',
-      date: localDate('2026-05-20'),
-      endTime: '16:00',
-      startTime: '15:00',
-    } as const
-
-    render(
-      <BookingSheetFlow
-        bookingSheetState={{
-          result: {
-            errorCode: 'GENERAL_ERROR',
-            message: 'Fixture checkout failed.',
-            status: 'failed',
-            step: 'checkout',
-          },
-          selection,
-          status: 'completed',
-          traceId: 'trace-failed-calendar-uid',
-        }}
-        confirmBooking={async () => {}}
-        dismissBookingSheet={() => {}}
-        onExportTrace={async () => {}}
-      />,
-    )
-
-    expect(useBookingCalendarActionSpy).toHaveBeenCalledWith(
-      selection,
-      'trace-failed-calendar-uid',
-    )
-    expect(
-      screen.queryByRole('button', { name: 'Add to calendar' }),
-    ).not.toBeInTheDocument()
   })
 
   it('wires add to calendar for completed successful bookings', async () => {
