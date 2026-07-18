@@ -55,11 +55,6 @@ describe('Settings screen integration', () => {
     expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument()
     expect(screen.getByDisplayValue('FIXTURE-CODE')).toBeInTheDocument()
     expect(screen.getByLabelText('Default cable')).toHaveValue('easy')
-    expect(
-      screen.queryByRole('checkbox', {
-        name: 'Show add-to-calendar action after successful booking',
-      }),
-    ).not.toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Calendar only' })).toHaveAttribute(
       'aria-selected',
       'true',

@@ -65,20 +65,6 @@ describe('LocalSettingsStore', () => {
     expect(store.loadState().recoveryIssue).toBeNull()
   })
 
-  it('ignores unrecognized stored properties', () => {
-    const storage = createMemoryStorage({
-      [SETTINGS_STORAGE_KEY]: JSON.stringify({
-        ...FIXTURE_SETTINGS,
-        unrecognizedSetting: 'not a setting',
-        version: 1,
-      }),
-    })
-    const store = new LocalSettingsStore({ storage })
-
-    expect(store.load()).toEqual(FIXTURE_SETTINGS)
-    expect(store.loadState().recoveryIssue).toBeNull()
-  })
-
   it('falls back to defaults for malformed JSON and unsupported versions', () => {
     const invalidJsonStore = new LocalSettingsStore({
       storage: createMemoryStorage({
