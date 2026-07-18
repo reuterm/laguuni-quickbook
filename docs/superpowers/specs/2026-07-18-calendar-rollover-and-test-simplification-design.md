@@ -9,11 +9,11 @@ Address two review findings in the calendar-export work:
 
 ## Failed Booking Test
 
-The failed completed-booking test will cover only visible behavior. It will confirm
-that the diagnostics action is rendered and the add-to-calendar action is absent.
-It will not spy on `useBookingCalendarAction` or assert its arguments, because that
-hook call is not observable behavior and may change without affecting the result
-panel.
+Remove the standalone failed completed-booking test. The existing failed-result test
+already verifies the visible behavior that matters: it renders diagnostics and does
+not render the add-to-calendar action. Do not replace the removed test with another
+test or retain a spy on `useBookingCalendarAction`, because the hook call is not
+observable behavior and may change without affecting the result panel.
 
 ## Calendar End Date
 
