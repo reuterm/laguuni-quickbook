@@ -22,19 +22,10 @@ type Story = StoryObj<typeof meta>
 
 export const Success: Story = {
   args: {
-    result: createBookingResult('success'),
-    selectionLabel,
-    traceId: 'trace-success',
-  },
-}
-
-export const SuccessWithCalendarAction: Story = {
-  args: {
     onAddToCalendar: noopAsync,
     result: createBookingResult('success'),
     selectionLabel,
-    showAddToCalendar: true,
-    traceId: 'trace-success-calendar',
+    traceId: 'trace-success',
   },
 }
 

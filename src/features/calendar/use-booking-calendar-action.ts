@@ -1,15 +1,13 @@
 import { useCallback, useState } from 'react'
 
 import type { BookingSlotSelection } from '../../domain/booking'
-import { useUserSettings } from '../settings/use-user-settings'
 import { createBookingCalendarEvent } from './calendar-event'
 import { shareOrDownloadCalendarFile } from './calendar-share'
 import { createBookingCalendarFile } from './ical'
 
 type UseBookingCalendarActionResult = {
-  addToCalendar: (() => Promise<void>) | undefined
+  addToCalendar: () => Promise<void>
   errorMessage: string | null
-  isEnabled: boolean
 }
 
 const CALENDAR_EXPORT_ERROR_MESSAGE =
@@ -19,8 +17,6 @@ export function useBookingCalendarAction(
   selection: BookingSlotSelection,
   bookingIdentifier: string,
 ): UseBookingCalendarActionResult {
-  const { settings } = useUserSettings()
-  const isEnabled = settings.calendarExportEnabled
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const addToCalendar = useCallback(async () => {
@@ -44,8 +40,7 @@ export function useBookingCalendarAction(
   }, [bookingIdentifier, selection])
 
   return {
-    addToCalendar: isEnabled ? addToCalendar : undefined,
+    addToCalendar,
     errorMessage,
-    isEnabled,
   }
 }

@@ -146,7 +146,6 @@ function CompletedSuccessfulBookingResultPanel({
       onExportTrace={onExportTrace}
       result={result}
       selectionLabel={selectionLabel}
-      showAddToCalendar={bookingCalendarAction.isEnabled}
       traceId={traceId}
     />
   )

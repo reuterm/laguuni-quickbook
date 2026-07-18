@@ -22,7 +22,6 @@ describe('BookingResultPanel', () => {
           status: 'success',
         }}
         selectionLabel="Pro on Wed 20 May at 15:00-16:00"
-        showAddToCalendar
         traceId="trace-success"
       />,
     )
@@ -46,7 +45,6 @@ describe('BookingResultPanel', () => {
           status: 'success',
         }}
         selectionLabel="Pro on Wed 20 May at 15:00-16:00"
-        showAddToCalendar
         traceId="trace-success"
       />,
     )
@@ -72,7 +70,6 @@ describe('BookingResultPanel', () => {
           status: 'payment_required',
         }}
         selectionLabel="Pro on Wed 20 May at 15:00-16:00"
-        showAddToCalendar
         traceId="trace-payment"
       />,
     )
@@ -91,7 +88,6 @@ describe('BookingResultPanel', () => {
           step: 'checkout',
         }}
         selectionLabel="Pro on Wed 20 May at 15:00-16:00"
-        showAddToCalendar
         traceId="trace-failed"
       />,
     )

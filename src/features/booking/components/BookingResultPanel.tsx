@@ -13,7 +13,6 @@ type BookingResultPanelProps = {
   onExportTrace?: ((traceId: string) => Promise<void>) | undefined
   result: BookingFlowResult
   selectionLabel: string
-  showAddToCalendar?: boolean | undefined
   traceId: string
 }
 
@@ -23,7 +22,6 @@ export function BookingResultPanel({
   onExportTrace,
   result,
   selectionLabel,
-  showAddToCalendar,
   traceId,
 }: BookingResultPanelProps) {
   const presentation = getBookingResultPresentation(result, selectionLabel)
@@ -37,9 +35,7 @@ export function BookingResultPanel({
           key={traceId}
           action={presentation.action}
           onAddToCalendar={
-            result.status === 'success' && showAddToCalendar
-              ? onAddToCalendar
-              : undefined
+            result.status === 'success' ? onAddToCalendar : undefined
           }
           onExportTrace={onExportTrace}
           traceId={traceId}
