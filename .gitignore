@@ -25,3 +25,4 @@ storybook-static
 *.sw?
 
 .playwright-cli/*
+.superpowers/
