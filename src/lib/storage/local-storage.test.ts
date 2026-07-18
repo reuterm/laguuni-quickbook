@@ -69,7 +69,7 @@ describe('LocalSettingsStore', () => {
     const storage = createMemoryStorage({
       [SETTINGS_STORAGE_KEY]: JSON.stringify({
         ...FIXTURE_SETTINGS,
-        calendarExportEnabled: 'not a setting',
+        unrecognizedSetting: 'not a setting',
         version: 1,
       }),
     })
