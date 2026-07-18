@@ -8,7 +8,7 @@ Align booking-result tests with the always-available calendar callback and the p
 
 `getBookingResultPresentation()` will return `{ kind: 'add-to-calendar' }` for successful bookings. Payment-required and failed booking results retain their existing payment, diagnostics, or no-action presentations.
 
-`BookingResultPanel` continues to receive both `onAddToCalendar` and `onExportTrace` as required callbacks. Its action renderer selects the appropriate UI exclusively from the presentation action, not from callback presence.
+`BookingResultPanel` and `BookingSheetFlow` receive both `onAddToCalendar` and `onExportTrace` as required callbacks. Its action renderer selects the appropriate UI exclusively from the presentation action, not from callback presence. Failed bookings always render diagnostics copying because the application always supplies the export callback.
 
 ## Test Coverage
 
@@ -16,6 +16,7 @@ Align booking-result tests with the always-available calendar callback and the p
 - Retain panel tests that verify the calendar action calls its callback and reports a rejected calendar export inline.
 - Retain panel tests for payment continuation and diagnostics copying, passing both required callbacks in every fixture.
 - Delete panel tests for optional callback behavior and for calendar-button absence on non-success results; neither behavior is part of the simplified API.
+- Make `BookingSheetFlow` and its completed-result helper props require `onExportTrace`; update flow fixtures with a no-op export callback unless a test asserts diagnostics copying.
 - Simplify the `BookingSheetFlow` calendar wiring test to cover successful booking export only. Remove the payment-state visibility assertion because visibility is owned by `BookingResultPanel`'s presentation action.
 
 ## Constraints
