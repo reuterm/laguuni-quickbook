@@ -15,7 +15,7 @@ describe('booking-result-presentation', () => {
         selectionLabel,
       ),
     ).toMatchObject({
-      action: { kind: 'none' },
+      action: { kind: 'add-to-calendar' },
       body: `${selectionLabel} was booked without any remaining payment.`,
       role: 'status',
       title: 'Booking confirmed',

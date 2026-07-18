@@ -1,5 +1,9 @@
 import { type ReactNode, useRef } from 'react'
-
+import type {
+  BookingFlowResult,
+  BookingSlotSelection,
+} from '../../../domain/booking'
+import { useBookingCalendarAction } from '../../calendar/use-booking-calendar-action'
 import { getBookingSelectionPresentation } from '../booking-selection-label'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
 import { BookingConfirmPanel } from './BookingConfirmPanel'
@@ -11,7 +15,7 @@ type BookingSheetFlowProps = {
   bookingSheetState: BookingSheetState
   confirmBooking: () => Promise<void>
   dismissBookingSheet: () => void
-  onExportTrace?: ((traceId: string) => Promise<void>) | undefined
+  onExportTrace: (traceId: string) => Promise<void>
 }
 
 export function BookingSheetFlow({
@@ -55,9 +59,10 @@ export function BookingSheetFlow({
       break
     case 'completed':
       content = (
-        <BookingResultPanel
+        <CompletedBookingResultPanel
           onExportTrace={onExportTrace}
           result={renderedState.result}
+          selection={renderedState.selection}
           selectionLabel={selectionSummary.label}
           traceId={renderedState.traceId}
         />
@@ -74,5 +79,37 @@ export function BookingSheetFlow({
     >
       {content}
     </BookingSheet>
+  )
+}
+
+type CompletedBookingResultPanelProps = {
+  onExportTrace: (traceId: string) => Promise<void>
+  result: BookingFlowResult
+  selection: BookingSlotSelection
+  selectionLabel: string
+  traceId: string
+}
+
+function CompletedBookingResultPanel({
+  onExportTrace,
+  result,
+  selection,
+  selectionLabel,
+  traceId,
+}: CompletedBookingResultPanelProps) {
+  const bookingCalendarAction = useBookingCalendarAction(
+    selection,
+    result.status === 'success' ? (result.orderIdentifier ?? traceId) : traceId,
+  )
+
+  return (
+    <BookingResultPanel
+      calendarErrorMessage={bookingCalendarAction.errorMessage}
+      onAddToCalendar={bookingCalendarAction.addToCalendar}
+      onExportTrace={onExportTrace}
+      result={result}
+      selectionLabel={selectionLabel}
+      traceId={traceId}
+    />
   )
 }
