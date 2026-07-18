@@ -197,6 +197,48 @@ describe('BookingSheetFlow', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('uses the trace ID as the calendar UID when success has no order identifier', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage({
+      [SETTINGS_STORAGE_KEY]: JSON.stringify({
+        ...DEFAULT_USER_SETTINGS,
+        calendarExportEnabled: true,
+        version: 1,
+      }),
+    })
+
+    render(
+      <TestProviders storage={storage}>
+        <BookingSheetFlow
+          bookingSheetState={{
+            result: { orderIdentifier: null, status: 'success' },
+            selection: {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+            status: 'completed',
+            traceId: 'trace-uid-fallback',
+          }}
+          confirmBooking={async () => {}}
+          dismissBookingSheet={() => {}}
+        />
+      </TestProviders>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
+
+    const [file] = shareOrDownloadCalendarFileMock.mock.calls[0] ?? []
+    expect(file).toBeInstanceOf(File)
+    if (!file) {
+      throw new Error('Expected a calendar file to be shared.')
+    }
+    expect(await file.text()).toContain(
+      'UID:laguuni-booking-trace-uid-fallback',
+    )
+  })
+
   it('keeps calendar export cancellation neutral in the completed success flow', async () => {
     const user = userEvent.setup()
     const storage = createMemoryStorage({

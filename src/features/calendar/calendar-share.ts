@@ -42,17 +42,17 @@ function canShareCalendarFile(file: File): boolean {
 
 function downloadCalendarFile(file: File): ShareCalendarFileResult {
   const objectUrl = URL.createObjectURL(file)
+  const anchor = document.createElement('a')
+
+  anchor.href = objectUrl
+  anchor.download = file.name
 
   try {
-    const anchor = document.createElement('a')
-
-    anchor.href = objectUrl
-    anchor.download = file.name
     anchor.click()
 
     return 'downloaded'
   } finally {
-    URL.revokeObjectURL(objectUrl)
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
   }
 }
 

@@ -134,7 +134,10 @@ function CompletedSuccessfulBookingResultPanel({
   selectionLabel,
   traceId,
 }: CompletedSuccessfulBookingResultPanelProps) {
-  const bookingCalendarAction = useBookingCalendarAction(selection)
+  const bookingCalendarAction = useBookingCalendarAction(
+    selection,
+    result.orderIdentifier ?? traceId,
+  )
 
   return (
     <BookingResultPanel

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { shareOrDownloadCalendarFile } from './calendar-share'
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
@@ -36,6 +37,8 @@ describe('calendar-share', () => {
   })
 
   it('falls back to downloading the calendar file when native file sharing is unavailable', async () => {
+    vi.useFakeTimers()
+
     const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
       type: 'text/calendar;charset=utf-8',
     })
@@ -69,6 +72,8 @@ describe('calendar-share', () => {
     expect(anchor.href).toBe('blob:fixture')
     expect(anchor.download).toBe('booking.ics')
     expect(anchor.click).toHaveBeenCalledOnce()
+    expect(revokeObjectURL).not.toHaveBeenCalled()
+    await vi.runAllTimersAsync()
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:fixture')
   })
 
@@ -94,6 +99,8 @@ describe('calendar-share', () => {
   })
 
   it('falls back to downloading when native sharing fails unexpectedly', async () => {
+    vi.useFakeTimers()
+
     const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
       type: 'text/calendar;charset=utf-8',
     })
@@ -130,6 +137,45 @@ describe('calendar-share', () => {
     expect(share).toHaveBeenCalledOnce()
     expect(createObjectURL).toHaveBeenCalledWith(file)
     expect(anchor.click).toHaveBeenCalledOnce()
+    expect(revokeObjectURL).not.toHaveBeenCalled()
+    await vi.runAllTimersAsync()
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:fixture')
+  })
+
+  it('defers URL cleanup when the download click fails', async () => {
+    vi.useFakeTimers()
+
+    const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
+      type: 'text/calendar;charset=utf-8',
+    })
+    const createObjectURL = vi.fn(() => 'blob:fixture')
+    const revokeObjectURL = vi.fn()
+    const anchor = {
+      click: vi.fn(() => {
+        throw new Error('download click failed')
+      }),
+      download: '',
+      href: '',
+    } satisfies Pick<HTMLAnchorElement, 'click' | 'download' | 'href'>
+
+    vi.stubGlobal('navigator', {})
+    vi.stubGlobal('URL', {
+      createObjectURL,
+      revokeObjectURL,
+    })
+    vi.spyOn(document, 'createElement').mockReturnValue(
+      anchor as unknown as HTMLAnchorElement,
+    )
+
+    await expect(
+      shareOrDownloadCalendarFile(file, {
+        text: 'Add this booking to your calendar.',
+        title: 'Add to calendar',
+      }),
+    ).resolves.toBe('failed')
+
+    expect(revokeObjectURL).not.toHaveBeenCalled()
+    await vi.runAllTimersAsync()
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:fixture')
   })
 

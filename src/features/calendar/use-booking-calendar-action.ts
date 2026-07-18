@@ -17,6 +17,7 @@ const CALENDAR_EXPORT_ERROR_MESSAGE =
 
 export function useBookingCalendarAction(
   selection: BookingSlotSelection,
+  bookingIdentifier: string,
 ): UseBookingCalendarActionResult {
   const { settings } = useUserSettings()
   const isEnabled = settings.calendarExportEnabled
@@ -26,7 +27,7 @@ export function useBookingCalendarAction(
     try {
       setErrorMessage(null)
 
-      const event = createBookingCalendarEvent(selection)
+      const event = createBookingCalendarEvent(selection, bookingIdentifier)
       const file = createBookingCalendarFile(event)
 
       const result = await shareOrDownloadCalendarFile(file, {
@@ -40,7 +41,7 @@ export function useBookingCalendarAction(
     } catch {
       setErrorMessage(CALENDAR_EXPORT_ERROR_MESSAGE)
     }
-  }, [selection])
+  }, [bookingIdentifier, selection])
 
   return {
     addToCalendar: isEnabled ? addToCalendar : undefined,
