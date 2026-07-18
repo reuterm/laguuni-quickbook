@@ -28,11 +28,6 @@ export const CALENDAR_VIEW_SETTINGS: UserSettings = {
   availabilityView: 'calendar',
 }
 
-export const CALENDAR_EXPORT_SETTINGS: UserSettings = {
-  ...BOOKING_ENABLED_SETTINGS,
-  calendarExportEnabled: true,
-}
-
 export const DEVELOPER_MODE_SETTINGS: UserSettings = {
   ...BOOKING_ENABLED_SETTINGS,
   availabilityView: 'calendar',

@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import {
   BOOKING_ENABLED_SETTINGS,
-  CALENDAR_EXPORT_SETTINGS,
   DEVELOPER_MODE_SETTINGS,
   noop,
 } from '$storybook/fixture-data'
@@ -35,16 +34,6 @@ export const Recovery: Story = {
   },
   parameters: {
     seedCorruptedSettings: true,
-  },
-}
-
-export const CalendarExportEnabled: Story = {
-  args: {
-    onOpenChange: noop,
-    open: true,
-  },
-  parameters: {
-    settings: CALENDAR_EXPORT_SETTINGS,
   },
 }
 

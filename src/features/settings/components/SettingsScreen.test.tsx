@@ -33,11 +33,6 @@ describe('Settings screen integration', () => {
     setInputValue('Season pass code', 'FIXTURE-CODE')
     await user.click(screen.getByRole('tab', { name: 'Calendar only' }))
     await user.selectOptions(screen.getByLabelText('Default cable'), 'easy')
-    await user.click(
-      screen.getByRole('checkbox', {
-        name: 'Show add-to-calendar action after successful booking',
-      }),
-    )
     await user.click(screen.getByRole('button', { name: 'Save settings' }))
 
     expect(
@@ -61,10 +56,10 @@ describe('Settings screen integration', () => {
     expect(screen.getByDisplayValue('FIXTURE-CODE')).toBeInTheDocument()
     expect(screen.getByLabelText('Default cable')).toHaveValue('easy')
     expect(
-      screen.getByRole('checkbox', {
+      screen.queryByRole('checkbox', {
         name: 'Show add-to-calendar action after successful booking',
       }),
-    ).toBeChecked()
+    ).not.toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Calendar only' })).toHaveAttribute(
       'aria-selected',
       'true',
