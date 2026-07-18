@@ -2,6 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { localDate } from '../../../../tests/local-date'
+import * as bookingCalendarAction from '../../calendar/use-booking-calendar-action'
 import { BookingSheetFlow } from './BookingSheetFlow'
 
 const shareOrDownloadCalendarFileMock = vi.fn<
@@ -30,6 +31,7 @@ describe('BookingSheetFlow', () => {
         bookingSheetState={{ status: 'closed' }}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
       />,
     )
 
@@ -52,6 +54,7 @@ describe('BookingSheetFlow', () => {
         }}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
       />,
     )
 
@@ -77,6 +80,7 @@ describe('BookingSheetFlow', () => {
         }}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
       />,
     )
 
@@ -124,10 +128,50 @@ describe('BookingSheetFlow', () => {
     expect(onExportTrace).toHaveBeenCalledWith('trace-failed')
   })
 
-  it('wires add to calendar only for completed successful bookings', async () => {
+  it('constructs the calendar action for failed completed bookings without rendering its button', () => {
+    const useBookingCalendarActionSpy = vi.spyOn(
+      bookingCalendarAction,
+      'useBookingCalendarAction',
+    )
+    const selection = {
+      cableId: 'pro',
+      date: localDate('2026-05-20'),
+      endTime: '16:00',
+      startTime: '15:00',
+    } as const
+
+    render(
+      <BookingSheetFlow
+        bookingSheetState={{
+          result: {
+            errorCode: 'GENERAL_ERROR',
+            message: 'Fixture checkout failed.',
+            status: 'failed',
+            step: 'checkout',
+          },
+          selection,
+          status: 'completed',
+          traceId: 'trace-failed-calendar-uid',
+        }}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
+      />,
+    )
+
+    expect(useBookingCalendarActionSpy).toHaveBeenCalledWith(
+      selection,
+      'trace-failed-calendar-uid',
+    )
+    expect(
+      screen.queryByRole('button', { name: 'Add to calendar' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('wires add to calendar for completed successful bookings', async () => {
     const user = userEvent.setup()
 
-    const { rerender } = render(
+    render(
       <BookingSheetFlow
         bookingSheetState={{
           result: {
@@ -145,39 +189,13 @@ describe('BookingSheetFlow', () => {
         }}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
       />,
     )
 
     await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
 
     expect(shareOrDownloadCalendarFileMock).toHaveBeenCalledOnce()
-
-    rerender(
-      <BookingSheetFlow
-        bookingSheetState={{
-          result: {
-            orderIdentifier: 'fixture-order-id',
-            paymentToken: 'fixture-payment-token',
-            redirectUrl: 'https://example.com/pay',
-            status: 'payment_required',
-          },
-          selection: {
-            cableId: 'pro',
-            date: localDate('2026-05-20'),
-            endTime: '16:00',
-            startTime: '15:00',
-          },
-          status: 'completed',
-          traceId: 'trace-payment',
-        }}
-        confirmBooking={async () => {}}
-        dismissBookingSheet={() => {}}
-      />,
-    )
-
-    expect(
-      screen.queryByRole('button', { name: 'Add to calendar' }),
-    ).not.toBeInTheDocument()
   })
 
   it('uses the trace ID as the calendar UID when success has no order identifier', async () => {
@@ -198,6 +216,7 @@ describe('BookingSheetFlow', () => {
         }}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
       />,
     )
 
@@ -236,6 +255,7 @@ describe('BookingSheetFlow', () => {
         }}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
       />,
     )
 
@@ -270,6 +290,7 @@ describe('BookingSheetFlow', () => {
         }}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
       />,
     )
 
@@ -307,6 +328,7 @@ describe('BookingSheetFlow', () => {
         bookingSheetState={firstState}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
       />,
     )
 
@@ -315,6 +337,7 @@ describe('BookingSheetFlow', () => {
         bookingSheetState={{ status: 'closed' }}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
       />,
     )
 
@@ -323,6 +346,7 @@ describe('BookingSheetFlow', () => {
         bookingSheetState={reopenedState}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
       />,
     )
 

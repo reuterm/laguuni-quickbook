@@ -23,6 +23,7 @@ type Story = StoryObj<typeof meta>
 export const Success: Story = {
   args: {
     onAddToCalendar: noopAsync,
+    onExportTrace: noopAsync,
     result: createBookingResult('success'),
     selectionLabel,
     traceId: 'trace-success',
@@ -31,6 +32,8 @@ export const Success: Story = {
 
 export const PaymentRequired: Story = {
   args: {
+    onAddToCalendar: noopAsync,
+    onExportTrace: noopAsync,
     result: createBookingResult('payment_required'),
     selectionLabel,
     traceId: 'trace-payment',
@@ -39,6 +42,7 @@ export const PaymentRequired: Story = {
 
 export const Failed: Story = {
   args: {
+    onAddToCalendar: noopAsync,
     onExportTrace: noopAsync,
     result: createBookingResult('failed'),
     selectionLabel,

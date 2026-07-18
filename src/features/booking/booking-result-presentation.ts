@@ -20,6 +20,9 @@ export type BookingResultPresentation = {
     | {
         kind: 'none'
       }
+    | {
+        kind: 'add-to-calendar'
+      }
   body: string
   icon: LucideIcon
   iconClassName: string
@@ -35,7 +38,7 @@ export function getBookingResultPresentation(
   switch (result.status) {
     case 'success':
       return {
-        action: { kind: 'none' },
+        action: { kind: 'add-to-calendar' },
         body: `${selectionLabel} was booked without any remaining payment.`,
         icon: CircleCheckBig,
         iconClassName: statusToneClassNames.success.accent,

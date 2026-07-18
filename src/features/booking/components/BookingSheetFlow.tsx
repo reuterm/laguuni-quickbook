@@ -15,7 +15,7 @@ type BookingSheetFlowProps = {
   bookingSheetState: BookingSheetState
   confirmBooking: () => Promise<void>
   dismissBookingSheet: () => void
-  onExportTrace?: ((traceId: string) => Promise<void>) | undefined
+  onExportTrace: (traceId: string) => Promise<void>
 }
 
 export function BookingSheetFlow({
@@ -83,7 +83,7 @@ export function BookingSheetFlow({
 }
 
 type CompletedBookingResultPanelProps = {
-  onExportTrace?: ((traceId: string) => Promise<void>) | undefined
+  onExportTrace: (traceId: string) => Promise<void>
   result: BookingFlowResult
   selection: BookingSlotSelection
   selectionLabel: string
@@ -97,46 +97,9 @@ function CompletedBookingResultPanel({
   selectionLabel,
   traceId,
 }: CompletedBookingResultPanelProps) {
-  if (result.status !== 'success') {
-    return (
-      <BookingResultPanel
-        onExportTrace={onExportTrace}
-        result={result}
-        selectionLabel={selectionLabel}
-        traceId={traceId}
-      />
-    )
-  }
-
-  return (
-    <CompletedSuccessfulBookingResultPanel
-      onExportTrace={onExportTrace}
-      result={result}
-      selection={selection}
-      selectionLabel={selectionLabel}
-      traceId={traceId}
-    />
-  )
-}
-
-type CompletedSuccessfulBookingResultPanelProps = {
-  onExportTrace?: ((traceId: string) => Promise<void>) | undefined
-  result: Extract<BookingFlowResult, { status: 'success' }>
-  selection: BookingSlotSelection
-  selectionLabel: string
-  traceId: string
-}
-
-function CompletedSuccessfulBookingResultPanel({
-  onExportTrace,
-  result,
-  selection,
-  selectionLabel,
-  traceId,
-}: CompletedSuccessfulBookingResultPanelProps) {
   const bookingCalendarAction = useBookingCalendarAction(
     selection,
-    result.orderIdentifier ?? traceId,
+    result.status === 'success' ? (result.orderIdentifier ?? traceId) : traceId,
   )
 
   return (

@@ -26,6 +26,7 @@ export const Confirm: Story = {
     bookingSheetState: createBookingSheetState('confirm'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
+    onExportTrace: noopAsync,
   },
 }
 
@@ -34,6 +35,7 @@ export const Submitting: Story = {
     bookingSheetState: createBookingSheetState('submitting'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
+    onExportTrace: noopAsync,
   },
 }
 
@@ -51,6 +53,7 @@ export const CompletedSuccessfulBooking: Story = {
     bookingSheetState: createCompletedBookingSheetState('success'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
+    onExportTrace: noopAsync,
   },
 }
 
@@ -59,5 +62,6 @@ export const CompletedPaymentRequired: Story = {
     bookingSheetState: createCompletedBookingSheetState('payment_required'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
+    onExportTrace: noopAsync,
   },
 }

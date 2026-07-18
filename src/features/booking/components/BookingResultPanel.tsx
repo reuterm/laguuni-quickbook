@@ -9,8 +9,8 @@ import { BookingStatePanel } from './BookingStatePanel'
 
 type BookingResultPanelProps = {
   calendarErrorMessage?: string | null | undefined
-  onAddToCalendar?: (() => Promise<void>) | undefined
-  onExportTrace?: ((traceId: string) => Promise<void>) | undefined
+  onAddToCalendar: () => Promise<void>
+  onExportTrace: (traceId: string) => Promise<void>
   result: BookingFlowResult
   selectionLabel: string
   traceId: string
@@ -34,9 +34,7 @@ export function BookingResultPanel({
           calendarErrorMessage={calendarErrorMessage}
           key={traceId}
           action={presentation.action}
-          onAddToCalendar={
-            result.status === 'success' ? onAddToCalendar : undefined
-          }
+          onAddToCalendar={onAddToCalendar}
           onExportTrace={onExportTrace}
           traceId={traceId}
         />
@@ -53,8 +51,8 @@ export function BookingResultPanel({
 type BookingResultActionProps = {
   action: ReturnType<typeof getBookingResultPresentation>['action']
   calendarErrorMessage?: string | null | undefined
-  onAddToCalendar?: (() => Promise<void>) | undefined
-  onExportTrace?: ((traceId: string) => Promise<void>) | undefined
+  onAddToCalendar: () => Promise<void>
+  onExportTrace: (traceId: string) => Promise<void>
   traceId: string
 }
 
@@ -73,32 +71,6 @@ function BookingResultAction({
     setInlineErrorMessage(calendarErrorMessage ?? null)
   }, [calendarErrorMessage])
 
-  if (onAddToCalendar !== undefined) {
-    return (
-      <div className="space-y-2">
-        <Button
-          type="button"
-          className="w-full sm:w-auto"
-          onClick={() => {
-            setInlineErrorMessage(null)
-
-            void onAddToCalendar().catch(() => {
-              setInlineErrorMessage(
-                'Could not add this booking to your calendar.',
-              )
-            })
-          }}
-        >
-          Add to calendar
-        </Button>
-
-        {inlineErrorMessage ? (
-          <p className="text-sm text-amber-200">{inlineErrorMessage}</p>
-        ) : null}
-      </div>
-    )
-  }
-
   switch (action.kind) {
     case 'payment':
       return (
@@ -109,10 +81,6 @@ function BookingResultAction({
         </Button>
       )
     case 'copy-diagnostics':
-      if (onExportTrace === undefined) {
-        return null
-      }
-
       return (
         <DiagnosticsCopyAction
           buttonContent={
@@ -123,6 +91,30 @@ function BookingResultAction({
           }
           onCopy={() => onExportTrace(traceId)}
         />
+      )
+    case 'add-to-calendar':
+      return (
+        <div className="space-y-2">
+          <Button
+            type="button"
+            className="w-full sm:w-auto"
+            onClick={() => {
+              setInlineErrorMessage(null)
+
+              void onAddToCalendar().catch(() => {
+                setInlineErrorMessage(
+                  'Could not add this booking to your calendar.',
+                )
+              })
+            }}
+          >
+            Add to calendar
+          </Button>
+
+          {inlineErrorMessage ? (
+            <p className="text-sm text-amber-200">{inlineErrorMessage}</p>
+          ) : null}
+        </div>
       )
     case 'none':
       return null
