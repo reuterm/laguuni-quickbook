@@ -66,6 +66,7 @@ function BookingResultAction({
   const [inlineErrorMessage, setInlineErrorMessage] = useState<string | null>(
     calendarErrorMessage ?? null,
   )
+  const [isAddingToCalendar, setIsAddingToCalendar] = useState(false)
 
   useEffect(() => {
     setInlineErrorMessage(calendarErrorMessage ?? null)
@@ -98,14 +99,20 @@ function BookingResultAction({
           <Button
             type="button"
             className="w-full sm:w-auto"
-            onClick={() => {
+            disabled={isAddingToCalendar}
+            onClick={async () => {
               setInlineErrorMessage(null)
+              setIsAddingToCalendar(true)
 
-              void onAddToCalendar().catch(() => {
+              try {
+                await onAddToCalendar()
+              } catch {
                 setInlineErrorMessage(
                   'Could not add this booking to your calendar.',
                 )
-              })
+              } finally {
+                setIsAddingToCalendar(false)
+              }
             }}
           >
             Add to calendar

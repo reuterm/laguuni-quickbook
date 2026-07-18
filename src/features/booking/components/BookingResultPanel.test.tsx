@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -30,6 +30,43 @@ describe('BookingResultPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
 
     expect(addToCalendar).toHaveBeenCalledOnce()
+  })
+
+  it('prevents duplicate calendar exports while an export is pending', async () => {
+    const user = userEvent.setup()
+    let resolveCalendarExport!: () => void
+    const addToCalendar = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveCalendarExport = resolve
+        }),
+    )
+
+    render(
+      <BookingResultPanel
+        onAddToCalendar={addToCalendar}
+        onExportTrace={async () => {}}
+        result={{
+          orderIdentifier: 'fixture-order-id',
+          status: 'success',
+        }}
+        selectionLabel="Pro on Wed 20 May at 15:00-16:00"
+        traceId="trace-success"
+      />,
+    )
+
+    const button = screen.getByRole('button', { name: 'Add to calendar' })
+    await user.click(button)
+    await user.click(button)
+
+    expect(addToCalendar).toHaveBeenCalledOnce()
+    expect(button).toBeDisabled()
+
+    resolveCalendarExport()
+
+    await waitFor(() => {
+      expect(button).toBeEnabled()
+    })
   })
 
   it('shows an inline calendar export error when the action fails', async () => {
