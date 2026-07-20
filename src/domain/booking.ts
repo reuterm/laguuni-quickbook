@@ -51,7 +51,12 @@ export type BookingCheckoutResult =
   | BookingCheckoutPaymentRequired
   | BookingCheckoutSuccess
 
-export type BookingFailureStep = 'checkout' | 'code' | 'profile' | 'unexpected'
+export type BookingFailureStep =
+  | 'checkout'
+  | 'code'
+  | 'profile'
+  | 'reservation'
+  | 'unexpected'
 
 export type BookingFlowFailure = BookingCheckoutFailure & {
   step: BookingFailureStep
@@ -65,5 +70,5 @@ export type BookingFlowResult =
 export type BookingRequest = {
   code?: string | null
   profile: BookingProfile
-  selection: BookingSlotSelection
+  selections: readonly BookingSlotSelection[]
 }

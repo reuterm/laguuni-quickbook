@@ -91,6 +91,8 @@ function getBookingFailureMessage(
         : 'The saved season pass code was not accepted. Update it in Settings and try again.'
     case 'checkout':
       return `${selectionLabel} could not be completed during checkout. ${result.message}`
+    case 'reservation':
+      return `${selectionLabel} could not be reserved. ${result.message}`
     case 'unexpected':
       return result.message
   }

@@ -117,6 +117,25 @@ describe('booking-result-presentation', () => {
     })
   })
 
+  it('builds reservation failure copy with selection context', () => {
+    expect(
+      getBookingResultPresentation(
+        {
+          errorCode: 'reservation-unavailable',
+          message: 'Fixture reservation failed.',
+          status: 'failed',
+          step: 'reservation',
+        },
+        selectionLabel,
+      ),
+    ).toMatchObject({
+      action: { kind: 'copy-diagnostics' },
+      body: `${selectionLabel} could not be reserved. Fixture reservation failed.`,
+      role: 'alert',
+      title: 'Booking failed',
+    })
+  })
+
   it('builds unexpected failure copy directly from the error message', () => {
     expect(
       getBookingResultPresentation(

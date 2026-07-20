@@ -36,7 +36,7 @@ export class DefaultBookingService implements BookingService {
   }
 
   async book(
-    { code, profile, selection }: BookingRequest,
+    { code, profile, selections }: BookingRequest,
     diagnostics: DiagnosticsTrace,
   ): Promise<BookingSubmission> {
     const normalizedCode = code?.trim()
@@ -57,10 +57,51 @@ export class DefaultBookingService implements BookingService {
       })
     }
 
-    diagnosticsReporter.recordStarted(selection, Boolean(normalizedCode))
+    if (selections.length === 0) {
+      return createBookingSubmission({
+        reservationRelease,
+        result: {
+          errorCode: 'missing-selections',
+          message: 'At least one booking slot selection is required.',
+          status: 'failed',
+          step: 'unexpected',
+        },
+      })
+    }
+
+    const selectedDates = new Set(selections.map((selection) => selection.date))
+
+    if (selectedDates.size !== selections.length) {
+      return createBookingSubmission({
+        reservationRelease,
+        result: {
+          errorCode: 'duplicate-date-selections',
+          message: 'Only one booking slot can be selected per day.',
+          status: 'failed',
+          step: 'unexpected',
+        },
+      })
+    }
+
+    diagnosticsReporter.recordStarted(selections, Boolean(normalizedCode))
 
     try {
-      const basketToken = await this.#api.createBasket()
+      let basketToken: string
+
+      try {
+        basketToken = await this.#api.createBasket()
+      } catch (error) {
+        return createBookingSubmission({
+          reservationRelease,
+          result: {
+            errorCode: 'reservation-unavailable',
+            message: getErrorMessage(error),
+            status: 'failed',
+            step: 'reservation',
+          },
+        })
+      }
+
       reservationRelease = createReservationRelease({
         api: this.#api,
         basketToken,
@@ -70,11 +111,27 @@ export class DefaultBookingService implements BookingService {
       })
       diagnosticsReporter.recordBasketCreated()
 
-      await this.#api.addReservationToBasket({
-        basketToken,
-        selection,
-      })
-      diagnosticsReporter.recordReservationAdded(selection)
+      for (const selection of selections) {
+        try {
+          await this.#api.addReservationToBasket({
+            basketToken,
+            selection,
+          })
+        } catch (error) {
+          await reservationRelease()
+
+          return createBookingSubmission({
+            reservationRelease,
+            result: {
+              errorCode: 'reservation-unavailable',
+              message: getErrorMessage(error),
+              status: 'failed',
+              step: 'reservation',
+            },
+          })
+        }
+        diagnosticsReporter.recordReservationAdded(selection)
+      }
 
       if (normalizedCode) {
         const lookupResult = await this.#api.lookupCode({
@@ -147,7 +204,7 @@ export class DefaultBookingService implements BookingService {
         result: bookingResult,
       })
     } catch (error) {
-      diagnosticsReporter.recordUnexpectedError(selection)
+      diagnosticsReporter.recordUnexpectedError(selections)
 
       return createBookingSubmission({
         reservationRelease,

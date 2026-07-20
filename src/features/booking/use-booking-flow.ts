@@ -8,7 +8,7 @@ import type { BookingSubmission } from './booking-service'
 import { validateBookingProfile } from './booking-validation'
 
 export type BookingFlowSubmission = BookingSubmission & {
-  selection: BookingSlotSelection
+  selections: readonly BookingSlotSelection[]
   traceId: string
 }
 
@@ -20,19 +20,21 @@ export function useBookingFlow() {
   const isBookingReady =
     validateBookingProfile(bookingProfile).status === 'valid'
   const submitBooking = useCallback(
-    async (selection: BookingSlotSelection): Promise<BookingFlowSubmission> => {
+    async (
+      selections: readonly BookingSlotSelection[],
+    ): Promise<BookingFlowSubmission> => {
       const trace = diagnostics.beginTrace({ name: 'booking' })
       const submission = await bookingService.book(
         {
           code: normalizeOptionalCode(settings.seasonPassCode),
           profile: bookingProfile,
-          selection,
+          selections,
         },
         trace,
       )
 
       return {
-        selection,
+        selections,
         ...submission,
         traceId: trace.traceId,
       }
