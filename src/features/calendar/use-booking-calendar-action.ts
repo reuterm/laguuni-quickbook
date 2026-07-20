@@ -14,7 +14,7 @@ const CALENDAR_EXPORT_ERROR_MESSAGE =
   'Could not add this booking to your calendar.'
 
 export function useBookingCalendarAction(
-  selection: BookingSlotSelection,
+  selections: readonly BookingSlotSelection[],
   bookingIdentifier: string,
 ): UseBookingCalendarActionResult {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -23,11 +23,16 @@ export function useBookingCalendarAction(
     try {
       setErrorMessage(null)
 
-      const event = createBookingCalendarEvent(selection, bookingIdentifier)
-      const file = createBookingCalendarFile(event)
+      const events = selections.map((selection) =>
+        createBookingCalendarEvent(selection, bookingIdentifier),
+      )
+      const file = createBookingCalendarFile(
+        events,
+        `laguuni-booking-${bookingIdentifier}.ics`,
+      )
 
       const result = await shareOrDownloadCalendarFile(file, {
-        text: `Add ${event.title} to your calendar.`,
+        text: 'Add your bookings to your calendar.',
         title: 'Add to calendar',
       })
 
@@ -37,7 +42,7 @@ export function useBookingCalendarAction(
     } catch {
       setErrorMessage(CALENDAR_EXPORT_ERROR_MESSAGE)
     }
-  }, [bookingIdentifier, selection])
+  }, [bookingIdentifier, selections])
 
   return {
     addToCalendar,

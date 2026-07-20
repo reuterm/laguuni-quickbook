@@ -62,7 +62,7 @@ export function BookingSheetFlow({
         <CompletedBookingResultPanel
           onExportTrace={onExportTrace}
           result={renderedState.result}
-          selection={renderedState.selections[0]}
+          selections={renderedState.selections}
           selectionLabel={selectionSummary.label}
           traceId={renderedState.traceId}
         />
@@ -85,7 +85,7 @@ export function BookingSheetFlow({
 type CompletedBookingResultPanelProps = {
   onExportTrace: (traceId: string) => Promise<void>
   result: BookingFlowResult
-  selection: BookingSlotSelection
+  selections: readonly BookingSlotSelection[]
   selectionLabel: string
   traceId: string
 }
@@ -93,12 +93,12 @@ type CompletedBookingResultPanelProps = {
 function CompletedBookingResultPanel({
   onExportTrace,
   result,
-  selection,
+  selections,
   selectionLabel,
   traceId,
 }: CompletedBookingResultPanelProps) {
   const bookingCalendarAction = useBookingCalendarAction(
-    selection,
+    selections,
     result.status === 'success' ? (result.orderIdentifier ?? traceId) : traceId,
   )
 

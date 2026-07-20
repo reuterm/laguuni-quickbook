@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import type { BookingCalendarEvent } from './calendar-event'
-import { createBookingCalendarFile, serializeCalendarEvent } from './ical'
+import {
+  createBookingCalendarFile,
+  serializeCalendarEvent,
+  serializeCalendarEvents,
+} from './ical'
 
 const calendarEvent: BookingCalendarEvent = {
   description:
@@ -65,6 +69,25 @@ describe('ical', () => {
     )
   })
 
+  it('serializes multiple booking events in one calendar with one timezone block', () => {
+    const easyEvent: BookingCalendarEvent = {
+      ...calendarEvent,
+      startsAtLocal: '20260522T100000',
+      endsAtLocal: '20260522T110000',
+      uid: 'laguuni-booking-fixture-order-id-2026-05-22',
+    }
+    const serialized = serializeCalendarEvents([calendarEvent, easyEvent])
+
+    expect(serialized).toContain(
+      'BEGIN:VEVENT\r\nUID:laguuni-booking-2026-05-14-1500-pro',
+    )
+    expect(serialized).toContain(
+      'BEGIN:VEVENT\r\nUID:laguuni-booking-fixture-order-id-2026-05-22',
+    )
+    expect(serialized.match(/BEGIN:VEVENT/g)).toHaveLength(2)
+    expect(serialized.match(/BEGIN:VTIMEZONE/g)).toHaveLength(1)
+  })
+
   it('folds long content lines using RFC 5545 continuation format', () => {
     const longSummaryEvent: BookingCalendarEvent = {
       ...calendarEvent,
@@ -83,13 +106,16 @@ describe('ical', () => {
   })
 
   it('wraps the serialized calendar payload in a browser File', async () => {
-    const file = createBookingCalendarFile(calendarEvent)
+    const file = createBookingCalendarFile(
+      [calendarEvent],
+      calendarEvent.fileName,
+    )
 
     expect(file).toBeInstanceOf(File)
     expect(file.name).toBe('laguuni-booking-2026-05-14-1500.ics')
     expect(file.type).toBe('text/calendar;charset=utf-8')
     await expect(file.text()).resolves.toBe(
-      serializeCalendarEvent(calendarEvent),
+      serializeCalendarEvents([calendarEvent]),
     )
   })
 })
