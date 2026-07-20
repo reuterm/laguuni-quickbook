@@ -187,6 +187,32 @@ describe('DefaultBookingService', () => {
     expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
   })
 
+  it('treats basket creation failures as recoverable availability changes', async () => {
+    const api = createApiStub()
+    vi.mocked(api.createBasket).mockRejectedValueOnce(
+      new Error('Fixture basket creation failed.'),
+    )
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+
+    const submission = await service.book(
+      {
+        profile,
+        selections: [selection],
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'reservation-unavailable',
+      message: 'Fixture basket creation failed.',
+      status: 'failed',
+      step: 'reservation',
+    })
+    expect(api.addReservationToBasket).not.toHaveBeenCalled()
+    expect(api.submitCheckout).not.toHaveBeenCalled()
+  })
+
   it('rejects an empty selections collection before creating a basket', async () => {
     const api = createApiStub()
     const service = new DefaultBookingService({ api })

@@ -72,7 +72,22 @@ export class DefaultBookingService implements BookingService {
     diagnosticsReporter.recordStarted(selections, Boolean(normalizedCode))
 
     try {
-      const basketToken = await this.#api.createBasket()
+      let basketToken: string
+
+      try {
+        basketToken = await this.#api.createBasket()
+      } catch (error) {
+        return createBookingSubmission({
+          reservationRelease,
+          result: {
+            errorCode: 'reservation-unavailable',
+            message: getErrorMessage(error),
+            status: 'failed',
+            step: 'reservation',
+          },
+        })
+      }
+
       reservationRelease = createReservationRelease({
         api: this.#api,
         basketToken,
