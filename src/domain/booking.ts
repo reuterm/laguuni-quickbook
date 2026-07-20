@@ -51,7 +51,12 @@ export type BookingCheckoutResult =
   | BookingCheckoutPaymentRequired
   | BookingCheckoutSuccess
 
-export type BookingFailureStep = 'checkout' | 'code' | 'profile' | 'unexpected'
+export type BookingFailureStep =
+  | 'checkout'
+  | 'code'
+  | 'profile'
+  | 'reservation'
+  | 'unexpected'
 
 export type BookingFlowFailure = BookingCheckoutFailure & {
   step: BookingFailureStep
