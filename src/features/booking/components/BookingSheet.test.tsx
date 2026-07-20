@@ -55,7 +55,7 @@ describe('BookingSheet', () => {
   it('does not apply spinner styling to the booking label while submitting', () => {
     render(
       <BookingSheet open onDismiss={() => {}} summary={selectionSummary}>
-        <BookingSubmittingPanel selectionLabel={selectionSummary.label} />
+        <BookingSubmittingPanel selectionsCount={selections.length} />
       </BookingSheet>,
     )
 
@@ -73,7 +73,7 @@ describe('BookingSheet', () => {
         onDismiss={onDismiss}
         summary={selectionSummary}
       >
-        <BookingSubmittingPanel selectionLabel={selectionSummary.label} />
+        <BookingSubmittingPanel selectionsCount={selections.length} />
       </BookingSheet>,
     )
 
@@ -136,7 +136,7 @@ describe('BookingSheet', () => {
         onDismiss={onDismiss}
         summary={selectionSummary}
       >
-        <BookingSubmittingPanel selectionLabel={selectionSummary.label} />
+        <BookingSubmittingPanel selectionsCount={selections.length} />
       </BookingSheet>,
     )
 

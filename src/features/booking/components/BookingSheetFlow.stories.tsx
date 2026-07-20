@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import {
   createBookingSheetState,
   createCompletedBookingSheetState,
+  createSelection,
   noop,
   noopAsync,
 } from '$storybook/fixture-data'
@@ -60,6 +61,45 @@ export const CompletedSuccessfulBooking: Story = {
 export const CompletedPaymentRequired: Story = {
   args: {
     bookingSheetState: createCompletedBookingSheetState('payment_required'),
+    confirmBooking: noopAsync,
+    dismissBookingSheet: noop,
+    onExportTrace: noopAsync,
+  },
+}
+
+const multiSlotSelections = [
+  createSelection({ date: '2026-05-20', endTime: '16:00', startTime: '15:00' }),
+  createSelection({
+    cableId: 'easy',
+    date: '2026-05-21',
+    endTime: '11:00',
+    startTime: '10:00',
+  }),
+] as const
+
+export const MultiSlotReview: Story = {
+  args: {
+    bookingSheetState: {
+      selections: multiSlotSelections,
+      status: 'confirm',
+    },
+    confirmBooking: noopAsync,
+    dismissBookingSheet: noop,
+    onExportTrace: noopAsync,
+  },
+}
+
+export const CompletedSuccessfulMultiSlotBooking: Story = {
+  args: {
+    bookingSheetState: {
+      result: {
+        orderIdentifier: 'fixture-multi-slot-order-id',
+        status: 'success',
+      },
+      selections: multiSlotSelections,
+      status: 'completed',
+      traceId: 'trace-multi-slot-success',
+    },
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
     onExportTrace: noopAsync,

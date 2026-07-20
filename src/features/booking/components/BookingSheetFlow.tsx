@@ -54,7 +54,9 @@ export function BookingSheetFlow({
     case 'submitting':
       dismissible = false
       content = (
-        <BookingSubmittingPanel selectionLabel={selectionSummary.label} />
+        <BookingSubmittingPanel
+          selectionsCount={renderedState.selections.length}
+        />
       )
       break
     case 'completed':
