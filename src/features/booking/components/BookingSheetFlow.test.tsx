@@ -43,12 +43,14 @@ describe('BookingSheetFlow', () => {
     render(
       <BookingSheetFlow
         bookingSheetState={{
-          selection: {
-            cableId: 'pro',
-            date: localDate('2026-05-20'),
-            endTime: '16:00',
-            startTime: '15:00',
-          },
+          selections: [
+            {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+          ],
           status: 'confirm',
         }}
         confirmBooking={async () => {}}
@@ -69,12 +71,14 @@ describe('BookingSheetFlow', () => {
     render(
       <BookingSheetFlow
         bookingSheetState={{
-          selection: {
-            cableId: 'pro',
-            date: localDate('2026-05-20'),
-            endTime: '16:00',
-            startTime: '15:00',
-          },
+          selections: [
+            {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+          ],
           status: 'submitting',
         }}
         confirmBooking={async () => {}}
@@ -103,12 +107,14 @@ describe('BookingSheetFlow', () => {
             status: 'failed',
             step: 'checkout',
           },
-          selection: {
-            cableId: 'pro',
-            date: localDate('2026-05-20'),
-            endTime: '16:00',
-            startTime: '15:00',
-          },
+          selections: [
+            {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+          ],
           status: 'completed',
           traceId: 'trace-failed',
         }}
@@ -140,12 +146,14 @@ describe('BookingSheetFlow', () => {
             orderIdentifier: 'fixture-order-id',
             status: 'success',
           },
-          selection: {
-            cableId: 'pro',
-            date: localDate('2026-05-20'),
-            endTime: '16:00',
-            startTime: '15:00',
-          },
+          selections: [
+            {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+          ],
           status: 'completed',
           traceId: 'trace-success',
         }}
@@ -167,12 +175,14 @@ describe('BookingSheetFlow', () => {
       <BookingSheetFlow
         bookingSheetState={{
           result: { orderIdentifier: null, status: 'success' },
-          selection: {
-            cableId: 'pro',
-            date: localDate('2026-05-20'),
-            endTime: '16:00',
-            startTime: '15:00',
-          },
+          selections: [
+            {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+          ],
           status: 'completed',
           traceId: 'trace-uid-fallback',
         }}
@@ -206,12 +216,14 @@ describe('BookingSheetFlow', () => {
             orderIdentifier: 'fixture-order-id',
             status: 'success',
           },
-          selection: {
-            cableId: 'pro',
-            date: localDate('2026-05-20'),
-            endTime: '16:00',
-            startTime: '15:00',
-          },
+          selections: [
+            {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+          ],
           status: 'completed',
           traceId: 'trace-success-cancelled',
         }}
@@ -241,12 +253,14 @@ describe('BookingSheetFlow', () => {
             orderIdentifier: 'fixture-order-id',
             status: 'success',
           },
-          selection: {
-            cableId: 'pro',
-            date: localDate('2026-05-20'),
-            endTime: '16:00',
-            startTime: '15:00',
-          },
+          selections: [
+            {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+          ],
           status: 'completed',
           traceId: 'trace-success-failed',
         }}
@@ -266,22 +280,26 @@ describe('BookingSheetFlow', () => {
 
   it('cancels a pending unmount when the booking sheet reopens', () => {
     const firstState = {
-      selection: {
-        cableId: 'pro',
-        date: localDate('2026-05-20'),
-        endTime: '16:00',
-        startTime: '15:00',
-      },
+      selections: [
+        {
+          cableId: 'pro',
+          date: localDate('2026-05-20'),
+          endTime: '16:00',
+          startTime: '15:00',
+        },
+      ],
       status: 'confirm',
     } as const
 
     const reopenedState = {
-      selection: {
-        cableId: 'easy',
-        date: localDate('2026-05-21'),
-        endTime: '11:00',
-        startTime: '10:00',
-      },
+      selections: [
+        {
+          cableId: 'easy',
+          date: localDate('2026-05-21'),
+          endTime: '11:00',
+          startTime: '10:00',
+        },
+      ],
       status: 'confirm',
     } as const
 

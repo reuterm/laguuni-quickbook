@@ -4,7 +4,7 @@ import type {
   BookingSlotSelection,
 } from '../../../domain/booking'
 import { useBookingCalendarAction } from '../../calendar/use-booking-calendar-action'
-import { getBookingSelectionPresentation } from '../booking-selection-label'
+import { getBookingSelectionsPresentation } from '../booking-selections'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
 import { BookingConfirmPanel } from './BookingConfirmPanel'
 import { BookingResultPanel } from './BookingResultPanel'
@@ -40,8 +40,8 @@ export function BookingSheetFlow({
     return null
   }
 
-  const selectionSummary = getBookingSelectionPresentation(
-    renderedState.selection,
+  const selectionSummary = getBookingSelectionsPresentation(
+    renderedState.selections,
   )
 
   let dismissible = true
@@ -62,7 +62,7 @@ export function BookingSheetFlow({
         <CompletedBookingResultPanel
           onExportTrace={onExportTrace}
           result={renderedState.result}
-          selection={renderedState.selection}
+          selection={renderedState.selections[0]}
           selectionLabel={selectionSummary.label}
           traceId={renderedState.traceId}
         />

@@ -12,16 +12,16 @@ export type BookingSheetState =
       status: 'closed'
     }
   | {
-      selection: BookingSlotSelection
+      selections: readonly [BookingSlotSelection, ...BookingSlotSelection[]]
       status: 'confirm'
     }
   | {
-      selection: BookingSlotSelection
+      selections: readonly [BookingSlotSelection, ...BookingSlotSelection[]]
       status: 'submitting'
     }
   | {
       result: BookingFlowResult
-      selection: BookingSlotSelection
+      selections: readonly [BookingSlotSelection, ...BookingSlotSelection[]]
       status: 'completed'
       traceId: string
     }
@@ -124,7 +124,7 @@ export function useBookingSheetController({
       }
 
       return {
-        selection,
+        selections: [selection],
         status: 'confirm',
       }
     })
@@ -135,21 +135,21 @@ export function useBookingSheetController({
       return
     }
 
-    const { selection } = bookingSheetState
+    const { selections } = bookingSheetState
 
     submitInFlightRef.current = true
     setBookingSheetState({
-      selection,
+      selections,
       status: 'submitting',
     })
 
     try {
-      const submission = await submitBooking([selection])
+      const submission = await submitBooking(selections)
       completedSubmissionRef.current = submission
 
       setBookingSheetState({
         result: submission.result,
-        selection,
+        selections,
         status: 'completed',
         traceId: submission.traceId,
       })
