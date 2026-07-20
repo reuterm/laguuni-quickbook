@@ -211,26 +211,34 @@ describe('DefaultBookingService', () => {
     expect(api.createBasket).not.toHaveBeenCalled()
   })
 
-  it('rejects mixed-cable selections before creating a basket', async () => {
+  it('adds mixed-cable selections on different days to one basket', async () => {
     const api = createApiStub()
     const service = new DefaultBookingService({ api })
-    const trace = createTrace()
 
-    const submission = await service.book(
-      {
-        profile,
-        selections: [selection, otherCableSelection],
+    await expect(
+      service.book(
+        {
+          profile,
+          selections: [selection, otherCableSelection],
+        },
+        createTrace(),
+      ),
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
       },
-      trace,
-    )
-
-    expect(submission.result).toEqual({
-      errorCode: 'mixed-cable-selections',
-      message: 'Booking slot selections must use the same cable.',
-      status: 'failed',
-      step: 'unexpected',
     })
-    expect(api.createBasket).not.toHaveBeenCalled()
+
+    expect(api.createBasket).toHaveBeenCalledOnce()
+    expect(api.addReservationToBasket).toHaveBeenNthCalledWith(1, {
+      basketToken: 'created-basket-token',
+      selection,
+    })
+    expect(api.addReservationToBasket).toHaveBeenNthCalledWith(2, {
+      basketToken: 'created-basket-token',
+      selection: otherCableSelection,
+    })
   })
 
   it('rejects duplicate date selections before creating a basket', async () => {
@@ -238,7 +246,8 @@ describe('DefaultBookingService', () => {
     const service = new DefaultBookingService({ api })
     const trace = createTrace()
     const duplicateDateSelection = {
-      ...selection,
+      ...otherCableSelection,
+      date: selection.date,
       endTime: '17:00',
       startTime: '16:00',
     }

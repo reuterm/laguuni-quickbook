@@ -69,25 +69,6 @@ export class DefaultBookingService implements BookingService {
       })
     }
 
-    const [firstSelection] = selections
-
-    if (
-      firstSelection !== undefined &&
-      selections.some(
-        (selection) => selection.cableId !== firstSelection.cableId,
-      )
-    ) {
-      return createBookingSubmission({
-        reservationRelease,
-        result: {
-          errorCode: 'mixed-cable-selections',
-          message: 'Booking slot selections must use the same cable.',
-          status: 'failed',
-          step: 'unexpected',
-        },
-      })
-    }
-
     const selectedDates = new Set(selections.map((selection) => selection.date))
 
     if (selectedDates.size !== selections.length) {
