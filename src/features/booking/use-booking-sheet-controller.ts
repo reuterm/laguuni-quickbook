@@ -30,7 +30,7 @@ type UseBookingSheetControllerOptions = {
   onBookingFinalized?:
     | ((finalizedBooking: {
         result: BookingFlowResult
-        selection: BookingSlotSelection
+        selections: readonly BookingSlotSelection[]
       }) => void | Promise<void>)
     | undefined
 }
@@ -58,15 +58,9 @@ export function useBookingSheetController({
         await submission.releaseReservation()
       }
 
-      const selection = submission.selections[0]
-
-      if (selection === undefined) {
-        return
-      }
-
       await onBookingFinalized?.({
         result: submission.result,
-        selection,
+        selections: submission.selections,
       })
     },
     [onBookingFinalized],

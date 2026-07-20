@@ -175,7 +175,50 @@ describe('useBookingSheetController', () => {
         orderIdentifier: 'fixture-order-id',
         status: 'success',
       },
-      selection,
+      selections: [selection],
+    })
+  })
+
+  it('passes every selected date to onBookingFinalized after a successful booking', async () => {
+    const secondSelection = {
+      cableId: 'easy' as const,
+      date: localDate('2026-05-21'),
+      endTime: '17:00',
+      startTime: '16:00',
+    }
+    const onBookingFinalized = vi.fn(async () => {})
+
+    bookingFlowMocks.useBookingFlow.mockReturnValue({
+      isBookingReady: true,
+      submitBooking: vi.fn(async () => ({
+        releaseReservation: vi.fn(async () => {}),
+        result: {
+          orderIdentifier: 'fixture-order-id',
+          status: 'success',
+        },
+        selections: [selection, secondSelection],
+        traceId: 'trace-success',
+      })),
+    })
+
+    const { result } = renderHook(() =>
+      useBookingSheetController({ onBookingFinalized }),
+    )
+
+    await act(async () => {
+      await result.current.requestBooking(selection)
+    })
+
+    await act(async () => {
+      await result.current.confirmBooking()
+    })
+
+    expect(onBookingFinalized).toHaveBeenCalledWith({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+      selections: [selection, secondSelection],
     })
   })
 
@@ -479,7 +522,7 @@ describe('useBookingSheetController', () => {
           status: 'failed',
           step: 'checkout',
         },
-        selection,
+        selections: [selection],
       })
     })
   })
@@ -533,7 +576,7 @@ describe('useBookingSheetController', () => {
           redirectUrl: 'https://example.com/pay',
           status: 'payment_required',
         },
-        selection,
+        selections: [selection],
       })
     })
   })
@@ -578,7 +621,7 @@ describe('useBookingSheetController', () => {
           redirectUrl: 'https://example.com/pay',
           status: 'payment_required',
         },
-        selection,
+        selections: [selection],
       })
     })
     expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
@@ -622,7 +665,7 @@ describe('useBookingSheetController', () => {
           redirectUrl: 'https://example.com/pay',
           status: 'payment_required',
         },
-        selection,
+        selections: [selection],
       })
     })
   })
