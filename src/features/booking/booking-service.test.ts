@@ -20,6 +20,11 @@ const secondSelection = {
   startTime: '16:00',
 }
 
+const otherCableSelection = {
+  ...secondSelection,
+  cableId: 'easy' as const,
+}
+
 const profile = {
   email: 'test@example.com',
   name: 'Test User',
@@ -60,36 +65,6 @@ function createApiStub(): LaguuniApi {
 }
 
 describe('DefaultBookingService', () => {
-  it('adds every requested slot to one basket before checkout', async () => {
-    const api = createApiStub()
-    const service = new DefaultBookingService({ api })
-
-    await expect(
-      service.book(
-        {
-          profile,
-          selections: [selection, secondSelection],
-        },
-        createTrace(),
-      ),
-    ).resolves.toMatchObject({
-      result: {
-        orderIdentifier: 'fixture-order-id',
-        status: 'success',
-      },
-    })
-
-    expect(api.createBasket).toHaveBeenCalledOnce()
-    expect(api.addReservationToBasket).toHaveBeenNthCalledWith(1, {
-      basketToken: 'created-basket-token',
-      selection,
-    })
-    expect(api.addReservationToBasket).toHaveBeenNthCalledWith(2, {
-      basketToken: 'created-basket-token',
-      selection: secondSelection,
-    })
-  })
-
   it('runs the expected basket, code, and checkout sequence', async () => {
     const api = createApiStub()
     const service = new DefaultBookingService({ api })
@@ -162,7 +137,7 @@ describe('DefaultBookingService', () => {
     expect(api.submitCheckout).toHaveBeenCalledOnce()
   })
 
-  it('stops adding selections after a failure and returns basket cleanup', async () => {
+  it('releases the basket immediately after an add failure and keeps later cleanup safe', async () => {
     const api = createApiStub()
     vi.mocked(api.addReservationToBasket).mockRejectedValueOnce(
       new Error('Slot unavailable'),
@@ -181,10 +156,11 @@ describe('DefaultBookingService', () => {
     expect(api.addReservationToBasket).toHaveBeenCalledOnce()
     expect(api.applyCodeToBasket).not.toHaveBeenCalled()
     expect(api.submitCheckout).not.toHaveBeenCalled()
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
 
     await submission.releaseReservation()
 
-    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+    expect(api.deleteBasket).toHaveBeenCalledOnce()
   })
 
   it('treats basket creation failures as recoverable availability changes', async () => {
@@ -233,6 +209,60 @@ describe('DefaultBookingService', () => {
       step: 'unexpected',
     })
     expect(api.createBasket).not.toHaveBeenCalled()
+  })
+
+  it('rejects mixed-cable selections before creating a basket', async () => {
+    const api = createApiStub()
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+
+    const submission = await service.book(
+      {
+        profile,
+        selections: [selection, otherCableSelection],
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'mixed-cable-selections',
+      message: 'Booking slot selections must use the same cable.',
+      status: 'failed',
+      step: 'unexpected',
+    })
+    expect(api.createBasket).not.toHaveBeenCalled()
+  })
+
+  it('rejects duplicate date selections before creating a basket', async () => {
+    const api = createApiStub()
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+    const duplicateDateSelection = {
+      ...selection,
+      endTime: '17:00',
+      startTime: '16:00',
+    }
+
+    await expect(
+      service.book(
+        {
+          profile,
+          selections: [selection, duplicateDateSelection],
+        },
+        trace,
+      ),
+    ).resolves.toMatchObject({
+      result: {
+        errorCode: 'duplicate-date-selections',
+        status: 'failed',
+        step: 'unexpected',
+      },
+    })
+
+    expect(api.createBasket).not.toHaveBeenCalled()
+    expect(api.addReservationToBasket).not.toHaveBeenCalled()
+    expect(api.applyCodeToBasket).not.toHaveBeenCalled()
+    expect(api.submitCheckout).not.toHaveBeenCalled()
   })
 
   it('stops before checkout when the code is invalid', async () => {
@@ -618,7 +648,7 @@ describe('DefaultBookingService', () => {
     expect(exportedLogs).not.toContain('test@example.com')
   })
 
-  it('returns basket cleanup for unexpected errors after basket creation', async () => {
+  it('returns basket cleanup for reservation errors after basket creation', async () => {
     const api = createApiStub()
 
     vi.mocked(api.addReservationToBasket).mockRejectedValueOnce(
@@ -636,10 +666,10 @@ describe('DefaultBookingService', () => {
     )
 
     expect(submission.result).toEqual({
-      errorCode: 'unexpected-error',
+      errorCode: 'reservation-unavailable',
       message: 'Fixture reservation failed.',
       status: 'failed',
-      step: 'unexpected',
+      step: 'reservation',
     })
 
     await submission.releaseReservation()

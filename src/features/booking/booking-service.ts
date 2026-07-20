@@ -69,6 +69,39 @@ export class DefaultBookingService implements BookingService {
       })
     }
 
+    const [firstSelection] = selections
+
+    if (
+      firstSelection !== undefined &&
+      selections.some(
+        (selection) => selection.cableId !== firstSelection.cableId,
+      )
+    ) {
+      return createBookingSubmission({
+        reservationRelease,
+        result: {
+          errorCode: 'mixed-cable-selections',
+          message: 'Booking slot selections must use the same cable.',
+          status: 'failed',
+          step: 'unexpected',
+        },
+      })
+    }
+
+    const selectedDates = new Set(selections.map((selection) => selection.date))
+
+    if (selectedDates.size !== selections.length) {
+      return createBookingSubmission({
+        reservationRelease,
+        result: {
+          errorCode: 'duplicate-date-selections',
+          message: 'Only one booking slot can be selected per day.',
+          status: 'failed',
+          step: 'unexpected',
+        },
+      })
+    }
+
     diagnosticsReporter.recordStarted(selections, Boolean(normalizedCode))
 
     try {
@@ -98,10 +131,24 @@ export class DefaultBookingService implements BookingService {
       diagnosticsReporter.recordBasketCreated()
 
       for (const selection of selections) {
-        await this.#api.addReservationToBasket({
-          basketToken,
-          selection,
-        })
+        try {
+          await this.#api.addReservationToBasket({
+            basketToken,
+            selection,
+          })
+        } catch (error) {
+          await reservationRelease()
+
+          return createBookingSubmission({
+            reservationRelease,
+            result: {
+              errorCode: 'reservation-unavailable',
+              message: getErrorMessage(error),
+              status: 'failed',
+              step: 'reservation',
+            },
+          })
+        }
         diagnosticsReporter.recordReservationAdded(selection)
       }
 
