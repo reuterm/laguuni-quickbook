@@ -232,7 +232,9 @@ describe('BookingSheetFlow', () => {
       />,
     )
 
-    expect(screen.getByText('2 slots was booked without any remaining payment.')).toBeVisible()
+    expect(
+      screen.getByText('2 slots was booked without any remaining payment.'),
+    ).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
 

@@ -38,7 +38,7 @@ describe('useBookingSheetController', () => {
     })
 
     expect(result.current.bookingSheetState).toEqual({
-      selection,
+      selections: [selection],
       status: 'confirm',
     })
   })
@@ -78,7 +78,7 @@ describe('useBookingSheetController', () => {
     })
 
     expect(result.current.bookingSheetState).toEqual({
-      selection,
+      selections: [selection],
       status: 'submitting',
     })
 
@@ -133,7 +133,7 @@ describe('useBookingSheetController', () => {
     })
 
     expect(result.current.bookingSheetState).toEqual({
-      selection,
+      selections: [selection],
       status: 'submitting',
     })
 
@@ -213,7 +213,7 @@ describe('useBookingSheetController', () => {
         orderIdentifier: 'fixture-order-id',
         status: 'success',
       },
-      selection,
+      selections: [selection],
       status: 'completed',
       traceId: 'trace-success',
     })
@@ -330,7 +330,7 @@ describe('useBookingSheetController', () => {
     })
 
     expect(result.current.bookingSheetState).toEqual({
-      selection,
+      selections: [selection],
       status: 'submitting',
     })
 
@@ -367,7 +367,7 @@ describe('useBookingSheetController', () => {
         orderIdentifier: 'fixture-order-id',
         status: 'success',
       },
-      selection,
+      selections: [selection],
       status: 'completed',
       traceId: 'trace-success',
     })
@@ -418,7 +418,7 @@ describe('useBookingSheetController', () => {
           orderIdentifier: 'fixture-order-id',
           status: 'success',
         },
-        selection,
+        selections: [selection],
         status: 'completed',
         traceId: 'trace-success',
       })

@@ -42,8 +42,12 @@ export function getBookingSelectionsPresentation(
   }
 }
 
-function formatBookingSelectionDate(date: BookingSlotSelection['date']): string {
-  const parts = bookingSelectionDateFormatter.formatToParts(parseLocalDate(date))
+function formatBookingSelectionDate(
+  date: BookingSlotSelection['date'],
+): string {
+  const parts = bookingSelectionDateFormatter.formatToParts(
+    parseLocalDate(date),
+  )
   const weekday = parts.find((part) => part.type === 'weekday')?.value
   const day = parts.find((part) => part.type === 'day')?.value
   const month = parts.find((part) => part.type === 'month')?.value
