@@ -13,6 +13,13 @@ const selection = {
   startTime: '15:00',
 }
 
+const secondSelection = {
+  cableId: 'pro' as const,
+  date: localDate('2026-05-15'),
+  endTime: '16:00',
+  startTime: '15:00',
+}
+
 const profile = {
   email: 'test@example.com',
   name: 'Test User',
@@ -53,6 +60,36 @@ function createApiStub(): LaguuniApi {
 }
 
 describe('DefaultBookingService', () => {
+  it('adds every requested slot to one basket before checkout', async () => {
+    const api = createApiStub()
+    const service = new DefaultBookingService({ api })
+
+    await expect(
+      service.book(
+        {
+          profile,
+          selections: [selection, secondSelection],
+        },
+        createTrace(),
+      ),
+    ).resolves.toMatchObject({
+      result: {
+        orderIdentifier: 'fixture-order-id',
+        status: 'success',
+      },
+    })
+
+    expect(api.createBasket).toHaveBeenCalledOnce()
+    expect(api.addReservationToBasket).toHaveBeenNthCalledWith(1, {
+      basketToken: 'created-basket-token',
+      selection,
+    })
+    expect(api.addReservationToBasket).toHaveBeenNthCalledWith(2, {
+      basketToken: 'created-basket-token',
+      selection: secondSelection,
+    })
+  })
+
   it('runs the expected basket, code, and checkout sequence', async () => {
     const api = createApiStub()
     const service = new DefaultBookingService({ api })
