@@ -83,7 +83,7 @@ describe('useBookingSheetController', () => {
     })
 
     expect(bookingFlowMocks.submitBooking).toHaveBeenCalledTimes(1)
-    expect(bookingFlowMocks.submitBooking).toHaveBeenCalledWith(selection)
+    expect(bookingFlowMocks.submitBooking).toHaveBeenCalledWith([selection])
 
     resolveBooking()
 
@@ -686,9 +686,9 @@ describe('useBookingSheetController', () => {
 function mockBookingFlow() {
   bookingFlowMocks.useBookingFlow.mockReturnValue({
     isBookingReady: true,
-    submitBooking: vi.fn(async (selection) => ({
-      ...(await bookingFlowMocks.submitBooking(selection)),
-      selection,
+    submitBooking: vi.fn(async (selections) => ({
+      ...(await bookingFlowMocks.submitBooking(selections)),
+      selections,
     })),
   })
 }

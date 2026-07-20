@@ -40,8 +40,11 @@ export type BookingDiagnosticsReporter = {
     hasCode: boolean,
   ): void
   recordReservationAdded(selection: BookingSlotSelection): void
-  recordStarted(selection: BookingSlotSelection, hasCode: boolean): void
-  recordUnexpectedError(selection: BookingSlotSelection): void
+  recordStarted(
+    selections: readonly BookingSlotSelection[],
+    hasCode: boolean,
+  ): void
+  recordUnexpectedError(selections: readonly BookingSlotSelection[]): void
 }
 
 export function createBookingDiagnosticsReporter(
@@ -167,24 +170,20 @@ export function createBookingDiagnosticsReporter(
         event: 'booking.reservation_added',
       })
     },
-    recordStarted(selection: BookingSlotSelection, hasCode: boolean) {
+    recordStarted(selections, hasCode) {
       diagnostics.append({
         data: {
-          cableId: selection.cableId,
-          date: selection.date,
-          endTime: selection.endTime,
           hasCode,
-          startTime: selection.startTime,
+          selectionCount: selections.length,
         },
         event: 'booking.started',
       })
     },
-    recordUnexpectedError(selection: BookingSlotSelection) {
+    recordUnexpectedError(selections) {
       diagnostics.append({
         data: {
           errorCode: 'unexpected-error',
-          selectionDate: selection.date,
-          selectionStartTime: selection.startTime,
+          selectionCount: selections.length,
         },
         event: 'booking.unexpected_error',
       })

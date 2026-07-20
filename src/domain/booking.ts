@@ -65,5 +65,5 @@ export type BookingFlowResult =
 export type BookingRequest = {
   code?: string | null
   profile: BookingProfile
-  selection: BookingSlotSelection
+  selections: readonly BookingSlotSelection[]
 }

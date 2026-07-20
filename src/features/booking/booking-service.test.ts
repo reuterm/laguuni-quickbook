@@ -16,8 +16,8 @@ const selection = {
 const secondSelection = {
   cableId: 'pro' as const,
   date: localDate('2026-05-15'),
-  endTime: '16:00',
-  startTime: '15:00',
+  endTime: '17:00',
+  startTime: '16:00',
 }
 
 const profile = {
@@ -100,7 +100,7 @@ describe('DefaultBookingService', () => {
         {
           code: 'FIXTURE-DISCOUNT',
           profile,
-          selection,
+          selections: [selection],
         },
         trace,
       ),
@@ -135,6 +135,80 @@ describe('DefaultBookingService', () => {
     )
   })
 
+  it('adds each selection to one basket before applying the code and checking out', async () => {
+    const api = createApiStub()
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+
+    await service.book(
+      {
+        code: 'FIXTURE-DISCOUNT',
+        profile,
+        selections: [selection, secondSelection],
+      },
+      trace,
+    )
+
+    expect(api.createBasket).toHaveBeenCalledOnce()
+    expect(api.addReservationToBasket).toHaveBeenNthCalledWith(1, {
+      basketToken: 'created-basket-token',
+      selection,
+    })
+    expect(api.addReservationToBasket).toHaveBeenNthCalledWith(2, {
+      basketToken: 'created-basket-token',
+      selection: secondSelection,
+    })
+    expect(api.applyCodeToBasket).toHaveBeenCalledOnce()
+    expect(api.submitCheckout).toHaveBeenCalledOnce()
+  })
+
+  it('stops adding selections after a failure and returns basket cleanup', async () => {
+    const api = createApiStub()
+    vi.mocked(api.addReservationToBasket).mockRejectedValueOnce(
+      new Error('Slot unavailable'),
+    )
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+
+    const submission = await service.book(
+      {
+        profile,
+        selections: [selection, secondSelection],
+      },
+      trace,
+    )
+
+    expect(api.addReservationToBasket).toHaveBeenCalledOnce()
+    expect(api.applyCodeToBasket).not.toHaveBeenCalled()
+    expect(api.submitCheckout).not.toHaveBeenCalled()
+
+    await submission.releaseReservation()
+
+    expect(api.deleteBasket).toHaveBeenCalledWith('created-basket-token')
+  })
+
+  it('rejects an empty selections collection before creating a basket', async () => {
+    const api = createApiStub()
+    const service = new DefaultBookingService({ api })
+    const trace = createTrace()
+
+    const submission = await service.book(
+      {
+        profile,
+        selections: [],
+      },
+      trace,
+    )
+
+    expect(submission.result).toEqual({
+      errorCode: 'missing-selections',
+      message: 'At least one booking slot selection is required.',
+      status: 'failed',
+      step: 'unexpected',
+    })
+    expect(api.createBasket).not.toHaveBeenCalled()
+  })
+
   it('stops before checkout when the code is invalid', async () => {
     const api = createApiStub()
 
@@ -152,7 +226,7 @@ describe('DefaultBookingService', () => {
         {
           code: 'INVALID',
           profile,
-          selection,
+          selections: [selection],
         },
         trace,
       ),
@@ -184,7 +258,7 @@ describe('DefaultBookingService', () => {
       {
         code: 'INVALID',
         profile,
-        selection,
+        selections: [selection],
       },
       trace,
     )
@@ -216,7 +290,7 @@ describe('DefaultBookingService', () => {
     const submission = await service.book(
       {
         profile,
-        selection,
+        selections: [selection],
       },
       trace,
     )
@@ -239,7 +313,7 @@ describe('DefaultBookingService', () => {
             ...profile,
             email: ' ',
           },
-          selection,
+          selections: [selection],
         },
         trace,
       ),
@@ -270,7 +344,7 @@ describe('DefaultBookingService', () => {
         {
           code: 'FIXTURE-DISCOUNT',
           profile,
-          selection,
+          selections: [selection],
         },
         trace,
       ),
@@ -306,7 +380,7 @@ describe('DefaultBookingService', () => {
         {
           code: 'FIXTURE-DISCOUNT',
           profile,
-          selection,
+          selections: [selection],
         },
         trace,
       ),
@@ -352,7 +426,7 @@ describe('DefaultBookingService', () => {
         {
           code: 'FIXTURE-DISCOUNT',
           profile,
-          selection,
+          selections: [selection],
         },
         trace,
       ),
@@ -393,7 +467,7 @@ describe('DefaultBookingService', () => {
       service.book(
         {
           profile,
-          selection,
+          selections: [selection],
         },
         trace,
       ),
@@ -449,7 +523,7 @@ describe('DefaultBookingService', () => {
       service.book(
         {
           profile,
-          selection,
+          selections: [selection],
         },
         trace,
       ),
@@ -497,7 +571,7 @@ describe('DefaultBookingService', () => {
       service.book(
         {
           profile,
-          selection,
+          selections: [selection],
         },
         trace,
       ),
@@ -530,7 +604,7 @@ describe('DefaultBookingService', () => {
     const submission = await service.book(
       {
         profile,
-        selection,
+        selections: [selection],
       },
       trace,
     )
@@ -572,7 +646,7 @@ describe('DefaultBookingService', () => {
     const submission = await service.book(
       {
         profile,
-        selection,
+        selections: [selection],
       },
       trace,
     )
@@ -596,7 +670,7 @@ describe('DefaultBookingService', () => {
     const submission = await service.book(
       {
         profile,
-        selection,
+        selections: [selection],
       },
       trace,
     )
@@ -628,7 +702,7 @@ describe('DefaultBookingService', () => {
     const submission = await service.book(
       {
         profile,
-        selection,
+        selections: [selection],
       },
       trace,
     )
@@ -645,7 +719,7 @@ describe('DefaultBookingService', () => {
     const submission = await service.book(
       {
         profile,
-        selection,
+        selections: [selection],
       },
       trace,
     )
@@ -670,7 +744,7 @@ describe('DefaultBookingService', () => {
     const submission = await service.book(
       {
         profile,
-        selection,
+        selections: [selection],
       },
       trace,
     )

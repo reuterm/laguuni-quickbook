@@ -5,17 +5,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import checkoutFailureFixture from '../../../tests/fixtures/laguuni/booking/checkout-failure.json'
 import checkoutPaymentRequiredFixture from '../../../tests/fixtures/laguuni/booking/checkout-payment-required.json'
+import { localDate } from '../../../tests/local-date'
 import { server } from '../../../tests/msw/server'
 import {
   DEFAULT_LAGUUNI_API_BASE_URL,
+  FetchHttpClient,
   normalizeApiBaseUrl,
 } from '../../lib/api/client'
+import { LaguuniApiClient } from '../../lib/api/laguuni-api'
 import { createMemoryStorage } from '../../test/create-memory-storage'
 import {
   clearPersistedAppState,
   saveUserSettings,
 } from '../../test/persisted-state'
 import { renderApp } from '../../test/render-app'
+import { LocalDiagnosticsStore } from '../diagnostics/logs'
+import { DefaultBookingService } from './booking-service'
 
 const TEST_API_BASE_URL = normalizeApiBaseUrl(DEFAULT_LAGUUNI_API_BASE_URL)
 
@@ -57,6 +62,104 @@ describe('booking flow integration', () => {
     expect(
       screen.queryByRole('button', { name: 'Book' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('submits two selections, one discount, and one order through one basket', async () => {
+    const itemBasketTokens: string[] = []
+    const orderBasketTokens: string[] = []
+    const itemBodies: unknown[] = []
+
+    server.use(
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/baskets/:basketToken/items/new.json`,
+        async ({ params, request }) => {
+          itemBasketTokens.push(String(params.basketToken))
+          itemBodies.push(await request.json())
+          return HttpResponse.json(249253)
+        },
+      ),
+      http.get(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/baskets/:basketToken/items.json`,
+        () => HttpResponse.json([{ discountedprice: '0', price: '26' }]),
+      ),
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
+        ({ params }) => {
+          orderBasketTokens.push(String(params.basketToken))
+          return HttpResponse.json('fixture-order-id')
+        },
+      ),
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/completeorderhandler/:identifier/cashreturn.json`,
+        ({ params }) =>
+          HttpResponse.json({
+            items: {
+              identifier: String(params.identifier),
+              payment: 'cash',
+              success: true,
+            },
+          }),
+      ),
+      http.get(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:identifier.json`,
+        ({ params }) =>
+          HttpResponse.json({
+            completed: '1',
+            identifier: String(params.identifier),
+            paid: '1',
+            payment: 'cash',
+          }),
+      ),
+    )
+    const service = new DefaultBookingService({
+      api: new LaguuniApiClient({
+        client: new FetchHttpClient({
+          baseUrl: TEST_API_BASE_URL,
+          fetchImplementation: globalThis.fetch.bind(globalThis),
+        }),
+      }),
+    })
+    const diagnostics = new LocalDiagnosticsStore({
+      appVersion: 'test-version',
+      storage: createMemoryStorage(),
+    })
+
+    const submission = await service.book(
+      {
+        code: 'FIXTURE-DISCOUNT',
+        profile: {
+          email: 'test@example.com',
+          name: 'Test User',
+          phone: '+358401234567',
+        },
+        selections: [
+          {
+            cableId: 'pro',
+            date: localDate('2026-05-20'),
+            endTime: '16:00',
+            startTime: '15:00',
+          },
+          {
+            cableId: 'pro',
+            date: localDate('2026-05-21'),
+            endTime: '17:00',
+            startTime: '16:00',
+          },
+        ],
+      },
+      diagnostics.beginTrace({ name: 'booking' }),
+    )
+
+    expect(submission.result.status).toBe('success')
+    expect(itemBasketTokens).toHaveLength(3)
+    expect([...new Set(itemBasketTokens)]).toHaveLength(1)
+    expect(itemBodies).toHaveLength(3)
+    expect(
+      itemBodies.filter(
+        (body) => typeof body === 'object' && body !== null && 'code' in body,
+      ),
+    ).toHaveLength(1)
+    expect(orderBasketTokens).toEqual([itemBasketTokens[0]])
   })
 
   it('shows a failure state when checkout returns an error', async () => {

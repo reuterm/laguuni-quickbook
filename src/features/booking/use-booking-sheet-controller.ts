@@ -58,9 +58,15 @@ export function useBookingSheetController({
         await submission.releaseReservation()
       }
 
+      const selection = submission.selections[0]
+
+      if (selection === undefined) {
+        return
+      }
+
       await onBookingFinalized?.({
         result: submission.result,
-        selection: submission.selection,
+        selection,
       })
     },
     [onBookingFinalized],
@@ -138,7 +144,7 @@ export function useBookingSheetController({
     })
 
     try {
-      const submission = await submitBooking(selection)
+      const submission = await submitBooking([selection])
       completedSubmissionRef.current = submission
 
       setBookingSheetState({
