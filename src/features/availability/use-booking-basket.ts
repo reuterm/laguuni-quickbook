@@ -9,7 +9,9 @@ export function useBookingBasket() {
   const revisionRef = useRef(0)
 
   function updateSelections(
-    updater: (current: readonly BookingSlotSelection[]) => readonly BookingSlotSelection[],
+    updater: (
+      current: readonly BookingSlotSelection[],
+    ) => readonly BookingSlotSelection[],
   ) {
     revisionRef.current += 1
     setSelections(updater)

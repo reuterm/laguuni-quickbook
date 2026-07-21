@@ -21,8 +21,6 @@ type AvailabilityCapacityChipProps =
       className?: string
       disabled?: boolean
       onClick: () => void
-      actionLabel?: string
-      pressed?: boolean
       slot: AvailabilitySlot
     }
   | {
@@ -32,6 +30,11 @@ type AvailabilityCapacityChipProps =
       slot: AvailabilitySlot
     }
 
+type AvailabilityCapacityChipSharedProps = {
+  actionLabel?: string
+  pressed?: boolean
+}
+
 export function AvailabilityCapacityChip({
   className,
   disabled,
@@ -39,7 +42,7 @@ export function AvailabilityCapacityChip({
   actionLabel,
   pressed,
   slot,
-}: AvailabilityCapacityChipProps) {
+}: AvailabilityCapacityChipProps & AvailabilityCapacityChipSharedProps) {
   const chipClassName = cn(
     getAvailabilityChipClassName(slot),
     onClick !== undefined && availabilityChipInteractiveClassName,

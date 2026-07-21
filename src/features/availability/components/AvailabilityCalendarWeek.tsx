@@ -23,9 +23,9 @@ import { availabilityCalendarColumnClassNames } from './availability-calendar-ui
 type AvailabilityCalendarWeekProps = {
   visibleDayIndices: readonly number[]
   week: AvailabilityWeek
-  isSelected?: (selection: BookingSlotSelection) => boolean
-  onAddSelection?: (selection: BookingSlotSelection) => void
-  onRemoveSelection?: (selection: BookingSlotSelection) => void
+  isSelected?: ((selection: BookingSlotSelection) => boolean) | undefined
+  onAddSelection?: ((selection: BookingSlotSelection) => void) | undefined
+  onRemoveSelection?: ((selection: BookingSlotSelection) => void) | undefined
 } & AvailabilityBookingActionProps
 
 export function AvailabilityCalendarWeek({

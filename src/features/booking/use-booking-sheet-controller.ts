@@ -34,9 +34,7 @@ type UseBookingSheetControllerOptions = {
         selections: readonly BookingSlotSelection[]
       }) => void | Promise<void>)
     | undefined
-  onKeepBookingForMore?:
-    | ((selection: BookingSlotSelection) => void)
-    | undefined
+  onKeepBookingForMore?: ((selection: BookingSlotSelection) => void) | undefined
 }
 
 export function useBookingSheetController({
@@ -116,19 +114,22 @@ export function useBookingSheetController({
     void completedSubmission.releaseReservation()
   }, [takeCompletedSubmission])
 
-  const requestInitialBooking = useCallback((selection: BookingSlotSelection) => {
-    setBookingSheetState((currentState) => {
-      if (currentState.status === 'submitting') {
-        return currentState
-      }
+  const requestInitialBooking = useCallback(
+    (selection: BookingSlotSelection) => {
+      setBookingSheetState((currentState) => {
+        if (currentState.status === 'submitting') {
+          return currentState
+        }
 
-      return {
-        kind: 'initial',
-        selections: [selection],
-        status: 'confirm',
-      }
-    })
-  }, [])
+        return {
+          kind: 'initial',
+          selections: [selection],
+          status: 'confirm',
+        }
+      })
+    },
+    [],
+  )
 
   const requestBasketReview = useCallback(
     (selections: readonly BookingSlotSelection[]) => {
