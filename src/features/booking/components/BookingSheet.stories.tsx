@@ -29,6 +29,7 @@ export const Confirm: Story = {
 }
 
 export const LongReview: Story = {
+  name: 'Long review',
   args: {
     children: <BookingConfirmPanel onConfirm={noopAsync} />,
     dismissible: true,

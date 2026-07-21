@@ -38,12 +38,13 @@ describe('BookingSheet', () => {
     )
 
     expect(
-      screen.getByRole('heading', { name: 'Booking details, 2 slots' }),
+      screen.getByRole('heading', { name: 'Booking details' }),
     ).toBeVisible()
     expect(
       screen.getByRole('heading', { name: 'Confirm booking' }),
     ).toBeVisible()
     expect(screen.getByText('2 slots')).toBeVisible()
+    expect(screen.queryByText('Slots')).not.toBeInTheDocument()
     expect(screen.getByTestId('booking-selected-slots')).toHaveClass(
       'max-h-[40vh]',
       'overflow-y-auto',

@@ -3,6 +3,7 @@ import {
   Sheet,
   SheetCloseButton,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
@@ -71,12 +72,9 @@ function BookingSheetLayout({
     <div className="grid gap-6">
       <SheetHeader className="space-y-2 pr-10 text-left">
         <p className={eyebrowClassName}>Booking</p>
-        <SheetTitle>Booking details, {summary.label}</SheetTitle>
+        <SheetTitle>Booking details</SheetTitle>
+        <SheetDescription>{summary.label}</SheetDescription>
       </SheetHeader>
-
-      <dl className="grid gap-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
-        <SummaryRow label="Slots" value={summary.label} />
-      </dl>
 
       <dl
         className="grid max-h-[40vh] gap-4 overflow-y-auto rounded-2xl border border-border/70 bg-muted/30 p-4"
@@ -96,15 +94,6 @@ function BookingSheetLayout({
       </dl>
 
       {children}
-    </div>
-  )
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="grid gap-1 sm:grid-cols-[5rem_1fr] sm:items-center sm:gap-3">
-      <dt className={eyebrowClassName}>{label}</dt>
-      <dd className="text-sm font-medium text-foreground">{value}</dd>
     </div>
   )
 }
