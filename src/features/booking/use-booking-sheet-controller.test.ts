@@ -92,6 +92,24 @@ describe('useBookingSheetController', () => {
     })
   })
 
+  it('ignores an empty basket review request without submitting a booking', async () => {
+    mockBookingFlow()
+
+    const { result } = renderHook(() => useBookingSheetController())
+
+    await act(async () => {
+      result.current.requestBasketReview([])
+    })
+
+    expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
+
+    await act(async () => {
+      await result.current.confirmBooking()
+    })
+
+    expect(bookingFlowMocks.submitBooking).not.toHaveBeenCalled()
+  })
+
   it('submits a confirmed booking only once while confirmation is already pending', async () => {
     let resolveBooking!: () => void
 

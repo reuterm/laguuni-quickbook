@@ -229,7 +229,11 @@ export function createBookingSheetState(
     case 'closed':
       return { status: 'closed' }
     case 'confirm':
-      return { selections: [createSelection()], status: 'confirm' }
+      return {
+        kind: 'initial',
+        selections: [createSelection()],
+        status: 'confirm',
+      }
     case 'submitting':
       return { selections: [createSelection()], status: 'submitting' }
     case 'completed':

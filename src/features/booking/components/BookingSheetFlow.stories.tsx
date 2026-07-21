@@ -111,6 +111,7 @@ const multiSlotSelections = [
 export const MultiSlotReview: Story = {
   args: {
     bookingSheetState: {
+      kind: 'basket',
       selections: multiSlotSelections,
       status: 'confirm',
     },

@@ -133,6 +133,10 @@ export function useBookingSheetController({
 
   const requestBasketReview = useCallback(
     (selections: readonly BookingSlotSelection[]) => {
+      if (selections.length === 0) {
+        return
+      }
+
       setBookingSheetState((currentState) => {
         if (currentState.status === 'submitting') {
           return currentState
