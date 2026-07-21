@@ -5,7 +5,6 @@ import {
 } from '@/components/ui/styles'
 import { formatLocalDate } from '@/lib/date'
 import { cn } from '@/lib/utils'
-import type { BookingSlotSelection } from '../../../domain/booking'
 import {
   type AvailabilityWeek,
   createSlotLookup,
@@ -22,21 +21,15 @@ import { availabilityCalendarColumnClassNames } from './availability-calendar-ui
 import type { BookingBasketProps } from './booking-basket-props'
 
 type AvailabilityCalendarWeekProps = {
-  basketKind: BookingBasketProps['kind']
-  isSelected: (selection: BookingSlotSelection) => boolean
-  onAddSelection: (selection: BookingSlotSelection) => void
-  onRemoveSelection: (selection: BookingSlotSelection) => void
+  basket: BookingBasketProps
   visibleDayIndices: readonly number[]
   week: AvailabilityWeek
 } & AvailabilityBookingActionProps
 
 export function AvailabilityCalendarWeek({
-  basketKind,
+  basket,
   bookingActionMode,
-  isSelected,
-  onAddSelection,
   onBookSelection,
-  onRemoveSelection,
   visibleDayIndices,
   week,
 }: AvailabilityCalendarWeekProps) {
@@ -100,10 +93,10 @@ export function AvailabilityCalendarWeek({
             let onClick: (() => void) | undefined
             let disabled: boolean | undefined
 
-            if (slot && basketKind === 'basket') {
-              onClick = isSelected(slot.selection)
-                ? () => onRemoveSelection(slot.selection)
-                : () => onAddSelection(slot.selection)
+            if (slot && basket.kind === 'basket') {
+              onClick = basket.isSelected(slot.selection)
+                ? () => basket.onRemoveSelection(slot.selection)
+                : () => basket.onAddSelection(slot.selection)
             } else if (slot && bookingActionMode !== 'hidden') {
               disabled = bookingActionMode === 'disabled'
               onClick = () => onBookSelection(slot.selection)

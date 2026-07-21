@@ -8,8 +8,10 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { localDate } from '../../../../tests/local-date'
+import { groupAvailabilityWeeks } from '../availability-calendar'
 import type { AvailabilityDayGroup } from '../availability-service'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
+import { AvailabilityCalendarWeek } from './AvailabilityCalendarWeek'
 import type { BookingBasketProps } from './booking-basket-props'
 
 const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
@@ -84,6 +86,18 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
     ],
   },
 ]
+
+const week = groupAvailabilityWeeks(FIXTURE_DAY_GROUPS)[0]
+
+if (week === undefined) {
+  throw new Error('Expected availability fixture to produce a week')
+}
+// @ts-expect-error Calendar weeks require a complete basket.
+;<AvailabilityCalendarWeek
+  bookingActionMode="hidden"
+  visibleDayIndices={[0]}
+  week={week}
+/>
 
 describe('AvailabilityCalendarGrid', () => {
   afterEach(() => {

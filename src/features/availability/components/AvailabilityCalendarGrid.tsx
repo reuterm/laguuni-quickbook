@@ -57,6 +57,7 @@ export function AvailabilityCalendarGrid({
       <div className="space-y-4">
         {weeks.map((week) => (
           <AvailabilityCalendarWeek
+            basket={basket}
             key={week.id}
             visibleDayIndices={listVisibleWeekdayIndices(
               week.weekStartDate,
@@ -66,10 +67,6 @@ export function AvailabilityCalendarGrid({
               week.days,
             )}
             week={week}
-            basketKind={basket.kind}
-            isSelected={basket.isSelected}
-            onAddSelection={basket.onAddSelection}
-            onRemoveSelection={basket.onRemoveSelection}
             {...(bookingActionMode === 'hidden'
               ? { bookingActionMode }
               : { bookingActionMode, onBookSelection })}
