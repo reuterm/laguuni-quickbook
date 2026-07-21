@@ -15,6 +15,7 @@ type BookingSheetFlowProps = {
   bookingSheetState: BookingSheetState
   confirmBooking: () => Promise<void>
   dismissBookingSheet: () => void
+  keepBookingForMore?: () => void
   onExportTrace: (traceId: string) => Promise<void>
 }
 
@@ -22,6 +23,7 @@ export function BookingSheetFlow({
   bookingSheetState,
   confirmBooking,
   dismissBookingSheet,
+  keepBookingForMore,
   onExportTrace,
 }: BookingSheetFlowProps) {
   const renderedStateRef = useRef<Exclude<
@@ -49,7 +51,15 @@ export function BookingSheetFlow({
 
   switch (renderedState.status) {
     case 'confirm':
-      content = <BookingConfirmPanel onConfirm={confirmBooking} />
+      content = (
+        <BookingConfirmPanel
+          {...(renderedState.kind === 'initial' &&
+          keepBookingForMore !== undefined
+            ? { onAddMore: keepBookingForMore }
+            : {})}
+          onConfirm={confirmBooking}
+        />
+      )
       break
     case 'submitting':
       dismissible = false

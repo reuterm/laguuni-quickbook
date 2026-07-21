@@ -39,10 +39,11 @@ describe('BookingSheetFlow', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('renders the confirmation panel for the confirm state', () => {
+  it('hides Add more for confirmation without a continuation callback', () => {
     render(
       <BookingSheetFlow
         bookingSheetState={{
+          kind: 'initial',
           selections: [
             {
               cableId: 'pro',
@@ -65,6 +66,39 @@ describe('BookingSheetFlow', () => {
     expect(
       screen.getByRole('button', { name: 'Confirm booking' }),
     ).toBeEnabled()
+    expect(
+      screen.queryByRole('button', { name: 'Add more' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('calls the continuation callback from an initial confirmation', async () => {
+    const onAddMore = vi.fn()
+    const user = userEvent.setup()
+
+    render(
+      <BookingSheetFlow
+        bookingSheetState={{
+          kind: 'initial',
+          selections: [
+            {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+          ],
+          status: 'confirm',
+        }}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+        keepBookingForMore={onAddMore}
+        onExportTrace={async () => {}}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Add more' }))
+
+    expect(onAddMore).toHaveBeenCalledOnce()
   })
 
   it('renders a non-dismissible submitting panel while booking is in progress', () => {
@@ -360,6 +394,7 @@ describe('BookingSheetFlow', () => {
 
   it('cancels a pending unmount when the booking sheet reopens', () => {
     const firstState = {
+      kind: 'initial',
       selections: [
         {
           cableId: 'pro',
@@ -372,6 +407,7 @@ describe('BookingSheetFlow', () => {
     } as const
 
     const reopenedState = {
+      kind: 'initial',
       selections: [
         {
           cableId: 'easy',
