@@ -26,3 +26,19 @@
 ### Commit
 
 - `a83e68b fix: show selected slot count in booking header`
+
+## PR2 App Test Correction
+
+### Red Evidence
+
+- `pnpm test src/app/App.test.tsx` failed as expected before the correction: `App.test.tsx:232` could not find the obsolete exact heading `Booking details` after opening the calendar booking sheet.
+
+### Change
+
+- Updated only the calendar-sheet heading assertion to exact `/^Booking details, 1 slot$/`.
+- Retained the `Confirm booking` heading assertion to verify the confirmation panel remains open.
+
+### Verification
+
+- `pnpm test src/app/App.test.tsx` passed after the correction: 1 test file, 7 tests, 0 failures.
+- `pnpm test` passed after the correction: 45 test files, 289 tests, 0 failures.

@@ -229,7 +229,7 @@ describe('App', () => {
     await user.click(firstCalendarButton)
 
     expect(
-      await screen.findByRole('heading', { name: 'Booking details' }),
+      await screen.findByRole('heading', { name: /^Booking details, 1 slot$/ }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Confirm booking' }),
