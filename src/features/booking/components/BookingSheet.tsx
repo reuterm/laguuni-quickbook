@@ -71,7 +71,7 @@ function BookingSheetLayout({
     <div className="grid gap-6">
       <SheetHeader className="space-y-2 pr-10 text-left">
         <p className={eyebrowClassName}>Booking</p>
-        <SheetTitle>Booking details</SheetTitle>
+        <SheetTitle>Booking details, {summary.label}</SheetTitle>
       </SheetHeader>
 
       <dl className="grid gap-4 rounded-2xl border border-border/70 bg-muted/30 p-4">

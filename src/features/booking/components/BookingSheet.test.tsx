@@ -38,6 +38,9 @@ describe('BookingSheet', () => {
     )
 
     expect(
+      screen.getByRole('heading', { name: 'Booking details, 2 slots' }),
+    ).toBeVisible()
+    expect(
       screen.getByRole('heading', { name: 'Confirm booking' }),
     ).toBeVisible()
     expect(screen.getByText('2 slots')).toBeVisible()

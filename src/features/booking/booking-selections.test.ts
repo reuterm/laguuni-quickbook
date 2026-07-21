@@ -7,6 +7,28 @@ import {
 } from './booking-selections'
 
 describe('booking-selections', () => {
+  it('presents one selection with the singular label and one cable-aware row', () => {
+    expect(
+      getBookingSelectionsPresentation([
+        {
+          cableId: 'pro',
+          date: localDate('2026-05-20'),
+          endTime: '11:00',
+          startTime: '10:00',
+        },
+      ]),
+    ).toEqual({
+      label: '1 slot',
+      rows: [
+        {
+          cableLabel: 'Pro',
+          dateLabel: 'Wed, 20 May',
+          timeLabel: '10:00-11:00',
+        },
+      ],
+    })
+  })
+
   it('sorts mixed-cable selections and exposes cable-aware rows', () => {
     expect(
       getBookingSelectionsPresentation([
