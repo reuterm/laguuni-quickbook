@@ -115,6 +115,7 @@ export const MultiSlotReview: Story = {
       selections: multiSlotSelections,
       status: 'confirm',
     },
+    clearBookingSelection: noop,
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
     onExportTrace: noopAsync,
