@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { expect } from 'storybook/test'
 
 import {
   createBookingSheetState,
@@ -64,6 +65,11 @@ export const CompletedPaymentRequired: Story = {
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
     onExportTrace: noopAsync,
+  },
+  play: async ({ canvas }) => {
+    await expect(
+      canvas.getByRole('heading', { name: 'Booking in progress' }),
+    ).toBeVisible()
   },
 }
 
