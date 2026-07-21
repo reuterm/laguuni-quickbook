@@ -101,6 +101,33 @@ describe('BookingSheetFlow', () => {
     expect(onAddMore).toHaveBeenCalledOnce()
   })
 
+  it('hides Add more for a basket confirmation even with a continuation callback', () => {
+    render(
+      <BookingSheetFlow
+        bookingSheetState={{
+          kind: 'basket',
+          selections: [
+            {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+          ],
+          status: 'confirm',
+        }}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+        keepBookingForMore={vi.fn()}
+        onExportTrace={async () => {}}
+      />,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Add more' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('renders a non-dismissible submitting panel while booking is in progress', () => {
     render(
       <BookingSheetFlow

@@ -5,6 +5,10 @@ import { localDate } from '../../../../tests/local-date'
 import { AvailabilityScreen } from './AvailabilityScreen'
 
 const mocks = vi.hoisted(() => ({
+  availabilityOverviewContentProps: undefined as
+    | { bookingActionMode: string; onBookSelection?: unknown }
+    | undefined,
+  isBookingReady: false,
   onBookingFinalized: undefined as
     | ((booking: {
         result: { status: 'success' }
@@ -12,6 +16,7 @@ const mocks = vi.hoisted(() => ({
       }) => Promise<void>)
     | undefined,
   refreshAvailabilityDay: vi.fn(async () => {}),
+  requestInitialBooking: vi.fn(),
 }))
 
 vi.mock('../../../app/providers', () => ({
@@ -30,8 +35,9 @@ vi.mock('../../booking/use-booking-sheet-controller', () => ({
       confirmBooking: vi.fn(),
       dismissBookingSheet: vi.fn(),
       isBookingInProgress: false,
-      isBookingReady: false,
+      isBookingReady: mocks.isBookingReady,
       requestBooking: vi.fn(),
+      requestInitialBooking: mocks.requestInitialBooking,
     }
   }),
 }))
@@ -52,13 +58,30 @@ vi.mock('../use-availability-scope', () => ({
 }))
 
 vi.mock('./AvailabilityOverviewContent', () => ({
-  AvailabilityOverviewContent: vi.fn(() => null),
+  AvailabilityOverviewContent: vi.fn((props) => {
+    mocks.availabilityOverviewContentProps = props
+    return null
+  }),
 }))
 
 describe('AvailabilityScreen', () => {
   afterEach(() => {
+    mocks.availabilityOverviewContentProps = undefined
+    mocks.isBookingReady = false
     mocks.onBookingFinalized = undefined
     mocks.refreshAvailabilityDay.mockClear()
+    mocks.requestInitialBooking.mockClear()
+  })
+
+  it('uses the initial booking controller action when booking is enabled', () => {
+    mocks.isBookingReady = true
+
+    render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
+
+    expect(mocks.availabilityOverviewContentProps).toMatchObject({
+      bookingActionMode: 'enabled',
+      onBookSelection: mocks.requestInitialBooking,
+    })
   })
 
   it('refreshes every distinct selected date after a successful booking', async () => {
