@@ -2,8 +2,8 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { localDate } from '../../../../tests/local-date'
 import type { BookingSlotSelection } from '@/domain/booking'
+import { localDate } from '../../../../tests/local-date'
 import { BookingBasketTray } from './BookingBasketTray'
 
 describe('BookingBasketTray', () => {

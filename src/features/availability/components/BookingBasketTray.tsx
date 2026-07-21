@@ -6,7 +6,10 @@ type BookingBasketTrayProps = {
   onReview: () => void
 }
 
-export function BookingBasketTray({ selections, onReview }: BookingBasketTrayProps) {
+export function BookingBasketTray({
+  selections,
+  onReview,
+}: BookingBasketTrayProps) {
   const selectedCount = selections.length
 
   if (selectedCount === 0) return null
