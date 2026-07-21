@@ -171,6 +171,50 @@ describe('AvailabilityCalendarGrid', () => {
     })
   })
 
+  it('uses controlled add and remove actions for calendar slots', () => {
+    const onAddSelection = vi.fn()
+    const onRemoveSelection = vi.fn()
+
+    stubMatchMedia(false)
+
+    render(
+      <AvailabilityCalendarGrid
+        availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+        bookingActionMode="enabled"
+        dayGroups={FIXTURE_DAY_GROUPS}
+        isSelected={(selection) => selection.startTime === '15:00'}
+        onAddSelection={onAddSelection}
+        onBookSelection={vi.fn()}
+        onRemoveSelection={onRemoveSelection}
+      />,
+    )
+
+    const selected = screen.getByRole('button', {
+      name: 'Remove 15:00-16:00, 2 spots free',
+    })
+
+    expect(selected).toHaveAttribute('aria-pressed', 'true')
+    expect(
+      screen.getByRole('button', {
+        name: 'Add 12:00-13:00, 4 spots free',
+      }),
+    ).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(selected)
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Add 12:00-13:00, 4 spots free',
+      }),
+    )
+
+    expect(onRemoveSelection).toHaveBeenCalledWith(
+      expect.objectContaining({ startTime: '15:00' }),
+    )
+    expect(onAddSelection).toHaveBeenCalledWith(
+      expect.objectContaining({ startTime: '12:00' }),
+    )
+  })
+
   it('shows non-interactive badges in read-only mode', () => {
     stubMatchMedia(false)
 

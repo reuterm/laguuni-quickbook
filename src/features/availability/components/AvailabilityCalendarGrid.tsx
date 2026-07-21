@@ -5,7 +5,7 @@ import {
   parseLocalDate,
 } from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
-
+import type { BookingSlotSelection } from '../../../domain/booking'
 import {
   AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   groupAvailabilityWeeks,
@@ -19,13 +19,19 @@ import type { AvailabilityBookingActionProps } from './availability-booking-acti
 type AvailabilityCalendarGridProps = {
   availabilityReferenceDate?: Date | undefined
   dayGroups: readonly AvailabilityDayGroup[]
+  isSelected?: (selection: BookingSlotSelection) => boolean
+  onAddSelection?: (selection: BookingSlotSelection) => void
+  onRemoveSelection?: (selection: BookingSlotSelection) => void
 } & AvailabilityBookingActionProps
 
 export function AvailabilityCalendarGrid({
   availabilityReferenceDate,
   bookingActionMode,
   dayGroups,
+  isSelected = () => false,
+  onAddSelection,
   onBookSelection,
+  onRemoveSelection,
 }: AvailabilityCalendarGridProps) {
   const weeks = groupAvailabilityWeeks(dayGroups).filter((week) =>
     week.days.some(
@@ -64,6 +70,9 @@ export function AvailabilityCalendarGrid({
               week.days,
             )}
             week={week}
+            isSelected={isSelected}
+            onAddSelection={onAddSelection}
+            onRemoveSelection={onRemoveSelection}
             {...(bookingActionMode === 'hidden'
               ? { bookingActionMode }
               : { bookingActionMode, onBookSelection })}

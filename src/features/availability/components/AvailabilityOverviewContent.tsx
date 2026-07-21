@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/styles'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
+import type { BookingSlotSelection } from '../../../domain/booking'
 import { useUserSettings } from '../../settings/use-user-settings'
 import { AVAILABILITY_CALENDAR_BREAKPOINT_QUERY } from '../availability-calendar'
 import type { AvailabilityState } from '../use-availability-overview'
@@ -26,6 +27,9 @@ type AvailabilityOverviewContentProps = {
   availabilityState: AvailabilityState
   isOffline?: boolean
   onLoadMore: () => Promise<void>
+  isSelected?: (selection: BookingSlotSelection) => boolean
+  onAddSelection?: (selection: BookingSlotSelection) => void
+  onRemoveSelection?: (selection: BookingSlotSelection) => void
 } & AvailabilityBookingActionProps
 
 export function AvailabilityOverviewContent({

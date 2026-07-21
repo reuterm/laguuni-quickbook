@@ -5,6 +5,7 @@ import {
 } from '@/components/ui/styles'
 import { formatLocalDate } from '@/lib/date'
 import { cn } from '@/lib/utils'
+import type { BookingSlotSelection } from '../../../domain/booking'
 import {
   type AvailabilityWeek,
   createSlotLookup,
@@ -22,16 +23,24 @@ import { availabilityCalendarColumnClassNames } from './availability-calendar-ui
 type AvailabilityCalendarWeekProps = {
   visibleDayIndices: readonly number[]
   week: AvailabilityWeek
+  isSelected?: (selection: BookingSlotSelection) => boolean
+  onAddSelection?: (selection: BookingSlotSelection) => void
+  onRemoveSelection?: (selection: BookingSlotSelection) => void
 } & AvailabilityBookingActionProps
 
 export function AvailabilityCalendarWeek({
   bookingActionMode,
+  isSelected = () => false,
+  onAddSelection,
   onBookSelection,
+  onRemoveSelection,
   visibleDayIndices,
   week,
 }: AvailabilityCalendarWeekProps) {
   const timeRows = listCalendarTimes(week.days)
   const slotLookup = createSlotLookup(week.days)
+  const isBasketEditing =
+    onAddSelection !== undefined && onRemoveSelection !== undefined
   const dayHeaders = visibleDayIndices.map((dayIndex) => {
     const weekdayLabel = getWeekdayLabel(dayIndex)
     const dayGroup = week.days[dayIndex] ?? null
@@ -88,12 +97,24 @@ export function AvailabilityCalendarWeek({
               ? slotLookup.get(createSlotLookupKey(dayGroup.date, time))
               : null
             const slotSelectionProps =
-              bookingActionMode !== 'hidden' && slot
-                ? {
-                    disabled: bookingActionMode === 'disabled',
-                    onClick: () => onBookSelection(slot.selection),
-                  }
-                : {}
+              isBasketEditing && slot
+                ? isSelected(slot.selection)
+                  ? {
+                      actionLabel: `Remove ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`,
+                      onClick: () => onRemoveSelection(slot.selection),
+                      pressed: true,
+                    }
+                  : {
+                      actionLabel: `Add ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`,
+                      onClick: () => onAddSelection(slot.selection),
+                      pressed: false,
+                    }
+                : bookingActionMode !== 'hidden' && slot
+                  ? {
+                      disabled: bookingActionMode === 'disabled',
+                      onClick: () => onBookSelection(slot.selection),
+                    }
+                  : {}
 
             return (
               <td

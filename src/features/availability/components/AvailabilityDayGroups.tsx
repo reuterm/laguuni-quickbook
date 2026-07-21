@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/styles'
 import { SurfaceList, SurfaceListItem } from '@/components/ui/surface-list'
 import { cn } from '@/lib/utils'
-
+import type { BookingSlotSelection } from '../../../domain/booking'
 import type { AvailabilityDayGroup } from '../availability-service'
 import { AvailabilityCapacityChip } from './availability-badge'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
@@ -19,13 +19,22 @@ const availabilityBookingButtonClassName =
 
 type AvailabilityDayGroupsProps = {
   dayGroups: readonly AvailabilityDayGroup[]
+  isSelected?: (selection: BookingSlotSelection) => boolean
+  onAddSelection?: (selection: BookingSlotSelection) => void
+  onRemoveSelection?: (selection: BookingSlotSelection) => void
 } & AvailabilityBookingActionProps
 
 export function AvailabilityDayGroups({
   bookingActionMode,
   dayGroups,
+  isSelected = () => false,
+  onAddSelection,
   onBookSelection,
+  onRemoveSelection,
 }: AvailabilityDayGroupsProps) {
+  const isBasketEditing =
+    onAddSelection !== undefined && onRemoveSelection !== undefined
+
   return (
     <div className={availabilityDayGroupsClassName}>
       {dayGroups.map((dayGroup) => (
@@ -56,7 +65,26 @@ export function AvailabilityDayGroups({
                   </div>
                 </div>
 
-                {bookingActionMode === 'hidden' ? (
+                {isBasketEditing ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className={cn(
+                      availabilityBookingButtonClassName,
+                      subtleDividerClassName,
+                    )}
+                    style={{ minWidth: availabilityBookingButtonMinWidth }}
+                    aria-label={`${isSelected(slot.selection) ? 'Remove' : 'Add'} ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`}
+                    onClick={() =>
+                      (isSelected(slot.selection)
+                        ? onRemoveSelection
+                        : onAddSelection)(slot.selection)
+                    }
+                  >
+                    {isSelected(slot.selection) ? 'Remove' : 'Add'}
+                  </Button>
+                ) : bookingActionMode === 'hidden' ? (
                   <span className={eyebrowClassName}>Read only</span>
                 ) : (
                   <Button

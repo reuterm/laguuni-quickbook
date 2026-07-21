@@ -21,6 +21,8 @@ type AvailabilityCapacityChipProps =
       className?: string
       disabled?: boolean
       onClick: () => void
+      actionLabel?: string
+      pressed?: boolean
       slot: AvailabilitySlot
     }
   | {
@@ -34,6 +36,8 @@ export function AvailabilityCapacityChip({
   className,
   disabled,
   onClick,
+  actionLabel,
+  pressed,
   slot,
 }: AvailabilityCapacityChipProps) {
   const chipClassName = cn(
@@ -53,7 +57,11 @@ export function AvailabilityCapacityChip({
       className={chipClassName}
       disabled={disabled}
       onClick={onClick}
-      aria-label={`Book ${slot.startTime}-${slot.endTime}, ${getAvailabilityBadgeLabel(slot)} spots free`}
+      aria-label={
+        actionLabel ??
+        `Book ${slot.startTime}-${slot.endTime}, ${getAvailabilityBadgeLabel(slot)} spots free`
+      }
+      aria-pressed={pressed}
       type="button"
     >
       {getAvailabilityBadgeLabel(slot)}

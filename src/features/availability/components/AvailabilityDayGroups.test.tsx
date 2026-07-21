@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { localDate } from '../../../../tests/local-date'
@@ -75,6 +76,42 @@ describe('AvailabilityDayGroups', () => {
     for (const button of screen.getAllByRole('button', { name: 'Book' })) {
       expect(button).toBeDisabled()
     }
+  })
+
+  it('uses controlled add and remove actions for list slots', async () => {
+    const onAddSelection = vi.fn()
+    const onRemoveSelection = vi.fn()
+    const user = userEvent.setup()
+
+    render(
+      <AvailabilityDayGroups
+        bookingActionMode="enabled"
+        dayGroups={[
+          createDayGroup({
+            date: localDate('2026-05-14'),
+            displayDate: 'Thu 14 May',
+            slots: [
+              createSlot('2026-05-14-900', '15:00', '16:00'),
+              createSlot('2026-05-14-720', '12:00', '13:00'),
+            ],
+          }),
+        ]}
+        isSelected={(selection) => selection.startTime === '15:00'}
+        onAddSelection={onAddSelection}
+        onBookSelection={vi.fn()}
+        onRemoveSelection={onRemoveSelection}
+      />,
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Remove 15:00-16:00, 3 spots free' }),
+    )
+    await user.click(
+      screen.getByRole('button', { name: 'Add 12:00-13:00, 3 spots free' }),
+    )
+
+    expect(onRemoveSelection).toHaveBeenCalledOnce()
+    expect(onAddSelection).toHaveBeenCalledOnce()
   })
 })
 
