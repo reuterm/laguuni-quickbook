@@ -65,8 +65,12 @@ export function AvailabilityScreen({
     isBookingReady,
     requestBooking,
   } = useBookingSheetController({
-    onBookingFinalized: async ({ selection }) => {
-      await refreshAvailabilityDay(selection.date)
+    onBookingFinalized: async ({ selections }) => {
+      const dates = new Set(selections.map((selection) => selection.date))
+
+      for (const date of dates) {
+        await refreshAvailabilityDay(date)
+      }
     },
   })
 

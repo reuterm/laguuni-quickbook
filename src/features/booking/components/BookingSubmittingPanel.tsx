@@ -6,15 +6,15 @@ import {
 } from './BookingStatePanel'
 
 type BookingSubmittingPanelProps = {
-  selectionLabel: string
+  selectionsCount: number
 }
 
 export function BookingSubmittingPanel({
-  selectionLabel,
+  selectionsCount,
 }: BookingSubmittingPanelProps) {
   return (
     <BookingStatePanel
-      body={`Submitting ${selectionLabel} through the storefront flow.`}
+      body={`Booking ${selectionsCount} ${selectionsCount === 1 ? 'slot' : 'slots'} through the storefront flow.`}
       icon={LoaderCircle}
       iconClassName="animate-spin text-muted-foreground"
       role="status"

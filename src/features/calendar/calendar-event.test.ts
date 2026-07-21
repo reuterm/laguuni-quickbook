@@ -29,7 +29,7 @@ describe('calendar-event', () => {
       startsAtLocal: '20260514T150000',
       timeZone: 'Europe/Helsinki',
       title: 'Wakeboarding - Pro',
-      uid: 'laguuni-booking-fixture-order-id',
+      uid: 'laguuni-booking-fixture-order-id-2026-05-14',
     })
   })
 

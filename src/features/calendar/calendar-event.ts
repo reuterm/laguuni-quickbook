@@ -41,7 +41,7 @@ export function createBookingCalendarEvent(
     startsAtLocal,
     timeZone: HELSINKI_TIME_ZONE,
     title: `Wakeboarding - ${cable.label}`,
-    uid: `laguuni-booking-${bookingIdentifier}`,
+    uid: `laguuni-booking-${bookingIdentifier}-${selection.date}`,
   }
 }
 

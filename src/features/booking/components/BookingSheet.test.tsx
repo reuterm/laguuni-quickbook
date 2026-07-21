@@ -3,24 +3,34 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { localDate } from '../../../../tests/local-date'
-import { getBookingSelectionPresentation } from '../booking-selection-label'
+import { getBookingSelectionsPresentation } from '../booking-selections'
 import { BookingConfirmPanel } from './BookingConfirmPanel'
 import { BookingSheet } from './BookingSheet'
 import { BookingSubmittingPanel } from './BookingSubmittingPanel'
 
-const selectionSummary = getBookingSelectionPresentation({
-  cableId: 'pro',
-  date: localDate('2026-05-20'),
-  endTime: '16:00',
-  startTime: '15:00',
-})
+const selections = [
+  {
+    cableId: 'pro' as const,
+    date: localDate('2026-05-20'),
+    endTime: '16:00',
+    startTime: '15:00',
+  },
+  {
+    cableId: 'easy' as const,
+    date: localDate('2026-05-22'),
+    endTime: '11:00',
+    startTime: '10:00',
+  },
+]
+
+const selectionSummary = getBookingSelectionsPresentation(selections)
 
 afterEach(() => {
   cleanup()
 })
 
 describe('BookingSheet', () => {
-  it('renders a confirmation summary before submission', () => {
+  it('renders mixed-cable selected slots in the scrollable list', () => {
     render(
       <BookingSheet open onDismiss={() => {}} summary={selectionSummary}>
         <BookingConfirmPanel onConfirm={async () => {}} />
@@ -28,10 +38,19 @@ describe('BookingSheet', () => {
     )
 
     expect(
+      screen.getByRole('heading', { name: 'Booking details' }),
+    ).toBeVisible()
+    expect(
       screen.getByRole('heading', { name: 'Confirm booking' }),
     ).toBeVisible()
+    expect(screen.getByText('2 slots')).toBeVisible()
+    expect(screen.queryByText('Slots')).not.toBeInTheDocument()
+    expect(screen.getByTestId('booking-selected-slots')).toHaveClass(
+      'max-h-[40vh]',
+      'overflow-y-auto',
+    )
     expect(screen.getByText('Pro')).toBeVisible()
-    expect(screen.getByText('15:00-16:00')).toBeVisible()
+    expect(screen.getByText('Easy')).toBeVisible()
     expect(
       screen.getByRole('button', { name: 'Confirm booking' }),
     ).toBeEnabled()
@@ -40,7 +59,7 @@ describe('BookingSheet', () => {
   it('does not apply spinner styling to the booking label while submitting', () => {
     render(
       <BookingSheet open onDismiss={() => {}} summary={selectionSummary}>
-        <BookingSubmittingPanel selectionLabel={selectionSummary.label} />
+        <BookingSubmittingPanel selectionsCount={selections.length} />
       </BookingSheet>,
     )
 
@@ -58,7 +77,7 @@ describe('BookingSheet', () => {
         onDismiss={onDismiss}
         summary={selectionSummary}
       >
-        <BookingSubmittingPanel selectionLabel={selectionSummary.label} />
+        <BookingSubmittingPanel selectionsCount={selections.length} />
       </BookingSheet>,
     )
 
@@ -121,7 +140,7 @@ describe('BookingSheet', () => {
         onDismiss={onDismiss}
         summary={selectionSummary}
       >
-        <BookingSubmittingPanel selectionLabel={selectionSummary.label} />
+        <BookingSubmittingPanel selectionsCount={selections.length} />
       </BookingSheet>,
     )
 

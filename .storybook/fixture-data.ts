@@ -216,7 +216,7 @@ export function createCompletedBookingSheetState(
 
   return {
     result: createBookingResult(resultStatus),
-    selection,
+    selections: [selection],
     status: 'completed',
     traceId: `trace-${resultStatus}`,
   }
@@ -229,9 +229,9 @@ export function createBookingSheetState(
     case 'closed':
       return { status: 'closed' }
     case 'confirm':
-      return { selection: createSelection(), status: 'confirm' }
+      return { selections: [createSelection()], status: 'confirm' }
     case 'submitting':
-      return { selection: createSelection(), status: 'submitting' }
+      return { selections: [createSelection()], status: 'submitting' }
     case 'completed':
       return createCompletedBookingSheetState('failed')
   }

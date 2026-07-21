@@ -8,14 +8,14 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { eyebrowClassName } from '@/components/ui/styles'
-import type { BookingSelectionPresentation } from '../booking-selection-label'
+import type { BookingSelectionsPresentation } from '../booking-selections'
 
 type BookingSheetProps = {
   children: React.ReactNode
   dismissible?: boolean
   onDismiss: () => void
   open: boolean
-  summary: BookingSelectionPresentation
+  summary: BookingSelectionsPresentation
 }
 
 export function BookingSheet({
@@ -66,7 +66,7 @@ function BookingSheetLayout({
   summary,
 }: {
   children: React.ReactNode
-  summary: BookingSelectionPresentation
+  summary: BookingSelectionsPresentation
 }) {
   return (
     <div className="grid gap-6">
@@ -76,22 +76,24 @@ function BookingSheetLayout({
         <SheetDescription>{summary.label}</SheetDescription>
       </SheetHeader>
 
-      <dl className="grid gap-4 rounded-2xl border border-border/70 bg-muted/30 p-4">
+      <dl
+        className="grid max-h-[40vh] gap-4 overflow-y-auto rounded-2xl border border-border/70 bg-muted/30 p-4"
+        data-testid="booking-selected-slots"
+      >
         {summary.rows.map((row) => (
-          <SummaryRow key={row.label} label={row.label} value={row.value} />
+          <div
+            key={`${row.cableLabel}-${row.dateLabel}-${row.timeLabel}`}
+            className="grid gap-1 sm:grid-cols-[5rem_1fr] sm:items-center sm:gap-3"
+          >
+            <dt className={eyebrowClassName}>{row.cableLabel}</dt>
+            <dd className="text-sm font-medium text-foreground">
+              {row.dateLabel}, {row.timeLabel}
+            </dd>
+          </div>
         ))}
       </dl>
 
       {children}
-    </div>
-  )
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="grid gap-1 sm:grid-cols-[5rem_1fr] sm:items-center sm:gap-3">
-      <dt className={eyebrowClassName}>{label}</dt>
-      <dd className="text-sm font-medium text-foreground">{value}</dd>
     </div>
   )
 }
