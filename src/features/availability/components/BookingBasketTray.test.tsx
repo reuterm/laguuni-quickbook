@@ -3,115 +3,53 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { localDate } from '../../../../tests/local-date'
+import type { BookingSlotSelection } from '@/domain/booking'
 import { BookingBasketTray } from './BookingBasketTray'
 
 describe('BookingBasketTray', () => {
   afterEach(cleanup)
 
-  it('shows selections chronologically and delegates review', async () => {
-    const onClear = vi.fn()
+  const first: BookingSlotSelection = {
+    cableId: 'pro',
+    date: localDate('2026-05-14'),
+    endTime: '13:00',
+    startTime: '12:00',
+  }
+  const second: BookingSlotSelection = {
+    cableId: 'easy',
+    date: localDate('2026-05-13'),
+    endTime: '11:00',
+    startTime: '10:00',
+  }
+
+  it('renders one count CTA and delegates review', async () => {
     const onReview = vi.fn()
     const user = userEvent.setup()
 
     render(
-      <BookingBasketTray
-        selections={[
-          {
-            cableId: 'pro',
-            date: localDate('2026-05-14'),
-            endTime: '13:00',
-            startTime: '12:00',
-          },
-          {
-            cableId: 'easy',
-            date: localDate('2026-05-13'),
-            endTime: '11:00',
-            startTime: '10:00',
-          },
-        ]}
-        onClear={onClear}
-        onReview={onReview}
-      />,
+      <BookingBasketTray onReview={onReview} selections={[first, second]} />,
     )
 
-    expect(screen.getByText('2 slots selected')).toBeInTheDocument()
-    expect(
-      screen.getAllByRole('listitem').map((item) => item.textContent),
-    ).toEqual([
-      expect.stringContaining('Wed 13 May'),
-      expect.stringContaining('Thu 14 May'),
-    ])
-
-    await user.click(
-      screen.getByRole('button', { name: 'Review selected slots' }),
-    )
-
+    await user.click(screen.getByRole('button', { name: '2 slots selected' }))
     expect(onReview).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Clear selection' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Review selected slots' }),
+    ).not.toBeInTheDocument()
   })
 
-  it('renders nothing without selections', () => {
-    const { container } = render(
-      <BookingBasketTray
-        selections={[]}
-        onClear={vi.fn()}
-        onReview={vi.fn()}
-      />,
+  it('uses singular count copy and returns nothing when empty', () => {
+    const { rerender } = render(
+      <BookingBasketTray onReview={vi.fn()} selections={[]} />,
     )
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
 
-    expect(container).toBeEmptyDOMElement()
-  })
-
-  it('renders selections that differ only by end time without duplicate keys', () => {
-    const consoleError = vi
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined)
-
-    render(
-      <BookingBasketTray
-        selections={[
-          {
-            cableId: 'pro',
-            date: localDate('2026-05-14'),
-            endTime: '13:00',
-            startTime: '12:00',
-          },
-          {
-            cableId: 'pro',
-            date: localDate('2026-05-14'),
-            endTime: '14:00',
-            startTime: '12:00',
-          },
-        ]}
-        onClear={vi.fn()}
-        onReview={vi.fn()}
-      />,
-    )
-
-    expect(screen.getAllByRole('listitem')).toHaveLength(2)
-    expect(consoleError).not.toHaveBeenCalled()
-  })
-
-  it('delegates clearing', async () => {
-    const onClear = vi.fn()
-    const user = userEvent.setup()
-
-    render(
-      <BookingBasketTray
-        selections={[
-          {
-            cableId: 'pro',
-            date: localDate('2026-05-14'),
-            endTime: '13:00',
-            startTime: '12:00',
-          },
-        ]}
-        onClear={onClear}
-        onReview={vi.fn()}
-      />,
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Clear selection' }))
-
-    expect(onClear).toHaveBeenCalledOnce()
+    rerender(<BookingBasketTray onReview={vi.fn()} selections={[first]} />)
+    expect(
+      screen.getByRole('button', { name: '1 slot selected' }),
+    ).toBeInTheDocument()
   })
 })
