@@ -222,24 +222,6 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.getByRole('button', { name: 'Book' })).toBeEnabled()
   })
 
-  it('threads controlled selection actions to the active list view', () => {
-    const onRemoveSelection = vi.fn()
-
-    renderContent(createLoadedState('ready'), {
-      bookingActionMode: 'enabled',
-      isSelected: () => true,
-      onAddSelection: vi.fn(),
-      onBookSelection: vi.fn(),
-      onRemoveSelection,
-    })
-
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Remove 15:00-16:00, 3 spots free' }),
-    )
-
-    expect(onRemoveSelection).toHaveBeenCalledOnce()
-  })
-
   it('disables booking actions while a booking is already in progress', () => {
     renderContent(createLoadedState('ready'), {
       bookingActionMode: 'disabled',

@@ -35,12 +35,15 @@ export const Default: Story = {
   render: ({ bookingActionMode, ...args }) => (
     <AvailabilityDayGroups
       {...args}
-      bookingActionMode={bookingActionMode}
-      {...(bookingActionMode === 'hidden'
-        ? {}
-        : {
-            onBookSelection: noop,
-          })}
+      slotAction={
+        bookingActionMode === 'enabled'
+          ? {
+              kind: 'booking',
+              mode: 'enabled',
+              onBookSelection: noop,
+            }
+          : { kind: 'booking', mode: bookingActionMode }
+      }
     />
   ),
 }

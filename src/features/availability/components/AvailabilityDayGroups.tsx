@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils'
 import type { BookingSlotSelection } from '../../../domain/booking'
 import type { AvailabilityDayGroup } from '../availability-service'
 import { AvailabilityCapacityChip } from './availability-badge'
-import type { AvailabilityBookingActionProps } from './availability-booking-action'
 
 const availabilityDayGroupsClassName = 'space-y-6'
 const availabilityBookingButtonMinWidth = '6.5rem'
@@ -17,24 +16,81 @@ const availabilityBookingButtonMinWidth = '6.5rem'
 const availabilityBookingButtonClassName =
   'shrink-0 border hover:border-border/90 hover:bg-white/[0.08]'
 
+type AvailabilitySlotAction =
+  | {
+      kind: 'booking'
+      mode: 'hidden'
+    }
+  | {
+      kind: 'booking'
+      mode: 'enabled' | 'disabled'
+      onBookSelection: (selection: BookingSlotSelection) => void
+    }
+  | {
+      isSelected: (selection: BookingSlotSelection) => boolean
+      kind: 'selection'
+      onAddSelection: (selection: BookingSlotSelection) => void
+      onRemoveSelection: (selection: BookingSlotSelection) => void
+    }
+
 type AvailabilityDayGroupsProps = {
   dayGroups: readonly AvailabilityDayGroup[]
-  isSelected?: ((selection: BookingSlotSelection) => boolean) | undefined
-  onAddSelection?: ((selection: BookingSlotSelection) => void) | undefined
-  onRemoveSelection?: ((selection: BookingSlotSelection) => void) | undefined
-} & AvailabilityBookingActionProps
+  slotAction: AvailabilitySlotAction
+}
+
+function renderSlotAction(
+  slot: AvailabilityDayGroup['slots'][number],
+  slotAction: AvailabilitySlotAction,
+) {
+  if (slotAction.kind === 'selection') {
+    const selected = slotAction.isSelected(slot.selection)
+
+    return (
+      <Button
+        type="button"
+        size="sm"
+        variant="secondary"
+        className={cn(
+          availabilityBookingButtonClassName,
+          subtleDividerClassName,
+        )}
+        style={{ minWidth: availabilityBookingButtonMinWidth }}
+        aria-pressed={selected}
+        aria-label={`${selected ? 'Remove' : 'Add'} ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`}
+        onClick={() =>
+          (selected ? slotAction.onRemoveSelection : slotAction.onAddSelection)(
+            slot.selection,
+          )
+        }
+      >
+        {selected ? 'Remove' : 'Add'}
+      </Button>
+    )
+  }
+
+  if (slotAction.mode === 'hidden') {
+    return <span className={eyebrowClassName}>Read only</span>
+  }
+
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="secondary"
+      className={cn(availabilityBookingButtonClassName, subtleDividerClassName)}
+      style={{ minWidth: availabilityBookingButtonMinWidth }}
+      disabled={slotAction.mode === 'disabled'}
+      onClick={() => slotAction.onBookSelection(slot.selection)}
+    >
+      Book
+    </Button>
+  )
+}
 
 export function AvailabilityDayGroups({
-  bookingActionMode,
   dayGroups,
-  isSelected = () => false,
-  onAddSelection,
-  onBookSelection,
-  onRemoveSelection,
+  slotAction,
 }: AvailabilityDayGroupsProps) {
-  const isBasketEditing =
-    onAddSelection !== undefined && onRemoveSelection !== undefined
-
   return (
     <div className={availabilityDayGroupsClassName}>
       {dayGroups.map((dayGroup) => (
@@ -64,45 +120,7 @@ export function AvailabilityDayGroups({
                     <AvailabilityCapacityChip slot={slot} />
                   </div>
                 </div>
-
-                {isBasketEditing ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className={cn(
-                      availabilityBookingButtonClassName,
-                      subtleDividerClassName,
-                    )}
-                    style={{ minWidth: availabilityBookingButtonMinWidth }}
-                    aria-pressed={isSelected(slot.selection)}
-                    aria-label={`${isSelected(slot.selection) ? 'Remove' : 'Add'} ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`}
-                    onClick={() =>
-                      (isSelected(slot.selection)
-                        ? onRemoveSelection
-                        : onAddSelection)(slot.selection)
-                    }
-                  >
-                    {isSelected(slot.selection) ? 'Remove' : 'Add'}
-                  </Button>
-                ) : bookingActionMode === 'hidden' ? (
-                  <span className={eyebrowClassName}>Read only</span>
-                ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className={cn(
-                      availabilityBookingButtonClassName,
-                      subtleDividerClassName,
-                    )}
-                    style={{ minWidth: availabilityBookingButtonMinWidth }}
-                    disabled={bookingActionMode === 'disabled'}
-                    onClick={() => onBookSelection(slot.selection)}
-                  >
-                    Book
-                  </Button>
-                )}
+                {renderSlotAction(slot, slotAction)}
               </SurfaceListItem>
             ))}
           </SurfaceList>
@@ -112,4 +130,4 @@ export function AvailabilityDayGroups({
   )
 }
 
-export type { AvailabilityBookingActionProps, AvailabilityDayGroupsProps }
+export type { AvailabilityDayGroupsProps, AvailabilitySlotAction }

@@ -13,7 +13,6 @@ describe('AvailabilityDayGroups', () => {
   it('renders each loaded day group as its own stacked section', () => {
     render(
       <AvailabilityDayGroups
-        bookingActionMode="hidden"
         dayGroups={[
           createDayGroup({
             date: localDate('2026-05-14'),
@@ -26,6 +25,7 @@ describe('AvailabilityDayGroups', () => {
             slots: [createSlot('2026-05-15-780', '13:00', '14:00')],
           }),
         ]}
+        slotAction={{ kind: 'booking', mode: 'hidden' }}
       />,
     )
 
@@ -39,9 +39,10 @@ describe('AvailabilityDayGroups', () => {
   })
 
   it('renders booking actions when booking is enabled', () => {
+    const onBookSelection = vi.fn()
+
     render(
       <AvailabilityDayGroups
-        bookingActionMode="enabled"
         dayGroups={[
           createDayGroup({
             date: localDate('2026-05-14'),
@@ -49,17 +50,23 @@ describe('AvailabilityDayGroups', () => {
             slots: [createSlot('2026-05-14-900', '15:00', '16:00')],
           }),
         ]}
-        onBookSelection={vi.fn()}
+        slotAction={{
+          kind: 'booking',
+          mode: 'enabled',
+          onBookSelection,
+        }}
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Book' })).toBeEnabled()
+    const bookButton = screen.getByRole('button', { name: 'Book' })
+    expect(bookButton).toBeEnabled()
+    bookButton.click()
+    expect(onBookSelection).toHaveBeenCalledOnce()
   })
 
   it('disables booking actions when booking is disabled', () => {
     render(
       <AvailabilityDayGroups
-        bookingActionMode="disabled"
         dayGroups={[
           createDayGroup({
             date: localDate('2026-05-14'),
@@ -67,7 +74,11 @@ describe('AvailabilityDayGroups', () => {
             slots: [createSlot('2026-05-14-900', '15:00', '16:00')],
           }),
         ]}
-        onBookSelection={vi.fn()}
+        slotAction={{
+          kind: 'booking',
+          mode: 'disabled',
+          onBookSelection: vi.fn(),
+        }}
       />,
     )
 
@@ -85,7 +96,6 @@ describe('AvailabilityDayGroups', () => {
 
     render(
       <AvailabilityDayGroups
-        bookingActionMode="enabled"
         dayGroups={[
           createDayGroup({
             date: localDate('2026-05-14'),
@@ -96,10 +106,12 @@ describe('AvailabilityDayGroups', () => {
             ],
           }),
         ]}
-        isSelected={(selection) => selection.startTime === '15:00'}
-        onAddSelection={onAddSelection}
-        onBookSelection={vi.fn()}
-        onRemoveSelection={onRemoveSelection}
+        slotAction={{
+          isSelected: (selection) => selection.startTime === '15:00',
+          kind: 'selection',
+          onAddSelection,
+          onRemoveSelection,
+        }}
       />,
     )
 

@@ -17,7 +17,10 @@ import { AVAILABILITY_CALENDAR_BREAKPOINT_QUERY } from '../availability-calendar
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
-import { AvailabilityDayGroups } from './AvailabilityDayGroups'
+import {
+  AvailabilityDayGroups,
+  type AvailabilitySlotAction,
+} from './AvailabilityDayGroups'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
 import { useAvailabilityAutoLoad } from './use-availability-auto-load'
@@ -52,6 +55,17 @@ export function AvailabilityOverviewContent({
   const canLoadMore =
     availabilityState.status === 'ready' && availabilityState.canLoadMore
   const canAutoLoadMore = canLoadMore && !contentModel.hasAppendError
+  let dayGroupSlotAction: AvailabilitySlotAction
+
+  if (bookingActionProps.bookingActionMode === 'hidden') {
+    dayGroupSlotAction = { kind: 'booking', mode: 'hidden' }
+  } else {
+    dayGroupSlotAction = {
+      kind: 'booking',
+      mode: bookingActionProps.bookingActionMode,
+      onBookSelection: bookingActionProps.onBookSelection,
+    }
+  }
 
   const { loadMoreTriggerRef } = useAvailabilityAutoLoad({
     canAutoLoadMore,
@@ -134,7 +148,7 @@ export function AvailabilityOverviewContent({
         ) : (
           <AvailabilityDayGroups
             dayGroups={contentModel.renderedCardDayGroups}
-            {...bookingActionProps}
+            slotAction={dayGroupSlotAction}
           />
         )
       ) : (

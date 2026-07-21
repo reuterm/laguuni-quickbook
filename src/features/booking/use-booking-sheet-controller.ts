@@ -119,7 +119,7 @@ export function useBookingSheetController({
       kind: 'initial' | 'basket',
       selections: readonly BookingSlotSelection[],
     ) => {
-      if (kind === 'basket' && selections.length === 0) {
+      if (selections.length === 0) {
         return
       }
 

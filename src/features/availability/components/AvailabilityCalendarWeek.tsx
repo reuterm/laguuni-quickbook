@@ -117,25 +117,12 @@ export function AvailabilityCalendarWeek({
                 )}
               >
                 {slot ? (
-                  onClick === undefined ? (
-                    <AvailabilityCapacityChip
-                      slot={slot}
-                      className="min-w-11 px-2.5 py-1"
-                    />
-                  ) : disabled ? (
-                    <AvailabilityCapacityChip
-                      slot={slot}
-                      className="min-w-11 px-2.5 py-1"
-                      disabled
-                      onClick={onClick}
-                    />
-                  ) : (
-                    <AvailabilityCapacityChip
-                      slot={slot}
-                      className="min-w-11 px-2.5 py-1"
-                      onClick={onClick}
-                    />
-                  )
+                  <AvailabilityCapacityChip
+                    slot={slot}
+                    className="min-w-11 px-2.5 py-1"
+                    disabled={disabled}
+                    onClick={onClick}
+                  />
                 ) : (
                   <span
                     aria-hidden="true"
