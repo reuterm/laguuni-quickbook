@@ -61,6 +61,36 @@ describe('BookingBasketTray', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
+  it('renders selections that differ only by end time without duplicate keys', () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined)
+
+    render(
+      <BookingBasketTray
+        selections={[
+          {
+            cableId: 'pro',
+            date: localDate('2026-05-14'),
+            endTime: '13:00',
+            startTime: '12:00',
+          },
+          {
+            cableId: 'pro',
+            date: localDate('2026-05-14'),
+            endTime: '14:00',
+            startTime: '12:00',
+          },
+        ]}
+        onClear={vi.fn()}
+        onReview={vi.fn()}
+      />,
+    )
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(2)
+    expect(consoleError).not.toHaveBeenCalled()
+  })
+
   it('delegates clearing', async () => {
     const onClear = vi.fn()
     const user = userEvent.setup()

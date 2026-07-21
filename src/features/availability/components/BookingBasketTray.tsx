@@ -2,7 +2,10 @@ import { Button } from '@/components/ui/button'
 import type { BookingSlotSelection } from '@/domain/booking'
 import { getCableById } from '@/domain/cable'
 import { formatBookingSelectionDate } from '../../booking/booking-selection-label'
-import { sortBookingSlotSelections } from '../../booking/booking-selections'
+import {
+  getBookingSlotSelectionKey,
+  sortBookingSlotSelections,
+} from '../../booking/booking-selections'
 
 type BookingBasketTrayProps = {
   selections: readonly BookingSlotSelection[]
@@ -29,9 +32,7 @@ export function BookingBasketTray({
       </p>
       <ul className="space-y-1">
         {sortedSelections.map((selection) => (
-          <li
-            key={`${selection.cableId}:${selection.date}:${selection.startTime}`}
-          >
+          <li key={getBookingSlotSelectionKey(selection)}>
             {getCableById(selection.cableId).label} -{' '}
             {formatBookingSelectionDate(selection.date)} - {selection.startTime}
             -{selection.endTime}
