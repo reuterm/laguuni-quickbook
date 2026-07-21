@@ -7,9 +7,10 @@ function selection(
   date: BookingSlotSelection['date'],
   startTime: string,
   endTime: string,
+  cableId = 'pro',
 ): BookingSlotSelection {
   return {
-    cableId: 'pro',
+    cableId,
     date,
     startTime,
     endTime,
@@ -39,6 +40,39 @@ describe('useBookingBasket', () => {
     act(() => result.current.clearSelectionsIfUnchanged(revision))
 
     expect(result.current.selections).toEqual([selected])
+  })
+
+  it('removes only the selection with the matching cable key', () => {
+    const { result } = renderHook(() => useBookingBasket())
+    const selected = selection('2026-05-16', '10:00', '11:00', 'pro')
+    const otherCable = selection('2026-05-16', '10:00', '11:00', 'ultra')
+
+    act(() => result.current.addSelection(selected))
+    act(() => result.current.removeSelection(otherCable))
+
+    expect(result.current.selections).toEqual([selected])
+    expect(result.current.isSelected(selected)).toBe(true)
+  })
+
+  it('clears all selections', () => {
+    const { result } = renderHook(() => useBookingBasket())
+    const selected = selection('2026-05-17', '11:00', '12:00')
+
+    act(() => result.current.addSelection(selected))
+    act(() => result.current.clearSelections())
+
+    expect(result.current.selections).toEqual([])
+  })
+
+  it('clears selections when the revision is unchanged', () => {
+    const { result } = renderHook(() => useBookingBasket())
+    const selected = selection('2026-05-18', '12:00', '13:00')
+
+    act(() => result.current.addSelection(selected))
+    const revision = result.current.revision
+    act(() => result.current.clearSelectionsIfUnchanged(revision))
+
+    expect(result.current.selections).toEqual([])
   })
 
 })
