@@ -16,7 +16,11 @@ type Story = StoryObj<typeof meta>
 export const Enabled: Story = {
   args: {
     bookingActionMode: 'enabled',
+    isSelected: () => false,
+    onAddSelection: noop,
     onBookSelection: noop,
+    onRemoveSelection: noop,
+    selectionMode: false,
     visibleDayIndices: [3, 4],
     week: createAvailabilityWeek(),
   },

@@ -30,19 +30,12 @@ type AvailabilityCapacityChipProps =
       slot: AvailabilitySlot
     }
 
-type AvailabilityCapacityChipSharedProps = {
-  actionLabel?: string
-  pressed?: boolean
-}
-
 export function AvailabilityCapacityChip({
   className,
   disabled,
   onClick,
-  actionLabel,
-  pressed,
   slot,
-}: AvailabilityCapacityChipProps & AvailabilityCapacityChipSharedProps) {
+}: AvailabilityCapacityChipProps) {
   const chipClassName = cn(
     getAvailabilityChipClassName(slot),
     onClick !== undefined && availabilityChipInteractiveClassName,
@@ -60,11 +53,7 @@ export function AvailabilityCapacityChip({
       className={chipClassName}
       disabled={disabled}
       onClick={onClick}
-      aria-label={
-        actionLabel ??
-        `Book ${slot.startTime}-${slot.endTime}, ${getAvailabilityBadgeLabel(slot)} spots free`
-      }
-      aria-pressed={pressed}
+      aria-label={`Book ${slot.startTime}-${slot.endTime}, ${getAvailabilityBadgeLabel(slot)} spots free`}
       type="button"
     >
       {getAvailabilityBadgeLabel(slot)}

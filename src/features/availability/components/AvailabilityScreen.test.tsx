@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
       }) => Promise<void>)
     | undefined,
   refreshAvailabilityDay: vi.fn(async () => {}),
-  requestInitialBooking: vi.fn(),
+  requestBooking: vi.fn(),
 }))
 
 vi.mock('../../../app/providers', () => ({
@@ -36,8 +36,7 @@ vi.mock('../../booking/use-booking-sheet-controller', () => ({
       dismissBookingSheet: vi.fn(),
       isBookingInProgress: false,
       isBookingReady: mocks.isBookingReady,
-      requestBooking: vi.fn(),
-      requestInitialBooking: mocks.requestInitialBooking,
+      requestBooking: mocks.requestBooking,
     }
   }),
 }))
@@ -70,18 +69,27 @@ describe('AvailabilityScreen', () => {
     mocks.isBookingReady = false
     mocks.onBookingFinalized = undefined
     mocks.refreshAvailabilityDay.mockClear()
-    mocks.requestInitialBooking.mockClear()
+    mocks.requestBooking.mockClear()
   })
 
-  it('uses the initial booking controller action when booking is enabled', () => {
+  it('requests an initial booking for an immediate slot click when booking is enabled', () => {
     mocks.isBookingReady = true
+    const expectedSelection = { date: localDate('2026-05-20') }
 
     render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
 
     expect(mocks.availabilityOverviewContentProps).toMatchObject({
       bookingActionMode: 'enabled',
-      onBookSelection: mocks.requestInitialBooking,
     })
+    ;(
+      mocks.availabilityOverviewContentProps?.onBookSelection as (
+        selection: typeof expectedSelection,
+      ) => void
+    )(expectedSelection)
+
+    expect(mocks.requestBooking).toHaveBeenCalledWith('initial', [
+      expectedSelection,
+    ])
   })
 
   it('refreshes every distinct selected date after a successful booking', async () => {

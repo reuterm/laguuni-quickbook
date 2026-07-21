@@ -32,7 +32,11 @@ export const Default: Story = {
 export const BasketSelection: Story = {
   render: () => <BasketSelectionCalendar />,
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getAllByRole('button', { name: /^Add\b/ })[0])
+    await userEvent.click(
+      canvas.getByRole('button', {
+        name: 'Book 12:00-13:00, 4 spots free',
+      }),
+    )
 
     await userEvent.click(
       canvas.getByRole('button', {
@@ -40,6 +44,17 @@ export const BasketSelection: Story = {
       }),
     )
     await expect(onReview).toHaveBeenCalled()
+
+    await userEvent.click(
+      canvas.getByRole('button', {
+        name: 'Book 12:00-13:00, 4 spots free',
+      }),
+    )
+    await expect(
+      canvas.queryByRole('button', {
+        name: 'Review selection 1 selected slot',
+      }),
+    ).not.toBeInTheDocument()
   },
 }
 

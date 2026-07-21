@@ -114,26 +114,12 @@ export function useBookingSheetController({
     void completedSubmission.releaseReservation()
   }, [takeCompletedSubmission])
 
-  const requestInitialBooking = useCallback(
-    (selection: BookingSlotSelection) => {
-      setBookingSheetState((currentState) => {
-        if (currentState.status === 'submitting') {
-          return currentState
-        }
-
-        return {
-          kind: 'initial',
-          selections: [selection],
-          status: 'confirm',
-        }
-      })
-    },
-    [],
-  )
-
-  const requestBasketReview = useCallback(
-    (selections: readonly BookingSlotSelection[]) => {
-      if (selections.length === 0) {
+  const requestBooking = useCallback(
+    (
+      kind: 'initial' | 'basket',
+      selections: readonly BookingSlotSelection[],
+    ) => {
+      if (kind === 'basket' && selections.length === 0) {
         return
       }
 
@@ -143,7 +129,7 @@ export function useBookingSheetController({
         }
 
         return {
-          kind: 'basket',
+          kind,
           selections,
           status: 'confirm',
         }
@@ -221,8 +207,6 @@ export function useBookingSheetController({
     isBookingInProgress: bookingSheetState.status === 'submitting',
     isBookingReady,
     keepBookingForMore,
-    requestBasketReview,
-    requestBooking: requestInitialBooking,
-    requestInitialBooking,
+    requestBooking,
   }
 }

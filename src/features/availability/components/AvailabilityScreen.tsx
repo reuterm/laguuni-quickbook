@@ -63,7 +63,7 @@ export function AvailabilityScreen({
     dismissBookingSheet,
     isBookingInProgress,
     isBookingReady,
-    requestInitialBooking,
+    requestBooking,
   } = useBookingSheetController({
     onBookingFinalized: async ({ selections }) => {
       const dates = new Set(selections.map((selection) => selection.date))
@@ -83,7 +83,7 @@ export function AvailabilityScreen({
   const bookingActionProps = getAvailabilityBookingActionProps(
     isBookingReady,
     isBookingInProgress,
-    requestInitialBooking,
+    (selection) => requestBooking('initial', [selection]),
   )
 
   return (

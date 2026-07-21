@@ -33,6 +33,10 @@ export function AvailabilityCalendarGrid({
   onBookSelection,
   onRemoveSelection,
 }: AvailabilityCalendarGridProps) {
+  const selectionMode =
+    onAddSelection !== undefined && onRemoveSelection !== undefined
+  const addSelection = onAddSelection ?? (() => {})
+  const removeSelection = onRemoveSelection ?? (() => {})
   const weeks = groupAvailabilityWeeks(dayGroups).filter((week) =>
     week.days.some(
       (dayGroup) => dayGroup !== null && dayGroup.slots.length > 0,
@@ -71,8 +75,9 @@ export function AvailabilityCalendarGrid({
             )}
             week={week}
             isSelected={isSelected}
-            onAddSelection={onAddSelection}
-            onRemoveSelection={onRemoveSelection}
+            onAddSelection={addSelection}
+            onRemoveSelection={removeSelection}
+            selectionMode={selectionMode}
             {...(bookingActionMode === 'hidden'
               ? { bookingActionMode }
               : { bookingActionMode, onBookSelection })}

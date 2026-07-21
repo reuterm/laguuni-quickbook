@@ -21,26 +21,26 @@ import type { AvailabilityBookingActionProps } from './availability-booking-acti
 import { availabilityCalendarColumnClassNames } from './availability-calendar-ui'
 
 type AvailabilityCalendarWeekProps = {
+  isSelected: (selection: BookingSlotSelection) => boolean
+  onAddSelection: (selection: BookingSlotSelection) => void
+  onRemoveSelection: (selection: BookingSlotSelection) => void
+  selectionMode: boolean
   visibleDayIndices: readonly number[]
   week: AvailabilityWeek
-  isSelected?: ((selection: BookingSlotSelection) => boolean) | undefined
-  onAddSelection?: ((selection: BookingSlotSelection) => void) | undefined
-  onRemoveSelection?: ((selection: BookingSlotSelection) => void) | undefined
 } & AvailabilityBookingActionProps
 
 export function AvailabilityCalendarWeek({
   bookingActionMode,
-  isSelected = () => false,
+  isSelected,
   onAddSelection,
   onBookSelection,
   onRemoveSelection,
+  selectionMode,
   visibleDayIndices,
   week,
 }: AvailabilityCalendarWeekProps) {
   const timeRows = listCalendarTimes(week.days)
   const slotLookup = createSlotLookup(week.days)
-  const isBasketEditing =
-    onAddSelection !== undefined && onRemoveSelection !== undefined
   const dayHeaders = visibleDayIndices.map((dayIndex) => {
     const weekdayLabel = getWeekdayLabel(dayIndex)
     const dayGroup = week.days[dayIndex] ?? null
@@ -96,25 +96,17 @@ export function AvailabilityCalendarWeek({
             const slot = dayGroup
               ? slotLookup.get(createSlotLookupKey(dayGroup.date, time))
               : null
-            const slotSelectionProps =
-              isBasketEditing && slot
-                ? isSelected(slot.selection)
-                  ? {
-                      actionLabel: `Remove ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`,
-                      onClick: () => onRemoveSelection(slot.selection),
-                      pressed: true,
-                    }
-                  : {
-                      actionLabel: `Add ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`,
-                      onClick: () => onAddSelection(slot.selection),
-                      pressed: false,
-                    }
-                : bookingActionMode !== 'hidden' && slot
-                  ? {
-                      disabled: bookingActionMode === 'disabled',
-                      onClick: () => onBookSelection(slot.selection),
-                    }
-                  : {}
+            let onClick: (() => void) | undefined
+            let disabled: boolean | undefined
+
+            if (slot && selectionMode) {
+              onClick = isSelected(slot.selection)
+                ? () => onRemoveSelection(slot.selection)
+                : () => onAddSelection(slot.selection)
+            } else if (slot && bookingActionMode !== 'hidden') {
+              disabled = bookingActionMode === 'disabled'
+              onClick = () => onBookSelection(slot.selection)
+            }
 
             return (
               <td
@@ -128,7 +120,8 @@ export function AvailabilityCalendarWeek({
                   <AvailabilityCapacityChip
                     slot={slot}
                     className="min-w-11 px-2.5 py-1"
-                    {...slotSelectionProps}
+                    disabled={disabled}
+                    onClick={onClick}
                   />
                 ) : (
                   <span

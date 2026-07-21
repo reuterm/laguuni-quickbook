@@ -190,22 +190,18 @@ describe('AvailabilityCalendarGrid', () => {
     )
 
     const selected = screen.getByRole('button', {
-      name: 'Remove 15:00-16:00, 2 spots free',
+      name: 'Book 15:00-16:00, 2 spots free',
     })
 
-    expect(selected).toHaveAttribute('aria-pressed', 'true')
-    expect(
-      screen.getByRole('button', {
-        name: 'Add 12:00-13:00, 4 spots free',
-      }),
-    ).toHaveAttribute('aria-pressed', 'false')
+    const unselected = screen.getByRole('button', {
+      name: 'Book 12:00-13:00, 4 spots free',
+    })
+
+    expect(selected).not.toHaveAttribute('aria-pressed')
+    expect(unselected).not.toHaveAttribute('aria-pressed')
 
     fireEvent.click(selected)
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Add 12:00-13:00, 4 spots free',
-      }),
-    )
+    fireEvent.click(unselected)
 
     expect(onRemoveSelection).toHaveBeenCalledWith(
       expect.objectContaining({ startTime: '15:00' }),

@@ -52,25 +52,26 @@ export function BookingSheetFlow({
   let content: ReactNode
 
   switch (renderedState.status) {
-    case 'confirm':
+    case 'confirm': {
+      const onAddMore =
+        renderedState.kind === 'initial' ? keepBookingForMore : undefined
+      const onClearSelection =
+        renderedState.kind === 'basket' && clearBookingSelection
+          ? () => {
+              clearBookingSelection()
+              dismissBookingSheet()
+            }
+          : undefined
+
       content = (
         <BookingConfirmPanel
-          {...(renderedState.kind === 'basket' && clearBookingSelection
-            ? {
-                onClearSelection: () => {
-                  clearBookingSelection()
-                  dismissBookingSheet()
-                },
-              }
-            : {})}
-          {...(renderedState.kind === 'initial' &&
-          keepBookingForMore !== undefined
-            ? { onAddMore: keepBookingForMore }
-            : {})}
+          onAddMore={onAddMore}
+          onClearSelection={onClearSelection}
           onConfirm={confirmBooking}
         />
       )
       break
+    }
     case 'submitting':
       dismissible = false
       content = (
