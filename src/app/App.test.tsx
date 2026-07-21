@@ -188,6 +188,9 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Confirm booking' }),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Add more' }),
+    ).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Confirm booking' }))
 

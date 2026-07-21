@@ -28,19 +28,86 @@ describe('useBookingSheetController', () => {
     vi.useRealTimers()
   })
 
-  it('opens a confirmation state when a booking is requested', async () => {
+  it('opens an initial confirmation and keeps its selection for continuation', async () => {
+    mockBookingFlow()
+    const onKeepBookingForMore = vi.fn()
+
+    const { result } = renderHook(() =>
+      useBookingSheetController({ onKeepBookingForMore }),
+    )
+
+    await act(async () => {
+      await result.current.requestBooking('initial', [selection])
+    })
+
+    expect(result.current.bookingSheetState).toEqual({
+      selections: [selection],
+      kind: 'initial',
+      status: 'confirm',
+    })
+
+    act(() => {
+      result.current.keepBookingForMore()
+    })
+
+    expect(onKeepBookingForMore).toHaveBeenCalledWith(selection)
+    expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
+  })
+
+  it('opens an initial confirmation for an explicit initial request', async () => {
     mockBookingFlow()
 
     const { result } = renderHook(() => useBookingSheetController())
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     expect(result.current.bookingSheetState).toEqual({
       selections: [selection],
+      kind: 'initial',
       status: 'confirm',
     })
+  })
+
+  it('opens a basket confirmation for multiple selections', async () => {
+    const secondSelection = {
+      cableId: 'easy' as const,
+      date: localDate('2026-05-21'),
+      endTime: '17:00',
+      startTime: '16:00',
+    }
+    mockBookingFlow()
+
+    const { result } = renderHook(() => useBookingSheetController())
+
+    await act(async () => {
+      result.current.requestBooking('basket', [selection, secondSelection])
+    })
+
+    expect(result.current.bookingSheetState).toEqual({
+      selections: [selection, secondSelection],
+      kind: 'basket',
+      status: 'confirm',
+    })
+  })
+
+  it('ignores an empty basket request without submitting a booking', async () => {
+    mockBookingFlow()
+
+    const { result } = renderHook(() => useBookingSheetController())
+
+    await act(async () => {
+      result.current.requestBooking('basket', [])
+    })
+
+    expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
+
+    await act(async () => {
+      await result.current.confirmBooking()
+    })
+
+    expect(bookingFlowMocks.submitBooking).not.toHaveBeenCalled()
   })
 
   it('submits a confirmed booking only once while confirmation is already pending', async () => {
@@ -66,7 +133,7 @@ describe('useBookingSheetController', () => {
     const { result } = renderHook(() => useBookingSheetController())
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     let firstConfirmation: Promise<void>
@@ -116,7 +183,7 @@ describe('useBookingSheetController', () => {
     const { result } = renderHook(() => useBookingSheetController())
 
     await act(async () => {
-      result.current.requestBooking(selection)
+      result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -124,12 +191,14 @@ describe('useBookingSheetController', () => {
     })
 
     await act(async () => {
-      result.current.requestBooking({
-        cableId: 'easy',
-        date: localDate('2026-05-21'),
-        endTime: '17:00',
-        startTime: '16:00',
-      })
+      result.current.requestBooking('initial', [
+        {
+          cableId: 'easy',
+          date: localDate('2026-05-21'),
+          endTime: '17:00',
+          startTime: '16:00',
+        },
+      ])
     })
 
     expect(result.current.bookingSheetState).toEqual({
@@ -162,7 +231,7 @@ describe('useBookingSheetController', () => {
     )
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -206,7 +275,7 @@ describe('useBookingSheetController', () => {
     )
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -242,7 +311,7 @@ describe('useBookingSheetController', () => {
     )
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await expect(
@@ -282,7 +351,7 @@ describe('useBookingSheetController', () => {
     )
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -312,7 +381,7 @@ describe('useBookingSheetController', () => {
     )
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -328,7 +397,7 @@ describe('useBookingSheetController', () => {
     const { result } = renderHook(() => useBookingSheetController())
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     act(() => {
@@ -361,7 +430,7 @@ describe('useBookingSheetController', () => {
     const { result } = renderHook(() => useBookingSheetController())
 
     await act(async () => {
-      result.current.requestBooking(selection)
+      result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -398,7 +467,7 @@ describe('useBookingSheetController', () => {
     const { result } = renderHook(() => useBookingSheetController())
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -446,7 +515,7 @@ describe('useBookingSheetController', () => {
     )
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     let confirmationPromise!: Promise<void>
@@ -502,7 +571,7 @@ describe('useBookingSheetController', () => {
     )
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -553,7 +622,7 @@ describe('useBookingSheetController', () => {
     )
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -602,7 +671,7 @@ describe('useBookingSheetController', () => {
     )
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -646,7 +715,7 @@ describe('useBookingSheetController', () => {
     )
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -684,7 +753,7 @@ describe('useBookingSheetController', () => {
     const { result } = renderHook(() => useBookingSheetController())
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {
@@ -713,7 +782,7 @@ describe('useBookingSheetController', () => {
     const { result, unmount } = renderHook(() => useBookingSheetController())
 
     await act(async () => {
-      await result.current.requestBooking(selection)
+      await result.current.requestBooking('initial', [selection])
     })
 
     await act(async () => {

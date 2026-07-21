@@ -13,6 +13,7 @@ import {
 } from '$storybook/fixture-data'
 
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
+import { emptyBookingBasket } from './booking-basket-props'
 
 const meta = {
   component: AvailabilityOverviewContent,
@@ -28,6 +29,7 @@ export const Loading: Story = {
     activeCableLabel: 'Pro',
     availabilityState: { isLoadingMore: false, status: 'loading' },
     bookingActionMode: 'hidden',
+    basket: emptyBookingBasket,
     onLoadMore: noopAsync,
   },
   parameters: {
@@ -40,6 +42,7 @@ export const Refreshing: Story = {
     activeCableLabel: 'Pro',
     availabilityState: createRefreshingAvailabilityState(CALENDAR_DAY_GROUPS),
     bookingActionMode: 'enabled',
+    basket: emptyBookingBasket,
     onBookSelection: noop,
     onLoadMore: noopAsync,
   },
@@ -53,6 +56,7 @@ export const Empty: Story = {
     activeCableLabel: 'Pro',
     availabilityState: createReadyAvailabilityState(EMPTY_DAY_GROUPS),
     bookingActionMode: 'hidden',
+    basket: emptyBookingBasket,
     onLoadMore: noopAsync,
   },
   parameters: {
@@ -67,6 +71,7 @@ export const AppendError: Story = {
       appendErrorMessage: 'Could not load the next week.',
     }),
     bookingActionMode: 'enabled',
+    basket: emptyBookingBasket,
     onBookSelection: noop,
     onLoadMore: noopAsync,
   },
@@ -80,6 +85,7 @@ export const Offline: Story = {
     activeCableLabel: 'Pro',
     availabilityState: createReadyAvailabilityState(BOOKABLE_DAY_GROUPS),
     bookingActionMode: 'hidden',
+    basket: emptyBookingBasket,
     isOffline: true,
     onLoadMore: noopAsync,
   },
@@ -97,6 +103,7 @@ export const ApiError: Story = {
       status: 'error',
     },
     bookingActionMode: 'hidden',
+    basket: emptyBookingBasket,
     onLoadMore: noopAsync,
   },
 }

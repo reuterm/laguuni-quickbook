@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { BOOKABLE_DAY_GROUPS, noop } from '$storybook/fixture-data'
 
 import { AvailabilityDayGroups } from './AvailabilityDayGroups'
+import { emptyBookingBasket } from './booking-basket-props'
 
 type AvailabilityDayGroupsStoryArgs = {
   bookingActionMode: 'disabled' | 'enabled' | 'hidden'
@@ -35,12 +36,10 @@ export const Default: Story = {
   render: ({ bookingActionMode, ...args }) => (
     <AvailabilityDayGroups
       {...args}
-      bookingActionMode={bookingActionMode}
+      basket={emptyBookingBasket}
       {...(bookingActionMode === 'hidden'
-        ? {}
-        : {
-            onBookSelection: noop,
-          })}
+        ? { bookingActionMode }
+        : { bookingActionMode, onBookSelection: noop })}
     />
   ),
 }

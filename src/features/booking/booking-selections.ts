@@ -23,14 +23,20 @@ export function getBookingSlotSelectionKey(
   return `${selection.cableId}:${selection.date}:${selection.startTime}:${selection.endTime}`
 }
 
-export function getBookingSelectionsPresentation(
+export function sortBookingSlotSelections(
   selections: readonly BookingSlotSelection[],
-): BookingSelectionsPresentation {
-  const sortedSelections = [...selections].sort((left, right) =>
+): readonly BookingSlotSelection[] {
+  return [...selections].sort((left, right) =>
     `${left.date}:${left.startTime}:${left.endTime}`.localeCompare(
       `${right.date}:${right.startTime}:${right.endTime}`,
     ),
   )
+}
+
+export function getBookingSelectionsPresentation(
+  selections: readonly BookingSlotSelection[],
+): BookingSelectionsPresentation {
+  const sortedSelections = sortBookingSlotSelections(selections)
 
   return {
     label: `${sortedSelections.length} ${sortedSelections.length === 1 ? 'slot' : 'slots'}`,

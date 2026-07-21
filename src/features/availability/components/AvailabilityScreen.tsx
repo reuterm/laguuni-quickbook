@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTitle } from '@/components/ui/alert-title'
@@ -22,9 +22,12 @@ import { useBookingSheetController } from '../../booking/use-booking-sheet-contr
 import { exportDiagnosticsForTrace } from '../../diagnostics/export'
 import { useAvailabilityOverview } from '../use-availability-overview'
 import { useAvailabilityScope } from '../use-availability-scope'
+import { useBookingBasket } from '../use-booking-basket'
 import { AvailabilityCableSelector } from './AvailabilityCableSelector'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 import { getAvailabilityBookingActionProps } from './availability-booking-action'
+import { BookingBasketReviewButton } from './BookingBasketReviewButton'
+import { emptyBookingBasket } from './booking-basket-props'
 
 type AvailabilityScreenProps = {
   isOnline: boolean
@@ -42,7 +45,10 @@ export function AvailabilityScreen({
   const [isReadOnlyNoticeDismissed, setIsReadOnlyNoticeDismissed] = useState(
     () => readOnlyNoticeStore.isDismissed(),
   )
+  const [isSelectingMultiple, setIsSelectingMultiple] = useState(false)
   const { selectedCable, selectCable } = useAvailabilityScope()
+  const bookingBasket = useBookingBasket()
+  const basketBookingRevisionRef = useRef<number | null>(null)
   const activeCable = getCableById(selectedCable)
   const { availabilityState, loadMoreAvailability, refreshAvailabilityDay } =
     useAvailabilityOverview(api, selectedCable, availabilityReferenceDate, {
@@ -65,7 +71,15 @@ export function AvailabilityScreen({
     isBookingReady,
     requestBooking,
   } = useBookingSheetController({
-    onBookingFinalized: async ({ selections }) => {
+    onBookingFinalized: async ({ result, selections }) => {
+      const basketBookingRevision = basketBookingRevisionRef.current
+      basketBookingRevisionRef.current = null
+
+      if (result.status === 'success' && basketBookingRevision !== null) {
+        bookingBasket.clearSelectionsIfUnchanged(basketBookingRevision)
+        setIsSelectingMultiple(false)
+      }
+
       const dates = new Set(selections.map((selection) => selection.date))
 
       for (const date of dates) {
@@ -83,13 +97,45 @@ export function AvailabilityScreen({
   const bookingActionProps = getAvailabilityBookingActionProps(
     isBookingReady,
     isBookingInProgress,
-    requestBooking,
+    (selection) => requestBooking('initial', [selection]),
   )
+  const clearBasketSelections = () => {
+    bookingBasket.clearSelections()
+    setIsSelectingMultiple(false)
+  }
+  const removeBasketSelection = (
+    selection: Parameters<typeof bookingBasket.removeSelection>[0],
+  ) => {
+    bookingBasket.removeSelection(selection)
+
+    if (bookingBasket.selections.length === 1) {
+      setIsSelectingMultiple(false)
+    }
+  }
+  const reviewBasket = () => {
+    basketBookingRevisionRef.current = bookingBasket.revision
+    requestBooking('basket', bookingBasket.selections)
+  }
+  const basket =
+    isSelectingMultiple || bookingBasket.selections.length > 0
+      ? {
+          isSelected: bookingBasket.isSelected,
+          kind: 'basket' as const,
+          onAddSelection: bookingBasket.addSelection,
+          onRemoveSelection: removeBasketSelection,
+          onReview: reviewBasket,
+          selections: bookingBasket.selections,
+        }
+      : emptyBookingBasket
 
   return (
     <section aria-labelledby="availability-title" className="space-y-6">
       <ContentRail className="space-y-5">
         <BookingSheetFlow
+          actions={{
+            basket: { onClearSelection: clearBasketSelections },
+            initial: { continuation: 'none' },
+          }}
           bookingSheetState={bookingSheetState}
           confirmBooking={confirmBooking}
           dismissBookingSheet={dismissBookingSheet}
@@ -150,6 +196,16 @@ export function AvailabilityScreen({
             onSelectCable={selectCable}
             selectedCable={selectedCable}
           />
+          {isBookingReady && !isSelectingMultiple ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={() => setIsSelectingMultiple(true)}
+            >
+              Select multiple slots
+            </Button>
+          ) : null}
         </div>
       </ContentRail>
 
@@ -157,9 +213,14 @@ export function AvailabilityScreen({
         <AvailabilityOverviewContent
           activeCableLabel={activeCable.label}
           availabilityState={availabilityState}
+          basket={basket}
           isOffline={!isOnline}
           onLoadMore={loadMoreAvailability}
           {...bookingActionProps}
+        />
+        <BookingBasketReviewButton
+          selections={basket.selections}
+          onReview={basket.onReview}
         />
       </div>
     </section>

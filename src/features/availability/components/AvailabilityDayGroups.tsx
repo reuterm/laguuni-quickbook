@@ -6,10 +6,10 @@ import {
 } from '@/components/ui/styles'
 import { SurfaceList, SurfaceListItem } from '@/components/ui/surface-list'
 import { cn } from '@/lib/utils'
-
 import type { AvailabilityDayGroup } from '../availability-service'
 import { AvailabilityCapacityChip } from './availability-badge'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
+import type { BookingBasketProps } from './booking-basket-props'
 
 const availabilityDayGroupsClassName = 'space-y-6'
 const availabilityBookingButtonMinWidth = '6.5rem'
@@ -18,13 +18,64 @@ const availabilityBookingButtonClassName =
   'shrink-0 border hover:border-border/90 hover:bg-white/[0.08]'
 
 type AvailabilityDayGroupsProps = {
+  basket: BookingBasketProps
   dayGroups: readonly AvailabilityDayGroup[]
 } & AvailabilityBookingActionProps
 
+function renderSlotAction(
+  slot: AvailabilityDayGroup['slots'][number],
+  basket: BookingBasketProps,
+  bookingActionProps: AvailabilityBookingActionProps,
+) {
+  if (basket.kind === 'basket') {
+    const selected = basket.isSelected(slot.selection)
+
+    return (
+      <Button
+        type="button"
+        size="sm"
+        variant="secondary"
+        className={cn(
+          availabilityBookingButtonClassName,
+          subtleDividerClassName,
+        )}
+        style={{ minWidth: availabilityBookingButtonMinWidth }}
+        aria-pressed={selected}
+        aria-label={`${selected ? 'Remove' : 'Add'} ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`}
+        onClick={() =>
+          (selected ? basket.onRemoveSelection : basket.onAddSelection)(
+            slot.selection,
+          )
+        }
+      >
+        {selected ? 'Remove' : 'Add'}
+      </Button>
+    )
+  }
+
+  if (bookingActionProps.bookingActionMode === 'hidden') {
+    return <span className={eyebrowClassName}>Read only</span>
+  }
+
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="secondary"
+      className={cn(availabilityBookingButtonClassName, subtleDividerClassName)}
+      style={{ minWidth: availabilityBookingButtonMinWidth }}
+      disabled={bookingActionProps.bookingActionMode === 'disabled'}
+      onClick={() => bookingActionProps.onBookSelection(slot.selection)}
+    >
+      Book
+    </Button>
+  )
+}
+
 export function AvailabilityDayGroups({
-  bookingActionMode,
+  basket,
   dayGroups,
-  onBookSelection,
+  ...bookingActionProps
 }: AvailabilityDayGroupsProps) {
   return (
     <div className={availabilityDayGroupsClassName}>
@@ -55,25 +106,7 @@ export function AvailabilityDayGroups({
                     <AvailabilityCapacityChip slot={slot} />
                   </div>
                 </div>
-
-                {bookingActionMode === 'hidden' ? (
-                  <span className={eyebrowClassName}>Read only</span>
-                ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    className={cn(
-                      availabilityBookingButtonClassName,
-                      subtleDividerClassName,
-                    )}
-                    style={{ minWidth: availabilityBookingButtonMinWidth }}
-                    disabled={bookingActionMode === 'disabled'}
-                    onClick={() => onBookSelection(slot.selection)}
-                  >
-                    Book
-                  </Button>
-                )}
+                {renderSlotAction(slot, basket, bookingActionProps)}
               </SurfaceListItem>
             ))}
           </SurfaceList>
@@ -83,4 +116,4 @@ export function AvailabilityDayGroups({
   )
 }
 
-export type { AvailabilityBookingActionProps, AvailabilityDayGroupsProps }
+export type { AvailabilityDayGroupsProps }

@@ -23,8 +23,14 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
+const actions = {
+  basket: { onClearSelection: noop },
+  initial: { continuation: 'none' as const },
+}
+
 export const Confirm: Story = {
   args: {
+    actions,
     bookingSheetState: createBookingSheetState('confirm'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
@@ -34,6 +40,7 @@ export const Confirm: Story = {
 
 export const Submitting: Story = {
   args: {
+    actions,
     bookingSheetState: createBookingSheetState('submitting'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
@@ -43,6 +50,7 @@ export const Submitting: Story = {
 
 export const Completed: Story = {
   args: {
+    actions,
     bookingSheetState: createCompletedBookingSheetState('failed'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
@@ -52,6 +60,7 @@ export const Completed: Story = {
 
 export const CompletedSuccessfulBooking: Story = {
   args: {
+    actions,
     bookingSheetState: createCompletedBookingSheetState('success'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
@@ -61,6 +70,7 @@ export const CompletedSuccessfulBooking: Story = {
 
 export const CompletedPaymentRequired: Story = {
   args: {
+    actions,
     bookingSheetState: createCompletedBookingSheetState('payment_required'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
@@ -85,7 +95,9 @@ const multiSlotSelections = [
 
 export const MultiSlotReview: Story = {
   args: {
+    actions,
     bookingSheetState: {
+      kind: 'basket',
       selections: multiSlotSelections,
       status: 'confirm',
     },
@@ -97,6 +109,7 @@ export const MultiSlotReview: Story = {
 
 export const CompletedSuccessfulMultiSlotBooking: Story = {
   args: {
+    actions,
     bookingSheetState: {
       result: {
         orderIdentifier: 'fixture-multi-slot-order-id',

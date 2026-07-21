@@ -6,12 +6,23 @@ import type {
 import { useBookingCalendarAction } from '../../calendar/use-booking-calendar-action'
 import { getBookingSelectionsPresentation } from '../booking-selections'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
-import { BookingConfirmPanel } from './BookingConfirmPanel'
+import {
+  BookingConfirmPanel,
+  type BookingConfirmSecondaryAction,
+} from './BookingConfirmPanel'
 import { BookingResultPanel } from './BookingResultPanel'
 import { BookingSheet } from './BookingSheet'
 import { BookingSubmittingPanel } from './BookingSubmittingPanel'
 
+export type BookingSheetFlowActions = {
+  basket: { onClearSelection: () => void }
+  initial:
+    | { continuation: 'none' }
+    | { continuation: 'add-more'; onAddMore: () => void }
+}
+
 type BookingSheetFlowProps = {
+  actions: BookingSheetFlowActions
   bookingSheetState: BookingSheetState
   confirmBooking: () => Promise<void>
   dismissBookingSheet: () => void
@@ -19,6 +30,7 @@ type BookingSheetFlowProps = {
 }
 
 export function BookingSheetFlow({
+  actions,
   bookingSheetState,
   confirmBooking,
   dismissBookingSheet,
@@ -48,9 +60,35 @@ export function BookingSheetFlow({
   let content: ReactNode
 
   switch (renderedState.status) {
-    case 'confirm':
-      content = <BookingConfirmPanel onConfirm={confirmBooking} />
+    case 'confirm': {
+      let secondaryAction: BookingConfirmSecondaryAction | undefined
+
+      if (
+        renderedState.kind === 'initial' &&
+        actions.initial.continuation === 'add-more'
+      ) {
+        secondaryAction = {
+          label: 'Add more',
+          onClick: actions.initial.onAddMore,
+        }
+      } else if (renderedState.kind === 'basket') {
+        secondaryAction = {
+          label: 'Clear selection',
+          onClick: () => {
+            actions.basket.onClearSelection()
+            dismissBookingSheet()
+          },
+        }
+      }
+
+      content = (
+        <BookingConfirmPanel
+          onConfirm={confirmBooking}
+          secondaryAction={secondaryAction}
+        />
+      )
       break
+    }
     case 'submitting':
       dismissible = false
       content = (

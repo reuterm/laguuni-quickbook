@@ -1,8 +1,10 @@
 import { cleanup, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { localDate } from '../../../../tests/local-date'
 import { AvailabilityDayGroups } from './AvailabilityDayGroups'
+import type { BookingBasketProps } from './booking-basket-props'
 
 describe('AvailabilityDayGroups', () => {
   afterEach(() => {
@@ -12,7 +14,6 @@ describe('AvailabilityDayGroups', () => {
   it('renders each loaded day group as its own stacked section', () => {
     render(
       <AvailabilityDayGroups
-        bookingActionMode="hidden"
         dayGroups={[
           createDayGroup({
             date: localDate('2026-05-14'),
@@ -25,6 +26,8 @@ describe('AvailabilityDayGroups', () => {
             slots: [createSlot('2026-05-15-780', '13:00', '14:00')],
           }),
         ]}
+        basket={createBasket()}
+        bookingActionMode="hidden"
       />,
     )
 
@@ -38,9 +41,10 @@ describe('AvailabilityDayGroups', () => {
   })
 
   it('renders booking actions when booking is enabled', () => {
+    const onBookSelection = vi.fn()
+
     render(
       <AvailabilityDayGroups
-        bookingActionMode="enabled"
         dayGroups={[
           createDayGroup({
             date: localDate('2026-05-14'),
@@ -48,17 +52,21 @@ describe('AvailabilityDayGroups', () => {
             slots: [createSlot('2026-05-14-900', '15:00', '16:00')],
           }),
         ]}
-        onBookSelection={vi.fn()}
+        basket={createBasket()}
+        bookingActionMode="enabled"
+        onBookSelection={onBookSelection}
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Book' })).toBeEnabled()
+    const bookButton = screen.getByRole('button', { name: 'Book' })
+    expect(bookButton).toBeEnabled()
+    bookButton.click()
+    expect(onBookSelection).toHaveBeenCalledOnce()
   })
 
   it('disables booking actions when booking is disabled', () => {
     render(
       <AvailabilityDayGroups
-        bookingActionMode="disabled"
         dayGroups={[
           createDayGroup({
             date: localDate('2026-05-14'),
@@ -66,6 +74,8 @@ describe('AvailabilityDayGroups', () => {
             slots: [createSlot('2026-05-14-900', '15:00', '16:00')],
           }),
         ]}
+        basket={createBasket()}
+        bookingActionMode="disabled"
         onBookSelection={vi.fn()}
       />,
     )
@@ -76,7 +86,72 @@ describe('AvailabilityDayGroups', () => {
       expect(button).toBeDisabled()
     }
   })
+
+  it('uses controlled add and remove actions for list slots', async () => {
+    const onAddSelection = vi.fn()
+    const onRemoveSelection = vi.fn()
+    const user = userEvent.setup()
+
+    render(
+      <AvailabilityDayGroups
+        dayGroups={[
+          createDayGroup({
+            date: localDate('2026-05-14'),
+            displayDate: 'Thu 14 May',
+            slots: [
+              createSlot('2026-05-14-900', '15:00', '16:00'),
+              createSlot('2026-05-14-720', '12:00', '13:00'),
+            ],
+          }),
+        ]}
+        basket={createBasket({
+          isSelected: (selection) => selection.startTime === '15:00',
+          onAddSelection,
+          onRemoveSelection,
+          kind: 'basket',
+        })}
+        bookingActionMode="enabled"
+        onBookSelection={vi.fn()}
+      />,
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Remove 15:00-16:00, 3 spots free' }),
+    )
+    await user.click(
+      screen.getByRole('button', { name: 'Add 12:00-13:00, 3 spots free' }),
+    )
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Remove 15:00-16:00, 3 spots free',
+        pressed: true,
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: 'Add 12:00-13:00, 3 spots free',
+        pressed: false,
+      }),
+    ).toBeInTheDocument()
+    expect(onRemoveSelection).toHaveBeenCalledOnce()
+    expect(onAddSelection).toHaveBeenCalledOnce()
+  })
 })
+
+function createBasket(
+  overrides: Partial<BookingBasketProps> = {},
+): BookingBasketProps {
+  return {
+    isSelected: () => false,
+    kind: 'initial',
+    onAddSelection: () => {},
+    onRemoveSelection: () => {},
+    onReview: () => {},
+    selections: [],
+    ...overrides,
+  }
+}
 
 function createDayGroup({
   date,

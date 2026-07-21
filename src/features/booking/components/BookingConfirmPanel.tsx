@@ -5,24 +5,45 @@ import {
   bookingNeutralToneClassName,
 } from './BookingStatePanel'
 
-type BookingConfirmPanelProps = {
-  onConfirm: () => Promise<void>
+export type BookingConfirmSecondaryAction = {
+  label: string
+  onClick: () => void
 }
 
-export function BookingConfirmPanel({ onConfirm }: BookingConfirmPanelProps) {
+type BookingConfirmPanelProps = {
+  onConfirm: () => Promise<void>
+  secondaryAction?: BookingConfirmSecondaryAction | undefined
+}
+
+export function BookingConfirmPanel({
+  onConfirm,
+  secondaryAction,
+}: BookingConfirmPanelProps) {
   return (
     <BookingStatePanel
       body="Ready to place this booking?"
       actions={
-        <Button
-          type="button"
-          className="w-full"
-          onClick={() => {
-            void onConfirm()
-          }}
-        >
-          Confirm booking
-        </Button>
+        <div className="grid gap-2">
+          <Button
+            type="button"
+            className="w-full"
+            onClick={() => {
+              void onConfirm()
+            }}
+          >
+            Confirm booking
+          </Button>
+          {secondaryAction ? (
+            <Button
+              type="button"
+              className="w-full"
+              variant="secondary"
+              onClick={secondaryAction.onClick}
+            >
+              {secondaryAction.label}
+            </Button>
+          ) : null}
+        </div>
       }
       toneClassName={bookingNeutralToneClassName}
       title="Confirm booking"

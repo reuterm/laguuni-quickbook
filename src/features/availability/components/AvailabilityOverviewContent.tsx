@@ -19,11 +19,13 @@ import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGr
 import { AvailabilityDayGroups } from './AvailabilityDayGroups'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
+import type { BookingBasketProps } from './booking-basket-props'
 import { useAvailabilityAutoLoad } from './use-availability-auto-load'
 
 type AvailabilityOverviewContentProps = {
   activeCableLabel: string
   availabilityState: AvailabilityState
+  basket: BookingBasketProps
   isOffline?: boolean
   onLoadMore: () => Promise<void>
 } & AvailabilityBookingActionProps
@@ -31,6 +33,7 @@ type AvailabilityOverviewContentProps = {
 export function AvailabilityOverviewContent({
   activeCableLabel,
   availabilityState,
+  basket,
   isOffline = false,
   onLoadMore,
   ...bookingActionProps
@@ -48,7 +51,6 @@ export function AvailabilityOverviewContent({
   const canLoadMore =
     availabilityState.status === 'ready' && availabilityState.canLoadMore
   const canAutoLoadMore = canLoadMore && !contentModel.hasAppendError
-
   const { loadMoreTriggerRef } = useAvailabilityAutoLoad({
     canAutoLoadMore,
     hasLoadedDayGroups: contentModel.hasLoadedDayGroups,
@@ -112,64 +114,93 @@ export function AvailabilityOverviewContent({
     )
   }
 
+  const appendErrorMessage = availabilityState.appendErrorMessage
+  const refreshNotice = contentModel.isRefreshing ? (
+    <p className={eyebrowClassName} role="status" aria-live="polite">
+      Refreshing availability…
+    </p>
+  ) : null
+
+  function renderAvailability() {
+    if (contentModel.hasRenderedAvailability) {
+      return (
+        <div
+          data-testid="availability-content"
+          className={cn(basket.selections.length > 0 && 'pb-24')}
+        >
+          {contentModel.isCalendarView ? (
+            <AvailabilityCalendarGrid
+              availabilityReferenceDate={availabilityReferenceDate}
+              basket={basket}
+              dayGroups={contentModel.renderedDayGroups}
+              {...bookingActionProps}
+            />
+          ) : (
+            <AvailabilityDayGroups
+              basket={basket}
+              dayGroups={contentModel.renderedCardDayGroups}
+              {...bookingActionProps}
+            />
+          )}
+        </div>
+      )
+    }
+
+    return (
+      <Alert role="status" className={subtleSurfaceBackgroundClassName}>
+        <AlertTitle>No bookable slots in range</AlertTitle>
+        <AlertDescription>
+          No bookable one-hour slots are available for {activeCableLabel} in the
+          loaded range.
+        </AlertDescription>
+      </Alert>
+    )
+  }
+
+  function renderAppendError() {
+    if (!appendErrorMessage) {
+      return null
+    }
+
+    return (
+      <Alert variant="destructive" role="alert">
+        <AlertTitle>Could not load next week</AlertTitle>
+        <AlertDescription>{appendErrorMessage}</AlertDescription>
+        <div className="mt-3 flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              void onLoadMore()
+            }}
+          >
+            Retry
+          </Button>
+        </div>
+      </Alert>
+    )
+  }
+
+  function renderLoadingMore() {
+    if (!availabilityState.isLoadingMore) {
+      return null
+    }
+
+    return (
+      <output aria-live="polite" className="flex justify-center px-1 py-2">
+        <Spinner className="size-5" />
+        <span className="sr-only">Loading another week…</span>
+      </output>
+    )
+  }
+
   return (
     <div className="space-y-3">
-      {contentModel.isRefreshing ? (
-        <p className={eyebrowClassName} role="status" aria-live="polite">
-          Refreshing availability…
-        </p>
-      ) : null}
-
-      {contentModel.hasRenderedAvailability ? (
-        contentModel.isCalendarView ? (
-          <AvailabilityCalendarGrid
-            availabilityReferenceDate={availabilityReferenceDate}
-            dayGroups={contentModel.renderedDayGroups}
-            {...bookingActionProps}
-          />
-        ) : (
-          <AvailabilityDayGroups
-            dayGroups={contentModel.renderedCardDayGroups}
-            {...bookingActionProps}
-          />
-        )
-      ) : (
-        <Alert role="status" className={subtleSurfaceBackgroundClassName}>
-          <AlertTitle>No bookable slots in range</AlertTitle>
-          <AlertDescription>
-            No bookable one-hour slots are available for {activeCableLabel} in
-            the loaded range.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {availabilityState.appendErrorMessage ? (
-        <Alert variant="destructive" role="alert">
-          <AlertTitle>Could not load next week</AlertTitle>
-          <AlertDescription>
-            {availabilityState.appendErrorMessage}
-          </AlertDescription>
-          <div className="mt-3 flex gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                void onLoadMore()
-              }}
-            >
-              Retry
-            </Button>
-          </div>
-        </Alert>
-      ) : null}
-
-      {availabilityState.isLoadingMore ? (
-        <output aria-live="polite" className="flex justify-center px-1 py-2">
-          <Spinner className="size-5" />
-          <span className="sr-only">Loading another week…</span>
-        </output>
-      ) : null}
+      {refreshNotice}
+      {renderAvailability()}
+      {renderAppendError()}
+      {renderLoadingMore()}
 
       <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-1 w-full" />
     </div>

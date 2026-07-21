@@ -16,19 +16,12 @@ const availabilityChipBaseClassName =
 const availabilityChipInteractiveClassName =
   'h-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50'
 
-type AvailabilityCapacityChipProps =
-  | {
-      className?: string
-      disabled?: boolean
-      onClick: () => void
-      slot: AvailabilitySlot
-    }
-  | {
-      className?: string
-      disabled?: never
-      onClick?: never
-      slot: AvailabilitySlot
-    }
+type AvailabilityCapacityChipProps = {
+  className?: string
+  disabled?: boolean | undefined
+  onClick?: (() => void) | undefined
+  slot: AvailabilitySlot
+}
 
 export function AvailabilityCapacityChip({
   className,

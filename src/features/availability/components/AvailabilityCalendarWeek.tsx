@@ -18,13 +18,16 @@ import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame
 import { AvailabilityCapacityChip } from './availability-badge'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { availabilityCalendarColumnClassNames } from './availability-calendar-ui'
+import type { BookingBasketProps } from './booking-basket-props'
 
 type AvailabilityCalendarWeekProps = {
+  basket: BookingBasketProps
   visibleDayIndices: readonly number[]
   week: AvailabilityWeek
 } & AvailabilityBookingActionProps
 
 export function AvailabilityCalendarWeek({
+  basket,
   bookingActionMode,
   onBookSelection,
   visibleDayIndices,
@@ -87,13 +90,17 @@ export function AvailabilityCalendarWeek({
             const slot = dayGroup
               ? slotLookup.get(createSlotLookupKey(dayGroup.date, time))
               : null
-            const slotSelectionProps =
-              bookingActionMode !== 'hidden' && slot
-                ? {
-                    disabled: bookingActionMode === 'disabled',
-                    onClick: () => onBookSelection(slot.selection),
-                  }
-                : {}
+            let onClick: (() => void) | undefined
+            let disabled: boolean | undefined
+
+            if (slot && basket.kind === 'basket') {
+              onClick = basket.isSelected(slot.selection)
+                ? () => basket.onRemoveSelection(slot.selection)
+                : () => basket.onAddSelection(slot.selection)
+            } else if (slot && bookingActionMode !== 'hidden') {
+              disabled = bookingActionMode === 'disabled'
+              onClick = () => onBookSelection(slot.selection)
+            }
 
             return (
               <td
@@ -107,7 +114,8 @@ export function AvailabilityCalendarWeek({
                   <AvailabilityCapacityChip
                     slot={slot}
                     className="min-w-11 px-2.5 py-1"
-                    {...slotSelectionProps}
+                    disabled={disabled}
+                    onClick={onClick}
                   />
                 ) : (
                   <span

@@ -8,8 +8,11 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { localDate } from '../../../../tests/local-date'
+import { groupAvailabilityWeeks } from '../availability-calendar'
 import type { AvailabilityDayGroup } from '../availability-service'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
+import { AvailabilityCalendarWeek } from './AvailabilityCalendarWeek'
+import type { BookingBasketProps } from './booking-basket-props'
 
 const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
   {
@@ -84,6 +87,18 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
   },
 ]
 
+const week = groupAvailabilityWeeks(FIXTURE_DAY_GROUPS)[0]
+
+if (week === undefined) {
+  throw new Error('Expected availability fixture to produce a week')
+}
+// @ts-expect-error Calendar weeks require a complete basket.
+;<AvailabilityCalendarWeek
+  bookingActionMode="hidden"
+  visibleDayIndices={[0]}
+  week={week}
+/>
+
 describe('AvailabilityCalendarGrid', () => {
   afterEach(() => {
     cleanup()
@@ -96,6 +111,7 @@ describe('AvailabilityCalendarGrid', () => {
     render(
       <AvailabilityCalendarGrid
         availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+        basket={createBasket()}
         dayGroups={FIXTURE_DAY_GROUPS}
         bookingActionMode="hidden"
       />,
@@ -151,6 +167,7 @@ describe('AvailabilityCalendarGrid', () => {
     render(
       <AvailabilityCalendarGrid
         availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+        basket={createBasket()}
         dayGroups={FIXTURE_DAY_GROUPS}
         bookingActionMode="enabled"
         onBookSelection={onBookSelection}
@@ -171,12 +188,56 @@ describe('AvailabilityCalendarGrid', () => {
     })
   })
 
+  it('uses controlled add and remove actions for calendar slots', () => {
+    const onAddSelection = vi.fn()
+    const onRemoveSelection = vi.fn()
+
+    stubMatchMedia(false)
+
+    render(
+      <AvailabilityCalendarGrid
+        availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+        basket={createBasket({
+          isSelected: (selection) => selection.startTime === '15:00',
+          kind: 'basket',
+          onAddSelection,
+          onRemoveSelection,
+        })}
+        dayGroups={FIXTURE_DAY_GROUPS}
+        onBookSelection={vi.fn()}
+        bookingActionMode="enabled"
+      />,
+    )
+
+    const selected = screen.getByRole('button', {
+      name: 'Book 15:00-16:00, 2 spots free',
+    })
+
+    const unselected = screen.getByRole('button', {
+      name: 'Book 12:00-13:00, 4 spots free',
+    })
+
+    expect(selected).not.toHaveAttribute('aria-pressed')
+    expect(unselected).not.toHaveAttribute('aria-pressed')
+
+    fireEvent.click(selected)
+    fireEvent.click(unselected)
+
+    expect(onRemoveSelection).toHaveBeenCalledWith(
+      expect.objectContaining({ startTime: '15:00' }),
+    )
+    expect(onAddSelection).toHaveBeenCalledWith(
+      expect.objectContaining({ startTime: '12:00' }),
+    )
+  })
+
   it('shows non-interactive badges in read-only mode', () => {
     stubMatchMedia(false)
 
     render(
       <AvailabilityCalendarGrid
         availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+        basket={createBasket()}
         dayGroups={FIXTURE_DAY_GROUPS}
         bookingActionMode="hidden"
       />,
@@ -192,6 +253,7 @@ describe('AvailabilityCalendarGrid', () => {
     render(
       <AvailabilityCalendarGrid
         availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+        basket={createBasket()}
         dayGroups={FIXTURE_DAY_GROUPS}
         bookingActionMode="hidden"
       />,
@@ -215,6 +277,7 @@ describe('AvailabilityCalendarGrid', () => {
     render(
       <AvailabilityCalendarGrid
         availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+        basket={createBasket()}
         dayGroups={FIXTURE_DAY_GROUPS}
         bookingActionMode="hidden"
       />,
@@ -246,6 +309,7 @@ describe('AvailabilityCalendarGrid', () => {
     render(
       <AvailabilityCalendarGrid
         availabilityReferenceDate={new Date('2026-05-14T12:00:00')}
+        basket={createBasket()}
         dayGroups={[
           ...FIXTURE_DAY_GROUPS,
           {
@@ -291,6 +355,29 @@ describe('AvailabilityCalendarGrid', () => {
     expect(screen.queryByText('25 May - 31 May')).not.toBeInTheDocument()
   })
 })
+
+function createBasket(
+  overrides: Partial<BookingBasketProps> = {},
+): BookingBasketProps {
+  return {
+    isSelected: () => false,
+    kind: 'initial',
+    onAddSelection: () => {},
+    onRemoveSelection: () => {},
+    onReview: () => {},
+    selections: [],
+    ...overrides,
+  }
+}
+
+// @ts-expect-error A basket must have every selection and review member.
+const incompleteBasket: BookingBasketProps = {
+  selections: [],
+  isSelected: () => false,
+  onAddSelection: () => {},
+  onRemoveSelection: () => {},
+}
+void incompleteBasket
 
 function stubMatchMedia(matches: boolean) {
   vi.stubGlobal(

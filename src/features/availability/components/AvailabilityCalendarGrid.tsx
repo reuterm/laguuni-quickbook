@@ -5,7 +5,6 @@ import {
   parseLocalDate,
 } from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
-
 import {
   AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   groupAvailabilityWeeks,
@@ -15,14 +14,17 @@ import type { AvailabilityDayGroup } from '../availability-service'
 import { AVAILABILITY_WEEK_DAY_COUNT } from '../availability-service'
 import { AvailabilityCalendarWeek } from './AvailabilityCalendarWeek'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
+import type { BookingBasketProps } from './booking-basket-props'
 
 type AvailabilityCalendarGridProps = {
   availabilityReferenceDate?: Date | undefined
+  basket: BookingBasketProps
   dayGroups: readonly AvailabilityDayGroup[]
 } & AvailabilityBookingActionProps
 
 export function AvailabilityCalendarGrid({
   availabilityReferenceDate,
+  basket,
   bookingActionMode,
   dayGroups,
   onBookSelection,
@@ -55,6 +57,7 @@ export function AvailabilityCalendarGrid({
       <div className="space-y-4">
         {weeks.map((week) => (
           <AvailabilityCalendarWeek
+            basket={basket}
             key={week.id}
             visibleDayIndices={listVisibleWeekdayIndices(
               week.weekStartDate,

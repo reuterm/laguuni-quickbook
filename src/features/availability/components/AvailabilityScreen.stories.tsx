@@ -49,6 +49,9 @@ export const BookingEnabled: Story = {
     settings: BOOKING_ENABLED_SETTINGS,
   },
   render: renderAvailabilityScreen,
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: 'Add more' })).toBeNull()
+  },
 }
 
 export const AvailabilityError: Story = {
@@ -192,6 +195,56 @@ export const SuccessfulBooking: Story = {
     await expect(
       page.findByRole('heading', { name: 'Booking confirmed' }),
     ).resolves.toBeInTheDocument()
+  },
+}
+
+export const BasketSelection: Story = {
+  args: {
+    isOnline: true,
+    onOpenSettings: noop,
+  },
+  parameters: {
+    settings: {
+      ...BOOKING_ENABLED_SETTINGS,
+      availabilityView: 'calendar',
+    },
+  },
+  render: renderAvailabilityScreen,
+  play: async ({ canvas, canvasElement }) => {
+    const page = within(canvasElement.ownerDocument.body)
+
+    await userEvent.click(
+      canvas.getByRole('button', { name: 'Select multiple slots' }),
+    )
+    await userEvent.click(
+      canvas.getAllByRole('button', { name: /^Book 15:00-16:00/ })[0],
+    )
+    await userEvent.click(
+      canvas.getByRole('button', { name: 'Review selection' }),
+    )
+
+    await expect(
+      page.findByRole('heading', { name: 'Confirm booking' }),
+    ).resolves.toBeInTheDocument()
+    const reviewSheet = within(page.getByRole('dialog'))
+
+    await expect(reviewSheet.getByText('2 slots')).toBeInTheDocument()
+    await expect(
+      Array.from(
+        reviewSheet.getByTestId('booking-selected-slots').children,
+        (row) => row.textContent,
+      ),
+    ).toEqual(['Wed 13 MayPro · 15:00-16:00', 'Thu 14 MayPro · 15:00-16:00'])
+    await userEvent.click(
+      reviewSheet.getByRole('button', { name: 'Clear selection' }),
+    )
+
+    await waitFor(() => {
+      expect(page.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(
+        canvas.queryByRole('button', { name: 'Review selection' }),
+      ).not.toBeInTheDocument()
+    })
   },
 }
 
