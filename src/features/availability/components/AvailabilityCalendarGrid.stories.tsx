@@ -9,7 +9,7 @@ import {
 
 import { useBookingBasket } from '../use-booking-basket'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
-import { BookingBasketTray } from './BookingBasketTray'
+import { BookingBasketReviewButton } from './BookingBasketReviewButton'
 
 const meta = {
   component: AvailabilityCalendarGrid,
@@ -34,16 +34,26 @@ export const BasketSelection: Story = {
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getAllByRole('button', { name: /^Add\b/ })[0])
 
-    await expect(canvas.getByText('1 slot selected')).toBeVisible()
+    await userEvent.click(
+      canvas.getByRole('button', {
+        name: 'Review selection 1 selected slot',
+      }),
+    )
+    await expect(onReview).toHaveBeenCalled()
   },
 }
+
+const onReview = fn()
 
 function BasketSelectionCalendar() {
   const basket = useBookingBasket()
 
   return (
     <>
-      <BookingBasketTray selections={basket.selections} onReview={fn()} />
+      <BookingBasketReviewButton
+        selections={basket.selections}
+        onReview={onReview}
+      />
       <AvailabilityCalendarGrid
         availabilityReferenceDate={STORYBOOK_REFERENCE_DATE}
         bookingActionMode="enabled"
