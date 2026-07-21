@@ -54,6 +54,7 @@ describe('BookingSheetFlow', () => {
           ],
           status: 'confirm',
         }}
+        clearBookingSelection={vi.fn()}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
         onExportTrace={async () => {}}
