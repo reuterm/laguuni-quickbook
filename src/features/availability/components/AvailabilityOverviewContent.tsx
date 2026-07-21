@@ -114,15 +114,16 @@ export function AvailabilityOverviewContent({
     )
   }
 
-  return (
-    <div className="space-y-3">
-      {contentModel.isRefreshing ? (
-        <p className={eyebrowClassName} role="status" aria-live="polite">
-          Refreshing availability…
-        </p>
-      ) : null}
+  const appendErrorMessage = availabilityState.appendErrorMessage
+  const refreshNotice = contentModel.isRefreshing ? (
+    <p className={eyebrowClassName} role="status" aria-live="polite">
+      Refreshing availability…
+    </p>
+  ) : null
 
-      {contentModel.hasRenderedAvailability ? (
+  function renderAvailability() {
+    if (contentModel.hasRenderedAvailability) {
+      return (
         <div
           data-testid="availability-content"
           className={cn(basket.selections.length > 0 && 'pb-24')}
@@ -142,43 +143,64 @@ export function AvailabilityOverviewContent({
             />
           )}
         </div>
-      ) : (
-        <Alert role="status" className={subtleSurfaceBackgroundClassName}>
-          <AlertTitle>No bookable slots in range</AlertTitle>
-          <AlertDescription>
-            No bookable one-hour slots are available for {activeCableLabel} in
-            the loaded range.
-          </AlertDescription>
-        </Alert>
-      )}
+      )
+    }
 
-      {availabilityState.appendErrorMessage ? (
-        <Alert variant="destructive" role="alert">
-          <AlertTitle>Could not load next week</AlertTitle>
-          <AlertDescription>
-            {availabilityState.appendErrorMessage}
-          </AlertDescription>
-          <div className="mt-3 flex gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                void onLoadMore()
-              }}
-            >
-              Retry
-            </Button>
-          </div>
-        </Alert>
-      ) : null}
+    return (
+      <Alert role="status" className={subtleSurfaceBackgroundClassName}>
+        <AlertTitle>No bookable slots in range</AlertTitle>
+        <AlertDescription>
+          No bookable one-hour slots are available for {activeCableLabel} in the
+          loaded range.
+        </AlertDescription>
+      </Alert>
+    )
+  }
 
-      {availabilityState.isLoadingMore ? (
-        <output aria-live="polite" className="flex justify-center px-1 py-2">
-          <Spinner className="size-5" />
-          <span className="sr-only">Loading another week…</span>
-        </output>
-      ) : null}
+  function renderAppendError() {
+    if (!availabilityState.appendErrorMessage) {
+      return null
+    }
+
+    return (
+      <Alert variant="destructive" role="alert">
+        <AlertTitle>Could not load next week</AlertTitle>
+        <AlertDescription>{appendErrorMessage}</AlertDescription>
+        <div className="mt-3 flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              void onLoadMore()
+            }}
+          >
+            Retry
+          </Button>
+        </div>
+      </Alert>
+    )
+  }
+
+  function renderLoadingMore() {
+    if (!availabilityState.isLoadingMore) {
+      return null
+    }
+
+    return (
+      <output aria-live="polite" className="flex justify-center px-1 py-2">
+        <Spinner className="size-5" />
+        <span className="sr-only">Loading another week…</span>
+      </output>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {refreshNotice}
+      {renderAvailability()}
+      {renderAppendError()}
+      {renderLoadingMore()}
 
       <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-1 w-full" />
     </div>
