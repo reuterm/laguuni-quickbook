@@ -34,7 +34,7 @@ describe('BookingBasketReviewButton', () => {
     )
 
     const button = screen.getByRole('button', {
-      name: 'Review selection 2 selected slots',
+      name: 'Review selection',
     })
 
     expect(button).toHaveTextContent('Review selection')
@@ -63,7 +63,7 @@ describe('BookingBasketReviewButton', () => {
       <BookingBasketReviewButton onReview={vi.fn()} selections={[first]} />,
     )
     expect(
-      screen.getByRole('button', { name: 'Review selection 1 selected slot' }),
+      screen.getByRole('button', { name: 'Review selection' }),
     ).toBeInTheDocument()
   })
 })

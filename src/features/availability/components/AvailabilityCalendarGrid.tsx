@@ -5,7 +5,6 @@ import {
   parseLocalDate,
 } from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
-import type { BookingSlotSelection } from '../../../domain/booking'
 import {
   AVAILABILITY_CALENDAR_BREAKPOINT_QUERY,
   groupAvailabilityWeeks,
@@ -15,28 +14,21 @@ import type { AvailabilityDayGroup } from '../availability-service'
 import { AVAILABILITY_WEEK_DAY_COUNT } from '../availability-service'
 import { AvailabilityCalendarWeek } from './AvailabilityCalendarWeek'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
+import type { BookingBasketProps } from './booking-basket-props'
 
 type AvailabilityCalendarGridProps = {
   availabilityReferenceDate?: Date | undefined
+  basket: BookingBasketProps
   dayGroups: readonly AvailabilityDayGroup[]
-  isSelected?: ((selection: BookingSlotSelection) => boolean) | undefined
-  onAddSelection?: ((selection: BookingSlotSelection) => void) | undefined
-  onRemoveSelection?: ((selection: BookingSlotSelection) => void) | undefined
 } & AvailabilityBookingActionProps
 
 export function AvailabilityCalendarGrid({
   availabilityReferenceDate,
+  basket,
   bookingActionMode,
   dayGroups,
-  isSelected = () => false,
-  onAddSelection,
   onBookSelection,
-  onRemoveSelection,
 }: AvailabilityCalendarGridProps) {
-  const selectionMode =
-    onAddSelection !== undefined && onRemoveSelection !== undefined
-  const addSelection = onAddSelection ?? (() => {})
-  const removeSelection = onRemoveSelection ?? (() => {})
   const weeks = groupAvailabilityWeeks(dayGroups).filter((week) =>
     week.days.some(
       (dayGroup) => dayGroup !== null && dayGroup.slots.length > 0,
@@ -74,10 +66,10 @@ export function AvailabilityCalendarGrid({
               week.days,
             )}
             week={week}
-            isSelected={isSelected}
-            onAddSelection={addSelection}
-            onRemoveSelection={removeSelection}
-            selectionMode={selectionMode}
+            basketKind={basket.kind}
+            isSelected={basket.isSelected}
+            onAddSelection={basket.onAddSelection}
+            onRemoveSelection={basket.onRemoveSelection}
             {...(bookingActionMode === 'hidden'
               ? { bookingActionMode }
               : { bookingActionMode, onBookSelection })}

@@ -19,23 +19,24 @@ import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame
 import { AvailabilityCapacityChip } from './availability-badge'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { availabilityCalendarColumnClassNames } from './availability-calendar-ui'
+import type { BookingBasketProps } from './booking-basket-props'
 
 type AvailabilityCalendarWeekProps = {
+  basketKind: BookingBasketProps['kind']
   isSelected: (selection: BookingSlotSelection) => boolean
   onAddSelection: (selection: BookingSlotSelection) => void
   onRemoveSelection: (selection: BookingSlotSelection) => void
-  selectionMode: boolean
   visibleDayIndices: readonly number[]
   week: AvailabilityWeek
 } & AvailabilityBookingActionProps
 
 export function AvailabilityCalendarWeek({
+  basketKind,
   bookingActionMode,
   isSelected,
   onAddSelection,
   onBookSelection,
   onRemoveSelection,
-  selectionMode,
   visibleDayIndices,
   week,
 }: AvailabilityCalendarWeekProps) {
@@ -99,7 +100,7 @@ export function AvailabilityCalendarWeek({
             let onClick: (() => void) | undefined
             let disabled: boolean | undefined
 
-            if (slot && selectionMode) {
+            if (slot && basketKind === 'basket') {
               onClick = isSelected(slot.selection)
                 ? () => onRemoveSelection(slot.selection)
                 : () => onAddSelection(slot.selection)

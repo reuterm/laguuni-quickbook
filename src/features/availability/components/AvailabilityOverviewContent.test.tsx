@@ -13,13 +13,18 @@ import { UserSettingsProvider } from '../../settings/use-user-settings'
 import type { AvailabilityDayGroup } from '../availability-service'
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
+import type { BookingBasketProps } from './booking-basket-props'
 
 type AvailabilityOverviewProps = Parameters<
   typeof AvailabilityOverviewContent
 >[0]
 type AvailabilityOverviewBaseProps = Pick<
   AvailabilityOverviewProps,
-  'activeCableLabel' | 'availabilityState' | 'isOffline' | 'onLoadMore'
+  | 'activeCableLabel'
+  | 'availabilityState'
+  | 'basket'
+  | 'isOffline'
+  | 'onLoadMore'
 >
 
 describe('AvailabilityOverviewContent', () => {
@@ -229,6 +234,34 @@ describe('AvailabilityOverviewContent', () => {
     })
 
     expect(screen.getByRole('button', { name: 'Book' })).toBeDisabled()
+  })
+
+  it.each([
+    'cards',
+    'calendar',
+  ] as const)('reserves bottom clearance for rendered %s availability with basket selections', (availabilityView) => {
+    renderContent(
+      createLoadedState('ready'),
+      { basket: { selections: [selectedSlot] }, bookingActionMode: 'hidden' },
+      { availabilityView },
+    )
+
+    expect(screen.getByTestId('availability-content')).toHaveClass('pb-24')
+  })
+
+  it('does not reserve review CTA clearance without basket selections', () => {
+    renderContent(createLoadedState('ready'), { bookingActionMode: 'hidden' })
+
+    expect(screen.getByTestId('availability-content')).not.toHaveClass('pb-24')
+  })
+
+  it('does not reserve review CTA clearance for empty availability', () => {
+    renderContent(createLoadedState('ready', createEmptyDayGroups()), {
+      basket: { selections: [selectedSlot] },
+      bookingActionMode: 'hidden',
+    })
+
+    expect(screen.queryByTestId('availability-content')).not.toBeInTheDocument()
   })
 
   it('shows a bottom loading state while appending another week', () => {
@@ -501,10 +534,8 @@ function renderContent(
   availabilityState: AvailabilityState,
   bookingProps?: {
     bookingActionMode?: 'disabled' | 'enabled' | 'hidden'
-    isSelected?: AvailabilityOverviewProps['isSelected']
-    onAddSelection?: AvailabilityOverviewProps['onAddSelection']
+    basket?: Partial<BookingBasketProps>
     onBookSelection?: AvailabilityOverviewProps['onBookSelection']
-    onRemoveSelection?: AvailabilityOverviewProps['onRemoveSelection']
   },
   settingsOverrides?: {
     availabilityView?: 'cards' | 'calendar'
@@ -537,6 +568,7 @@ function renderContent(
       <TestProviders>
         <AvailabilityOverviewContent
           {...availabilityContentProps}
+          basket={createBasket(bookingProps?.basket)}
           bookingActionMode="hidden"
         />
       </TestProviders>,
@@ -550,14 +582,26 @@ function renderContent(
     <TestProviders>
       <AvailabilityOverviewContent
         {...availabilityContentProps}
+        basket={createBasket(bookingProps?.basket)}
         bookingActionMode={bookingActionMode}
-        isSelected={bookingProps?.isSelected}
-        onAddSelection={bookingProps?.onAddSelection}
         onBookSelection={bookingProps?.onBookSelection ?? vi.fn()}
-        onRemoveSelection={bookingProps?.onRemoveSelection}
       />
     </TestProviders>,
   )
+}
+
+function createBasket(
+  overrides: Partial<BookingBasketProps> = {},
+): BookingBasketProps {
+  return {
+    isSelected: () => false,
+    kind: 'initial',
+    onAddSelection: () => {},
+    onRemoveSelection: () => {},
+    onReview: () => {},
+    selections: [],
+    ...overrides,
+  }
 }
 
 function createLoadedState(
@@ -598,6 +642,13 @@ function createBookableDayGroup() {
       },
     ],
   }
+}
+
+const selectedSlot = {
+  cableId: 'pro' as const,
+  date: localDate('2026-05-14'),
+  endTime: '16:00',
+  startTime: '15:00',
 }
 
 function createEmptyDayGroups(): readonly AvailabilityDayGroup[] {

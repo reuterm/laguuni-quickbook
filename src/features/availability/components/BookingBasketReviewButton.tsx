@@ -14,13 +14,8 @@ export function BookingBasketReviewButton({
 
   if (selectedCount === 0) return null
 
-  const selectedSlotLabel = `${selectedCount} selected slot${
-    selectedCount === 1 ? '' : 's'
-  }`
-
   return (
     <Button
-      aria-label={`Review selection ${selectedSlotLabel}`}
       className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-1/2 z-40 -translate-x-1/2 rounded-full px-5 shadow-lg"
       type="button"
       onClick={onReview}

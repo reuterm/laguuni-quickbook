@@ -11,21 +11,26 @@ import { BookingResultPanel } from './BookingResultPanel'
 import { BookingSheet } from './BookingSheet'
 import { BookingSubmittingPanel } from './BookingSubmittingPanel'
 
+export type BookingSheetFlowActions = {
+  basket: { onClearSelection: () => void }
+  initial:
+    | { continuation: 'none' }
+    | { continuation: 'add-more'; onAddMore: () => void }
+}
+
 type BookingSheetFlowProps = {
+  actions: BookingSheetFlowActions
   bookingSheetState: BookingSheetState
-  clearBookingSelection?: () => void
   confirmBooking: () => Promise<void>
   dismissBookingSheet: () => void
-  keepBookingForMore?: () => void
   onExportTrace: (traceId: string) => Promise<void>
 }
 
 export function BookingSheetFlow({
+  actions,
   bookingSheetState,
-  clearBookingSelection,
   confirmBooking,
   dismissBookingSheet,
-  keepBookingForMore,
   onExportTrace,
 }: BookingSheetFlowProps) {
   const renderedStateRef = useRef<Exclude<
@@ -54,11 +59,14 @@ export function BookingSheetFlow({
   switch (renderedState.status) {
     case 'confirm': {
       const onAddMore =
-        renderedState.kind === 'initial' ? keepBookingForMore : undefined
+        renderedState.kind === 'initial' &&
+        actions.initial.continuation === 'add-more'
+          ? actions.initial.onAddMore
+          : undefined
       const onClearSelection =
-        renderedState.kind === 'basket' && clearBookingSelection
+        renderedState.kind === 'basket'
           ? () => {
-              clearBookingSelection()
+              actions.basket.onClearSelection()
               dismissBookingSheet()
             }
           : undefined

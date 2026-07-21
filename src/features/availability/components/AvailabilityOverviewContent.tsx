@@ -11,33 +11,29 @@ import {
 } from '@/components/ui/styles'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
-import type { BookingSlotSelection } from '../../../domain/booking'
 import { useUserSettings } from '../../settings/use-user-settings'
 import { AVAILABILITY_CALENDAR_BREAKPOINT_QUERY } from '../availability-calendar'
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
-import {
-  AvailabilityDayGroups,
-  type AvailabilitySlotAction,
-} from './AvailabilityDayGroups'
+import { AvailabilityDayGroups } from './AvailabilityDayGroups'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
+import type { BookingBasketProps } from './booking-basket-props'
 import { useAvailabilityAutoLoad } from './use-availability-auto-load'
 
 type AvailabilityOverviewContentProps = {
   activeCableLabel: string
   availabilityState: AvailabilityState
+  basket: BookingBasketProps
   isOffline?: boolean
   onLoadMore: () => Promise<void>
-  isSelected?: ((selection: BookingSlotSelection) => boolean) | undefined
-  onAddSelection?: ((selection: BookingSlotSelection) => void) | undefined
-  onRemoveSelection?: ((selection: BookingSlotSelection) => void) | undefined
 } & AvailabilityBookingActionProps
 
 export function AvailabilityOverviewContent({
   activeCableLabel,
   availabilityState,
+  basket,
   isOffline = false,
   onLoadMore,
   ...bookingActionProps
@@ -55,18 +51,6 @@ export function AvailabilityOverviewContent({
   const canLoadMore =
     availabilityState.status === 'ready' && availabilityState.canLoadMore
   const canAutoLoadMore = canLoadMore && !contentModel.hasAppendError
-  let dayGroupSlotAction: AvailabilitySlotAction
-
-  if (bookingActionProps.bookingActionMode === 'hidden') {
-    dayGroupSlotAction = { kind: 'booking', mode: 'hidden' }
-  } else {
-    dayGroupSlotAction = {
-      kind: 'booking',
-      mode: bookingActionProps.bookingActionMode,
-      onBookSelection: bookingActionProps.onBookSelection,
-    }
-  }
-
   const { loadMoreTriggerRef } = useAvailabilityAutoLoad({
     canAutoLoadMore,
     hasLoadedDayGroups: contentModel.hasLoadedDayGroups,
@@ -139,18 +123,25 @@ export function AvailabilityOverviewContent({
       ) : null}
 
       {contentModel.hasRenderedAvailability ? (
-        contentModel.isCalendarView ? (
-          <AvailabilityCalendarGrid
-            availabilityReferenceDate={availabilityReferenceDate}
-            dayGroups={contentModel.renderedDayGroups}
-            {...bookingActionProps}
-          />
-        ) : (
-          <AvailabilityDayGroups
-            dayGroups={contentModel.renderedCardDayGroups}
-            slotAction={dayGroupSlotAction}
-          />
-        )
+        <div
+          data-testid="availability-content"
+          className={cn(basket.selections.length > 0 && 'pb-24')}
+        >
+          {contentModel.isCalendarView ? (
+            <AvailabilityCalendarGrid
+              availabilityReferenceDate={availabilityReferenceDate}
+              basket={basket}
+              dayGroups={contentModel.renderedDayGroups}
+              {...bookingActionProps}
+            />
+          ) : (
+            <AvailabilityDayGroups
+              basket={basket}
+              dayGroups={contentModel.renderedCardDayGroups}
+              {...bookingActionProps}
+            />
+          )}
+        </div>
       ) : (
         <Alert role="status" className={subtleSurfaceBackgroundClassName}>
           <AlertTitle>No bookable slots in range</AlertTitle>

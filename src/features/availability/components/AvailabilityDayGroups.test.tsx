@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { localDate } from '../../../../tests/local-date'
 import { AvailabilityDayGroups } from './AvailabilityDayGroups'
+import type { BookingBasketProps } from './booking-basket-props'
 
 describe('AvailabilityDayGroups', () => {
   afterEach(() => {
@@ -25,7 +26,8 @@ describe('AvailabilityDayGroups', () => {
             slots: [createSlot('2026-05-15-780', '13:00', '14:00')],
           }),
         ]}
-        slotAction={{ kind: 'booking', mode: 'hidden' }}
+        basket={createBasket()}
+        bookingActionMode="hidden"
       />,
     )
 
@@ -50,11 +52,9 @@ describe('AvailabilityDayGroups', () => {
             slots: [createSlot('2026-05-14-900', '15:00', '16:00')],
           }),
         ]}
-        slotAction={{
-          kind: 'booking',
-          mode: 'enabled',
-          onBookSelection,
-        }}
+        basket={createBasket()}
+        bookingActionMode="enabled"
+        onBookSelection={onBookSelection}
       />,
     )
 
@@ -74,11 +74,9 @@ describe('AvailabilityDayGroups', () => {
             slots: [createSlot('2026-05-14-900', '15:00', '16:00')],
           }),
         ]}
-        slotAction={{
-          kind: 'booking',
-          mode: 'disabled',
-          onBookSelection: vi.fn(),
-        }}
+        basket={createBasket()}
+        bookingActionMode="disabled"
+        onBookSelection={vi.fn()}
       />,
     )
 
@@ -106,12 +104,14 @@ describe('AvailabilityDayGroups', () => {
             ],
           }),
         ]}
-        slotAction={{
+        basket={createBasket({
           isSelected: (selection) => selection.startTime === '15:00',
-          kind: 'selection',
           onAddSelection,
           onRemoveSelection,
-        }}
+          kind: 'basket',
+        })}
+        bookingActionMode="enabled"
+        onBookSelection={vi.fn()}
       />,
     )
 
@@ -138,6 +138,20 @@ describe('AvailabilityDayGroups', () => {
     expect(onAddSelection).toHaveBeenCalledOnce()
   })
 })
+
+function createBasket(
+  overrides: Partial<BookingBasketProps> = {},
+): BookingBasketProps {
+  return {
+    isSelected: () => false,
+    kind: 'initial',
+    onAddSelection: () => {},
+    onRemoveSelection: () => {},
+    onReview: () => {},
+    selections: [],
+    ...overrides,
+  }
+}
 
 function createDayGroup({
   date,

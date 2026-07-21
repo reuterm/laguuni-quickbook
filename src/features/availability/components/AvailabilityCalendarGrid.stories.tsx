@@ -10,6 +10,7 @@ import {
 import { useBookingBasket } from '../use-booking-basket'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 import { BookingBasketReviewButton } from './BookingBasketReviewButton'
+import { emptyBookingBasket } from './booking-basket-props'
 
 const meta = {
   component: AvailabilityCalendarGrid,
@@ -23,6 +24,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: {
     availabilityReferenceDate: STORYBOOK_REFERENCE_DATE,
+    basket: emptyBookingBasket,
     bookingActionMode: 'enabled',
     dayGroups: CALENDAR_DAY_GROUPS,
     onBookSelection: noop,
@@ -40,7 +42,7 @@ export const BasketSelection: Story = {
 
     await userEvent.click(
       canvas.getByRole('button', {
-        name: 'Review selection 1 selected slot',
+        name: '1 slot selected',
       }),
     )
     await expect(onReview).toHaveBeenCalled()
@@ -52,7 +54,7 @@ export const BasketSelection: Story = {
     )
     await expect(
       canvas.queryByRole('button', {
-        name: 'Review selection 1 selected slot',
+        name: '1 slot selected',
       }),
     ).not.toBeInTheDocument()
   },
@@ -62,21 +64,27 @@ const onReview = fn()
 
 function BasketSelectionCalendar() {
   const basket = useBookingBasket()
+  const bookingBasket = {
+    isSelected: basket.isSelected,
+    kind: 'basket' as const,
+    onAddSelection: basket.addSelection,
+    onRemoveSelection: basket.removeSelection,
+    onReview,
+    selections: basket.selections,
+  }
 
   return (
     <>
       <BookingBasketReviewButton
-        selections={basket.selections}
-        onReview={onReview}
+        selections={bookingBasket.selections}
+        onReview={bookingBasket.onReview}
       />
       <AvailabilityCalendarGrid
         availabilityReferenceDate={STORYBOOK_REFERENCE_DATE}
+        basket={bookingBasket}
         bookingActionMode="enabled"
         dayGroups={CALENDAR_DAY_GROUPS}
-        isSelected={basket.isSelected}
-        onAddSelection={basket.addSelection}
         onBookSelection={noop}
-        onRemoveSelection={basket.removeSelection}
       />
     </>
   )
