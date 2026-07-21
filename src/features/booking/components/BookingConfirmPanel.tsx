@@ -6,8 +6,8 @@ import {
 } from './BookingStatePanel'
 
 type BookingConfirmPanelProps = {
-  onAddMore?: () => void
-  onClearSelection?: () => void
+  onAddMore?: (() => void) | undefined
+  onClearSelection?: (() => void) | undefined
   onConfirm: () => Promise<void>
 }
 
