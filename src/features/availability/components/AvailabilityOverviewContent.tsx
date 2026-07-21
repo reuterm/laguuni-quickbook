@@ -158,7 +158,7 @@ export function AvailabilityOverviewContent({
   }
 
   function renderAppendError() {
-    if (!availabilityState.appendErrorMessage) {
+    if (!appendErrorMessage) {
       return null
     }
 
