@@ -218,7 +218,7 @@ export function useBookingSheetController({
     isBookingReady,
     keepBookingForMore,
     requestBasketReview,
-    requestBooking: requestBasketReview,
+    requestBooking: requestInitialBooking,
     requestInitialBooking,
   }
 }

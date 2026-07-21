@@ -110,6 +110,18 @@ describe('AvailabilityDayGroups', () => {
       screen.getByRole('button', { name: 'Add 12:00-13:00, 3 spots free' }),
     )
 
+    expect(
+      screen.getByRole('button', {
+        name: 'Remove 15:00-16:00, 3 spots free',
+        pressed: true,
+      }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: 'Add 12:00-13:00, 3 spots free',
+        pressed: false,
+      }),
+    ).toBeInTheDocument()
     expect(onRemoveSelection).toHaveBeenCalledOnce()
     expect(onAddSelection).toHaveBeenCalledOnce()
   })

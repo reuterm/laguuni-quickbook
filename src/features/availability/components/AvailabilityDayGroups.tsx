@@ -75,6 +75,7 @@ export function AvailabilityDayGroups({
                       subtleDividerClassName,
                     )}
                     style={{ minWidth: availabilityBookingButtonMinWidth }}
+                    aria-pressed={isSelected(slot.selection)}
                     aria-label={`${isSelected(slot.selection) ? 'Remove' : 'Add'} ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`}
                     onClick={() =>
                       (isSelected(slot.selection)

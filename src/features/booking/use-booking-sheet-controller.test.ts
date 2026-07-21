@@ -54,6 +54,22 @@ describe('useBookingSheetController', () => {
     expect(result.current.bookingSheetState).toEqual({ status: 'closed' })
   })
 
+  it('preserves requestBooking as an initial single-selection confirmation', async () => {
+    mockBookingFlow()
+
+    const { result } = renderHook(() => useBookingSheetController())
+
+    await act(async () => {
+      await result.current.requestBooking(selection)
+    })
+
+    expect(result.current.bookingSheetState).toEqual({
+      selections: [selection],
+      kind: 'initial',
+      status: 'confirm',
+    })
+  })
+
   it('opens a basket confirmation for multiple selections', async () => {
     const secondSelection = {
       cableId: 'easy' as const,
