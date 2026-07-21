@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect } from 'storybook/test'
+import { expect, fn, userEvent } from 'storybook/test'
 
 import {
   createBookingSheetState,
@@ -29,6 +29,31 @@ export const Confirm: Story = {
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
     onExportTrace: noopAsync,
+  },
+}
+
+export const InitialConfirmation: Story = {
+  args: {
+    bookingSheetState: {
+      kind: 'initial',
+      selections: [
+        createSelection({
+          date: '2026-05-13',
+          endTime: '12:00',
+          startTime: '11:00',
+        }),
+      ],
+      status: 'confirm',
+    },
+    confirmBooking: noopAsync,
+    dismissBookingSheet: noop,
+    keepBookingForMore: fn(),
+    onExportTrace: noopAsync,
+  },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Add more' }))
+
+    await expect(args.keepBookingForMore).toHaveBeenCalledOnce()
   },
 }
 

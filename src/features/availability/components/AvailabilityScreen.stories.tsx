@@ -49,6 +49,9 @@ export const BookingEnabled: Story = {
     settings: BOOKING_ENABLED_SETTINGS,
   },
   render: renderAvailabilityScreen,
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: 'Add more' })).toBeNull()
+  },
 }
 
 export const AvailabilityError: Story = {
