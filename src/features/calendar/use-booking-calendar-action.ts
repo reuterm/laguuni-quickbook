@@ -32,7 +32,7 @@ export function useBookingCalendarAction(
       )
 
       const result = await shareOrDownloadCalendarFile(file, {
-        text: 'Add your bookings to your calendar.',
+        text: 'Add bookings to your calendar.',
         title: 'Add to calendar',
       })
 
