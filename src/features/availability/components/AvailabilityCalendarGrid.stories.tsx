@@ -42,7 +42,7 @@ export const BasketSelection: Story = {
 
     await userEvent.click(
       canvas.getByRole('button', {
-        name: '1 slot selected',
+        name: 'Review selection',
       }),
     )
     await expect(onReview).toHaveBeenCalled()
@@ -54,7 +54,7 @@ export const BasketSelection: Story = {
     )
     await expect(
       canvas.queryByRole('button', {
-        name: '1 slot selected',
+        name: 'Review selection',
       }),
     ).not.toBeInTheDocument()
   },

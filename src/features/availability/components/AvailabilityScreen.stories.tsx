@@ -217,10 +217,10 @@ export const BasketSelection: Story = {
       canvas.getByRole('button', { name: 'Select multiple slots' }),
     )
     await userEvent.click(
-      canvas.getAllByRole('button', { name: /^Add 15:00-16:00/ })[0],
+      canvas.getAllByRole('button', { name: /^Book 15:00-16:00/ })[0],
     )
     await userEvent.click(
-      canvas.getByRole('button', { name: '2 slots selected' }),
+      canvas.getByRole('button', { name: 'Review selection' }),
     )
 
     await expect(
@@ -242,7 +242,7 @@ export const BasketSelection: Story = {
     await waitFor(() => {
       expect(page.queryByRole('dialog')).not.toBeInTheDocument()
       expect(
-        canvas.queryByRole('button', { name: '2 slots selected' }),
+        canvas.queryByRole('button', { name: 'Review selection' }),
       ).not.toBeInTheDocument()
     })
   },
