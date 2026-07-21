@@ -69,6 +69,9 @@ describe('BookingSheetFlow', () => {
     expect(
       screen.queryByRole('button', { name: 'Add more' }),
     ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Clear selection' }),
+    ).not.toBeInTheDocument()
   })
 
   it('calls the continuation callback from an initial confirmation', async () => {
@@ -101,7 +104,11 @@ describe('BookingSheetFlow', () => {
     expect(onAddMore).toHaveBeenCalledOnce()
   })
 
-  it('hides Add more for a basket confirmation even with a continuation callback', () => {
+  it('clears and dismisses a basket confirmation', async () => {
+    const clearBookingSelection = vi.fn()
+    const dismissBookingSheet = vi.fn()
+    const user = userEvent.setup()
+
     render(
       <BookingSheetFlow
         bookingSheetState={{
@@ -116,13 +123,18 @@ describe('BookingSheetFlow', () => {
           ],
           status: 'confirm',
         }}
+        clearBookingSelection={clearBookingSelection}
         confirmBooking={async () => {}}
-        dismissBookingSheet={() => {}}
+        dismissBookingSheet={dismissBookingSheet}
         keepBookingForMore={vi.fn()}
         onExportTrace={async () => {}}
       />,
     )
 
+    await user.click(screen.getByRole('button', { name: 'Clear selection' }))
+
+    expect(clearBookingSelection).toHaveBeenCalledOnce()
+    expect(dismissBookingSheet).toHaveBeenCalledOnce()
     expect(
       screen.queryByRole('button', { name: 'Add more' }),
     ).not.toBeInTheDocument()

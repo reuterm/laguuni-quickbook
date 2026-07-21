@@ -13,6 +13,7 @@ import { BookingSubmittingPanel } from './BookingSubmittingPanel'
 
 type BookingSheetFlowProps = {
   bookingSheetState: BookingSheetState
+  clearBookingSelection?: () => void
   confirmBooking: () => Promise<void>
   dismissBookingSheet: () => void
   keepBookingForMore?: () => void
@@ -21,6 +22,7 @@ type BookingSheetFlowProps = {
 
 export function BookingSheetFlow({
   bookingSheetState,
+  clearBookingSelection,
   confirmBooking,
   dismissBookingSheet,
   keepBookingForMore,
@@ -53,6 +55,14 @@ export function BookingSheetFlow({
     case 'confirm':
       content = (
         <BookingConfirmPanel
+          {...(renderedState.kind === 'basket' && clearBookingSelection
+            ? {
+                onClearSelection: () => {
+                  clearBookingSelection()
+                  dismissBookingSheet()
+                },
+              }
+            : {})}
           {...(renderedState.kind === 'initial' &&
           keepBookingForMore !== undefined
             ? { onAddMore: keepBookingForMore }

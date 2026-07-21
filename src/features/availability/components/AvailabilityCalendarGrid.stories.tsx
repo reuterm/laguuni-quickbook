@@ -43,11 +43,7 @@ function BasketSelectionCalendar() {
 
   return (
     <>
-      <BookingBasketTray
-        selections={basket.selections}
-        onClear={basket.clearSelections}
-        onReview={fn()}
-      />
+      <BookingBasketTray selections={basket.selections} onReview={fn()} />
       <AvailabilityCalendarGrid
         availabilityReferenceDate={STORYBOOK_REFERENCE_DATE}
         bookingActionMode="enabled"

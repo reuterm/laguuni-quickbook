@@ -7,11 +7,13 @@ import {
 
 type BookingConfirmPanelProps = {
   onAddMore?: () => void
+  onClearSelection?: () => void
   onConfirm: () => Promise<void>
 }
 
 export function BookingConfirmPanel({
   onAddMore,
+  onClearSelection,
   onConfirm,
 }: BookingConfirmPanelProps) {
   return (
@@ -31,6 +33,16 @@ export function BookingConfirmPanel({
           {onAddMore !== undefined ? (
             <Button type="button" variant="secondary" onClick={onAddMore}>
               Add more
+            </Button>
+          ) : null}
+          {onClearSelection ? (
+            <Button
+              type="button"
+              className="w-full"
+              onClick={onClearSelection}
+              variant="secondary"
+            >
+              Clear selection
             </Button>
           ) : null}
         </div>
