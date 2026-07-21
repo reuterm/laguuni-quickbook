@@ -6,7 +6,10 @@ import type {
 import { useBookingCalendarAction } from '../../calendar/use-booking-calendar-action'
 import { getBookingSelectionsPresentation } from '../booking-selections'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
-import { BookingConfirmPanel } from './BookingConfirmPanel'
+import {
+  BookingConfirmPanel,
+  type BookingConfirmSecondaryAction,
+} from './BookingConfirmPanel'
 import { BookingResultPanel } from './BookingResultPanel'
 import { BookingSheet } from './BookingSheet'
 import { BookingSubmittingPanel } from './BookingSubmittingPanel'
@@ -58,24 +61,30 @@ export function BookingSheetFlow({
 
   switch (renderedState.status) {
     case 'confirm': {
-      const onAddMore =
+      let secondaryAction: BookingConfirmSecondaryAction | undefined
+
+      if (
         renderedState.kind === 'initial' &&
         actions.initial.continuation === 'add-more'
-          ? actions.initial.onAddMore
-          : undefined
-      const onClearSelection =
-        renderedState.kind === 'basket'
-          ? () => {
-              actions.basket.onClearSelection()
-              dismissBookingSheet()
-            }
-          : undefined
+      ) {
+        secondaryAction = {
+          label: 'Add more',
+          onClick: actions.initial.onAddMore,
+        }
+      } else if (renderedState.kind === 'basket') {
+        secondaryAction = {
+          label: 'Clear selection',
+          onClick: () => {
+            actions.basket.onClearSelection()
+            dismissBookingSheet()
+          },
+        }
+      }
 
       content = (
         <BookingConfirmPanel
-          onAddMore={onAddMore}
-          onClearSelection={onClearSelection}
           onConfirm={confirmBooking}
+          secondaryAction={secondaryAction}
         />
       )
       break

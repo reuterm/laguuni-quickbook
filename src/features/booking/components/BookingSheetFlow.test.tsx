@@ -100,6 +100,40 @@ describe('BookingSheetFlow', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('adds more from an initial continuation confirmation', async () => {
+    const onAddMore = vi.fn()
+    const actions: BookingSheetFlowActions = {
+      basket: { onClearSelection: vi.fn() },
+      initial: { continuation: 'add-more', onAddMore },
+    }
+    const user = userEvent.setup()
+
+    render(
+      <BookingSheetFlow
+        actions={actions}
+        bookingSheetState={{
+          kind: 'initial',
+          selections: [
+            {
+              cableId: 'pro',
+              date: localDate('2026-05-20'),
+              endTime: '16:00',
+              startTime: '15:00',
+            },
+          ],
+          status: 'confirm',
+        }}
+        confirmBooking={async () => {}}
+        dismissBookingSheet={() => {}}
+        onExportTrace={async () => {}}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Add more' }))
+
+    expect(onAddMore).toHaveBeenCalledOnce()
+  })
+
   it('clears and dismisses a basket confirmation', async () => {
     const actions = createFlowActions()
     const clearBookingSelection = actions.basket.onClearSelection
@@ -131,6 +165,7 @@ describe('BookingSheetFlow', () => {
 
     expect(clearBookingSelection).toHaveBeenCalledOnce()
     expect(dismissBookingSheet).toHaveBeenCalledOnce()
+    expect(clearBookingSelection).toHaveBeenCalledBefore(dismissBookingSheet)
     expect(
       screen.queryByRole('button', { name: 'Add more' }),
     ).not.toBeInTheDocument()
