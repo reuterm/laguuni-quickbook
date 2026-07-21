@@ -52,6 +52,10 @@ describe('useBookingBasket', () => {
 
     expect(result.current.selections).toEqual([selected])
     expect(result.current.isSelected(selected)).toBe(true)
+
+    act(() => result.current.removeSelection(selected))
+
+    expect(result.current.selections).toEqual([])
   })
 
   it('clears all selections', () => {
