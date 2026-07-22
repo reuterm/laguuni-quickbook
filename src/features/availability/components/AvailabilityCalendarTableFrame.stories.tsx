@@ -32,11 +32,15 @@ export const Default: Story = {
           </th>
           <td className="px-2 py-2 text-center">
             <AvailabilityCapacityChip
+              disabled={false}
+              pressed={false}
               slot={createAvailabilitySlot({ freeCapacity: 3 })}
             />
           </td>
           <td className="px-2 py-2 text-center">
             <AvailabilityCapacityChip
+              disabled={false}
+              pressed={false}
               slot={createAvailabilitySlot({ freeCapacity: 2 })}
             />
           </td>

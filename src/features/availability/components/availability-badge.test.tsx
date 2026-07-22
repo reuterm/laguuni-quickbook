@@ -24,7 +24,6 @@ describe('AvailabilityCapacityChip', () => {
   it('exposes selected interactive state', () => {
     render(
       <AvailabilityCapacityChip
-        actionLabel="Remove 15:00-16:00, 4 spots free"
         disabled={false}
         onClick={vi.fn()}
         pressed
@@ -32,16 +31,16 @@ describe('AvailabilityCapacityChip', () => {
       />,
     )
 
-    const chip = screen.getByRole('button', {
-      name: 'Remove 15:00-16:00, 4 spots free',
-    })
+    const chip = screen.getByRole('button', { name: 'Book slot' })
 
     expect(chip).toHaveAttribute('aria-pressed', 'true')
     expect(chip).toHaveClass('border-primary')
   })
 
   it('renders static chips without button semantics', () => {
-    render(<AvailabilityCapacityChip slot={slot} />)
+    render(
+      <AvailabilityCapacityChip disabled={false} pressed={false} slot={slot} />,
+    )
 
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
     expect(screen.getByText('4')).toBeInTheDocument()

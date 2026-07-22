@@ -46,7 +46,6 @@ function renderCapacityChip({
   if (interactive) {
     return (
       <AvailabilityCapacityChip
-        actionLabel={`Book ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`}
         disabled={disabled ?? false}
         onClick={onClick ?? noop}
         pressed={false}
@@ -55,7 +54,9 @@ function renderCapacityChip({
     )
   }
 
-  return <AvailabilityCapacityChip slot={slot} />
+  return (
+    <AvailabilityCapacityChip disabled={false} pressed={false} slot={slot} />
+  )
 }
 
 export const Default: Story = {

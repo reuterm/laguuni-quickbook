@@ -103,7 +103,11 @@ export function AvailabilityDayGroups({
                     <span className="font-semibold tabular-nums text-foreground">
                       {slot.startTime}-{slot.endTime}
                     </span>
-                    <AvailabilityCapacityChip slot={slot} />
+                    <AvailabilityCapacityChip
+                      disabled={false}
+                      pressed={false}
+                      slot={slot}
+                    />
                   </div>
                 </div>
                 {renderSlotAction(slot, basket, bookingActionProps)}

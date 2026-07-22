@@ -188,8 +188,8 @@ describe('AvailabilityCalendarGrid', () => {
     )
 
     fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Book 15:00-16:00, 2 spots free',
+      within(screen.getByRole('row', { name: '15:00 2' })).getByRole('button', {
+        name: 'Book slot',
       }),
     )
 
@@ -222,12 +222,18 @@ describe('AvailabilityCalendarGrid', () => {
       />,
     )
 
-    const selected = screen.getByRole('button', {
-      name: /^Remove 15:00-16:00/,
+    const selected = within(
+      screen.getByRole('row', { name: '15:00 2' }),
+    ).getByRole('button', {
+      name: 'Book slot',
+      pressed: true,
     })
 
-    const unselected = screen.getByRole('button', {
-      name: /^Add 16:00-17:00/,
+    const unselected = within(
+      screen.getByRole('row', { name: '16:00 3' }),
+    ).getByRole('button', {
+      name: 'Book slot',
+      pressed: false,
     })
 
     expect(selected).toHaveAttribute('aria-pressed', 'true')

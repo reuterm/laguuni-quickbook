@@ -55,7 +55,7 @@ const week = {
 describe('AvailabilityCalendarWeek', () => {
   afterEach(cleanup)
 
-  it('marks basket selections pressed and labels basket actions', () => {
+  it('marks basket selections pressed', () => {
     render(
       <AvailabilityCalendarWeek
         basket={createBasket({
@@ -71,13 +71,13 @@ describe('AvailabilityCalendarWeek', () => {
 
     expect(
       screen.getByRole('button', {
-        name: 'Remove 15:00-16:00, 4 spots free',
+        name: 'Book slot',
         pressed: true,
       }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', {
-        name: 'Add 12:00-13:00, 2 spots free',
+        name: 'Book slot',
         pressed: false,
       }),
     ).toBeInTheDocument()

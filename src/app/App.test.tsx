@@ -264,7 +264,7 @@ describe('App', () => {
     })
 
     const calendarButtons = await screen.findAllByRole('button', {
-      name: 'Book 15:00-16:00, 4 spots free',
+      name: 'Book slot',
     })
 
     const firstCalendarButton = calendarButtons[0]

@@ -120,7 +120,7 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.getByRole('rowheader', { name: '15:00' })).toBeInTheDocument()
     expect(
       screen.getByRole('button', {
-        name: 'Book 15:00-16:00, 3 spots free',
+        name: 'Book slot',
       }),
     ).toBeInTheDocument()
   })
