@@ -6,7 +6,7 @@ Make selected calendar slots visibly and semantically selected while preserving 
 
 ## Scope
 
-- Add optional `pressed` and `actionLabel` support to interactive `AvailabilityCapacityChip` instances.
+- Require `disabled`, `pressed`, and `actionLabel` for interactive `AvailabilityCapacityChip` instances.
 - Render `aria-pressed` for interactive calendar slot chips.
 - Apply a clear selected treatment to a pressed chip.
 - In `AvailabilityCalendarWeek`, derive selection state from `basket.isSelected(slot.selection)` when `basket.kind === 'basket'`.
@@ -17,17 +17,25 @@ Make selected calendar slots visibly and semantically selected while preserving 
 
 `BookingBasketProps` remains unchanged. The calendar week continues to receive one explicit basket object, then derives click behavior, `pressed`, and accessible label from that object.
 
-`AvailabilityCapacityChip` remains a noninteractive span without `onClick`. Interactive callers may supply:
+`AvailabilityCapacityChip` has a discriminated props contract. A static capacity display is a span without `onClick`. Every interactive caller must explicitly supply its full behavior, accessibility, and visual state:
 
 ```ts
-{
-  onClick: () => void
-  pressed?: boolean
-  actionLabel?: string
-}
+type AvailabilityCapacityChipProps =
+  | {
+      slot: AvailabilitySlot
+      className?: string
+    }
+  | {
+      slot: AvailabilitySlot
+      className?: string
+      onClick: () => void
+      disabled: boolean
+      pressed: boolean
+      actionLabel: string
+    }
 ```
 
-For a selected slot, the chip renders `aria-pressed="true"`, uses an action label beginning `Remove`, and applies a primary-color border/background/ring treatment. An unselected basket slot renders `aria-pressed="false"` with an action label beginning `Add`.
+Single-booking calendar chips pass `pressed={false}`, their current disabled state, and a `Book ...` action label. For a selected basket slot, the chip renders `aria-pressed="true"`, uses an action label beginning `Remove`, and applies a primary-color border/background/ring treatment. An unselected basket slot renders `aria-pressed="false"` with an action label beginning `Add`.
 
 ## Out Of Scope
 
