@@ -210,15 +210,15 @@ describe('AvailabilityCalendarGrid', () => {
     )
 
     const selected = screen.getByRole('button', {
-      name: 'Book 15:00-16:00, 2 spots free',
+      name: /^Remove 15:00-16:00/,
     })
 
     const unselected = screen.getByRole('button', {
-      name: 'Book 12:00-13:00, 4 spots free',
+      name: /^Add 12:00-13:00/,
     })
 
-    expect(selected).not.toHaveAttribute('aria-pressed')
-    expect(unselected).not.toHaveAttribute('aria-pressed')
+    expect(selected).toHaveAttribute('aria-pressed', 'true')
+    expect(unselected).toHaveAttribute('aria-pressed', 'false')
 
     fireEvent.click(selected)
     fireEvent.click(unselected)
