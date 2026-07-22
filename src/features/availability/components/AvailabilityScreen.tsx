@@ -23,7 +23,7 @@ import { BookingSheetFlow } from '../../booking/components/BookingSheetFlow'
 import { useBookingSheetController } from '../../booking/use-booking-sheet-controller'
 import { exportDiagnosticsForTrace } from '../../diagnostics/export'
 import {
-  getSelectionForDate,
+  getBookingReplacementDecision,
   type PendingBookingReplacement,
 } from '../booking-replacement'
 import { useAvailabilityOverview } from '../use-availability-overview'
@@ -220,16 +220,20 @@ export function AvailabilityScreen({
       return
     }
 
-    const current = getSelectionForDate(
+    const replacementDecision = getBookingReplacementDecision(
       bookingBasket.selections,
-      selection.date,
+      selection,
     )
-    if (current === undefined || current.cableId === selection.cableId) {
+
+    if (replacementDecision.kind === 'add') {
       bookingBasket.addSelection(selection)
       return
     }
 
-    setPendingReplacement({ current, proposed: selection })
+    setPendingReplacement({
+      current: replacementDecision.current,
+      proposed: selection,
+    })
   }
 
   return (

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { toLocalDateString } from '@/lib/date'
 import {
+  getBookingReplacementDecision,
   getBookingReplacementMessage,
-  getSelectionForDate,
 } from './booking-replacement'
 
 describe('booking replacement helpers', () => {
@@ -19,13 +19,31 @@ describe('booking replacement helpers', () => {
     startTime: '17:00',
   }
 
-  it('returns the selection for the requested date', () => {
-    expect(getSelectionForDate([proSelection], proSelection.date)).toBe(
-      proSelection,
-    )
+  it('adds when no selection exists for the proposed date', () => {
+    expect(getBookingReplacementDecision([], proSelection)).toEqual({
+      kind: 'add',
+    })
+  })
+
+  it('adds when the selection for the proposed date uses the same cable', () => {
+    const laterProSelection = {
+      ...proSelection,
+      endTime: '17:00',
+      startTime: '16:00',
+    }
+
     expect(
-      getSelectionForDate([proSelection], toLocalDateString('2026-05-15')),
-    ).toBeUndefined()
+      getBookingReplacementDecision([proSelection], laterProSelection),
+    ).toEqual({ kind: 'add' })
+  })
+
+  it('requires confirmation when the selection for the proposed date uses another cable', () => {
+    expect(
+      getBookingReplacementDecision([proSelection], easySelection),
+    ).toEqual({
+      current: proSelection,
+      kind: 'confirm-replacement',
+    })
   })
 
   it('formats a message for replacing a booking with another cable', () => {
