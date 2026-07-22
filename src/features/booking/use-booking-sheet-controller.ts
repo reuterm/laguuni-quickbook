@@ -157,6 +157,21 @@ export function useBookingSheetController({
     [],
   )
 
+  const requestBooking = useCallback(
+    (kind: 'initial' | 'basket', selections: readonly BookingSlotSelection[]) => {
+      if (kind === 'basket') {
+        requestBasketReview(selections)
+        return
+      }
+
+      const [selection] = selections
+      if (selection !== undefined) {
+        requestInitialBooking(selection)
+      }
+    },
+    [requestBasketReview, requestInitialBooking],
+  )
+
   const keepBookingForMore = useCallback(() => {
     if (
       bookingSheetState.status !== 'confirm' ||
@@ -227,6 +242,7 @@ export function useBookingSheetController({
     isBookingReady,
     keepBookingForMore,
     requestBasketReview,
+    requestBooking,
     requestInitialBooking,
   }
 }
