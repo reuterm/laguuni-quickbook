@@ -22,7 +22,7 @@ describe('BookingBasketReviewButton', () => {
     startTime: '10:00',
   }
 
-  it('renders a floating review pill and delegates review', async () => {
+  it('renders a floating static review pill and delegates review', async () => {
     const onReview = vi.fn()
     const user = userEvent.setup()
 
@@ -33,11 +33,9 @@ describe('BookingBasketReviewButton', () => {
       />,
     )
 
-    const button = screen.getByRole('button', {
-      name: 'Review selection',
-    })
+    const button = screen.getByRole('button', { name: 'Review selection' })
 
-    expect(button).toHaveTextContent('Review selection')
+    expect(button).toBeVisible()
     expect(button).toHaveClass(
       'fixed',
       'bottom-[calc(env(safe-area-inset-bottom)+1rem)]',
@@ -53,7 +51,7 @@ describe('BookingBasketReviewButton', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('uses a singular accessible label and returns nothing when empty', () => {
+  it('uses the same accessible label for one selection and returns nothing when empty', () => {
     const { rerender } = render(
       <BookingBasketReviewButton onReview={vi.fn()} selections={[]} />,
     )

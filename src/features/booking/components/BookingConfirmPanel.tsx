@@ -12,7 +12,7 @@ export type BookingConfirmSecondaryAction = {
 
 type BookingConfirmPanelProps = {
   onConfirm: () => Promise<void>
-  secondaryAction?: BookingConfirmSecondaryAction | undefined
+  secondaryAction?: BookingConfirmSecondaryAction
 }
 
 export function BookingConfirmPanel({

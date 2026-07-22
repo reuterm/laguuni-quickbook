@@ -1,4 +1,4 @@
-import { cleanup, screen, waitFor } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
@@ -188,9 +188,7 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'Confirm booking' }),
     ).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Add more' }),
-    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add more' })).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: 'Confirm booking' }))
 
@@ -198,6 +196,52 @@ describe('App', () => {
       await screen.findByRole('heading', { name: 'Booking confirmed' }),
     ).toBeInTheDocument()
     expect(screen.queryByText(/Trace ID:/)).not.toBeInTheDocument()
+  })
+
+  it('retains two selected slots after dismissing their review', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+
+    saveUserSettings(
+      {
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '+358401234567',
+      },
+      storage,
+    )
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
+    })
+
+    await openFirstBookingSheet(user)
+    await user.click(screen.getByRole('button', { name: 'Add more' }))
+    await user.click(screen.getByRole('tab', { name: 'Easy' }))
+
+    const secondDay = await screen.findByRole('heading', { name: 'Thu 21 May' })
+    const secondDaySection = secondDay.closest('section')
+    if (secondDaySection === null) {
+      throw new Error('Expected the second Easy cable day group')
+    }
+
+    const firstAddButton = within(secondDaySection).getAllByRole('button', {
+      name: /^Add /,
+    })[0]
+    if (!firstAddButton) {
+      throw new Error(
+        'Expected an Add button in the second Easy cable day group',
+      )
+    }
+
+    await user.click(firstAddButton)
+    await user.click(screen.getByRole('button', { name: 'Review selection' }))
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(
+      screen.getByRole('button', { name: 'Review selection' }),
+    ).toBeVisible()
   })
 
   it('opens the existing booking sheet from a calendar availability badge', async () => {

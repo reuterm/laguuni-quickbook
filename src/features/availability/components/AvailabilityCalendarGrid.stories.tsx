@@ -3,11 +3,11 @@ import { expect, fn, userEvent } from 'storybook/test'
 
 import {
   CALENDAR_DAY_GROUPS,
+  createSelection,
   noop,
   STORYBOOK_REFERENCE_DATE,
 } from '$storybook/fixture-data'
 
-import { useBookingBasket } from '../use-booking-basket'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 import { BookingBasketReviewButton } from './BookingBasketReviewButton'
 import { emptyBookingBasket } from './booking-basket-props'
@@ -34,43 +34,41 @@ export const Default: Story = {
 export const BasketSelection: Story = {
   render: () => <BasketSelectionCalendar />,
   play: async ({ canvas }) => {
-    await userEvent.click(
-      canvas.getByRole('button', {
-        name: 'Book 12:00-13:00, 4 spots free',
-      }),
-    )
-
-    await userEvent.click(
-      canvas.getByRole('button', {
-        name: 'Review selection',
-      }),
-    )
-    await expect(onReview).toHaveBeenCalled()
-
-    await userEvent.click(
-      canvas.getByRole('button', {
-        name: 'Book 12:00-13:00, 4 spots free',
-      }),
-    )
     await expect(
-      canvas.queryByRole('button', {
-        name: 'Review selection',
+      canvas.getByRole('button', {
+        name: 'Remove 15:00-16:00, 3 spots free',
+        pressed: true,
       }),
-    ).not.toBeInTheDocument()
+    ).toBeInTheDocument()
+
+    await userEvent.click(
+      canvas.getByRole('button', {
+        name: 'Remove 15:00-16:00, 3 spots free',
+      }),
+    )
+    await expect(onRemoveSelection).toHaveBeenCalled()
   },
 }
 
 const onReview = fn()
+const selectedFixture = [createSelection()]
+const onRemoveSelection = fn()
 
 function BasketSelectionCalendar() {
-  const basket = useBookingBasket()
   const bookingBasket = {
-    isSelected: basket.isSelected,
+    isSelected: (selection: (typeof selectedFixture)[number]) =>
+      selectedFixture.some(
+        (item) =>
+          item.cableId === selection.cableId &&
+          item.date === selection.date &&
+          item.endTime === selection.endTime &&
+          item.startTime === selection.startTime,
+      ),
     kind: 'basket' as const,
-    onAddSelection: basket.addSelection,
-    onRemoveSelection: basket.removeSelection,
+    onAddSelection: noop,
+    onRemoveSelection,
     onReview,
-    selections: basket.selections,
+    selections: selectedFixture,
   }
 
   return (

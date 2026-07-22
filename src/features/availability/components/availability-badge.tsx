@@ -16,26 +16,29 @@ const availabilityChipBaseClassName =
 const availabilityChipInteractiveClassName =
   'h-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50'
 
-type AvailabilityCapacityChipProps = {
+export type AvailabilityCapacityChipProps = {
   className?: string
-  disabled?: boolean | undefined
+  disabled: boolean
   onClick?: (() => void) | undefined
+  pressed: boolean
   slot: AvailabilitySlot
 }
 
 export function AvailabilityCapacityChip({
-  className,
-  disabled,
-  onClick,
-  slot,
+  ...props
 }: AvailabilityCapacityChipProps) {
+  const { className, disabled, onClick, pressed, slot } = props
+  const isInteractive = onClick !== undefined
   const chipClassName = cn(
     getAvailabilityChipClassName(slot),
-    onClick !== undefined && availabilityChipInteractiveClassName,
+    isInteractive && availabilityChipInteractiveClassName,
+    isInteractive &&
+      pressed &&
+      'border-primary bg-primary/25 text-primary ring-2 ring-primary/50',
     className,
   )
 
-  if (onClick === undefined) {
+  if (!isInteractive) {
     return (
       <span className={chipClassName}>{getAvailabilityBadgeLabel(slot)}</span>
     )
@@ -44,9 +47,10 @@ export function AvailabilityCapacityChip({
   return (
     <button
       className={chipClassName}
+      aria-label={getAvailabilityChipAccessibleName(slot, pressed)}
+      aria-pressed={pressed}
       disabled={disabled}
       onClick={onClick}
-      aria-label={`Book ${slot.startTime}-${slot.endTime}, ${getAvailabilityBadgeLabel(slot)} spots free`}
       type="button"
     >
       {getAvailabilityBadgeLabel(slot)}
@@ -56,6 +60,13 @@ export function AvailabilityCapacityChip({
 
 function getAvailabilityBadgeLabel(slot: AvailabilitySlot) {
   return `${slot.freeCapacity}`
+}
+
+function getAvailabilityChipAccessibleName(
+  slot: AvailabilitySlot,
+  pressed: boolean,
+) {
+  return `${pressed ? 'Remove' : 'Book'} ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`
 }
 
 function getAvailabilityChipClassName(slot: AvailabilitySlot) {

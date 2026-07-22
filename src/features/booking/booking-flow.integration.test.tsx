@@ -1,4 +1,4 @@
-import { cleanup, screen, waitFor } from '@testing-library/react'
+import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -203,6 +203,183 @@ describe('booking flow integration', () => {
 
     await waitFor(() => {
       expect(deletedBasketTokens).toHaveLength(1)
+    })
+  })
+
+  it('releases a failed basket reservation without checkout and retains its review', async () => {
+    const user = userEvent.setup()
+    const deletedBasketTokens: string[] = []
+    const checkoutRequests: string[] = []
+    const storage = createBookingStorage()
+
+    server.use(
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/baskets/:basketToken/items/new.json`,
+        () => HttpResponse.json({ status: 'unavailable' }, { status: 500 }),
+      ),
+      http.delete(
+        `${TEST_API_BASE_URL}/api/laguuni/baskets/:basketToken.json`,
+        ({ params }) => {
+          deletedBasketTokens.push(String(params.basketToken))
+          return HttpResponse.json(null)
+        },
+      ),
+      http.post(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/orders/:basketToken.json`,
+        ({ request }) => {
+          checkoutRequests.push(request.url)
+          return HttpResponse.json({ status: 'unexpected' }, { status: 500 })
+        },
+      ),
+    )
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
+    })
+    await createMixedCableBasket(user)
+    await user.click(screen.getByRole('button', { name: 'Confirm booking' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Booking failed' }),
+    ).toBeInTheDocument()
+    await waitFor(() => expect(deletedBasketTokens).toHaveLength(1))
+    expect(checkoutRequests).toHaveLength(0)
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(
+      screen.getByRole('button', { name: 'Review selection' }),
+    ).toBeVisible()
+  })
+
+  it('keeps a mixed-cable basket until every availability refresh settles', async () => {
+    const user = userEvent.setup()
+    const storage = createBookingStorage()
+    const refreshRequests: Array<{ date: string; productId: string }> = []
+    let deferRefreshes = false
+    let resolveEasyRefresh: (() => void) | undefined
+    let resolveProRefresh: (() => void) | undefined
+    const easyRefresh = new Promise<void>((resolve) => {
+      resolveEasyRefresh = resolve
+    })
+    const proRefresh = new Promise<void>((resolve) => {
+      resolveProRefresh = resolve
+    })
+
+    server.use(
+      http.get(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/products/:productId/availabletimes/:date.json`,
+        async ({ params, request }) => {
+          const url = new URL(request.url)
+          if (url.searchParams.get('capacity') !== 'true') return
+
+          const productId = String(params.productId)
+          const date = String(params.date)
+          if (deferRefreshes && (productId === '6' || productId === '7')) {
+            refreshRequests.push({ date, productId })
+            await (productId === '6' ? proRefresh : easyRefresh)
+          }
+
+          return HttpResponse.json(createAvailabilityResponse(3))
+        },
+      ),
+    )
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
+    })
+    await createMixedCableBasket(user)
+    deferRefreshes = true
+    await user.click(screen.getByRole('button', { name: 'Confirm booking' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Booking confirmed' }),
+    ).toBeInTheDocument()
+    await waitFor(() => expect(refreshRequests).toHaveLength(2))
+    expect(refreshRequests).toEqual(
+      expect.arrayContaining([
+        { date: '2026-05-20', productId: '6' },
+        { date: '2026-05-21', productId: '7' },
+      ]),
+    )
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(
+      screen.getByRole('button', { name: 'Review selection' }),
+    ).toBeVisible()
+
+    resolveProRefresh?.()
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Review selection' }),
+      ).toBeVisible()
+    })
+
+    resolveEasyRefresh?.()
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: 'Review selection' }),
+      ).not.toBeInTheDocument()
+    })
+  })
+
+  it('preserves a replacement basket when an earlier refresh completion clears', async () => {
+    const user = userEvent.setup()
+    const storage = createBookingStorage()
+    let deferRefreshes = false
+    let resolveEasyRefresh: (() => void) | undefined
+    let resolveProRefresh: (() => void) | undefined
+    const easyRefresh = new Promise<void>((resolve) => {
+      resolveEasyRefresh = resolve
+    })
+    const proRefresh = new Promise<void>((resolve) => {
+      resolveProRefresh = resolve
+    })
+
+    server.use(
+      http.get(
+        `${TEST_API_BASE_URL}/api/laguuni/fi_FI/products/:productId/availabletimes/:date.json`,
+        async ({ params, request }) => {
+          if (new URL(request.url).searchParams.get('capacity') !== 'true')
+            return
+
+          const productId = String(params.productId)
+          if (deferRefreshes && (productId === '6' || productId === '7')) {
+            await (productId === '6' ? proRefresh : easyRefresh)
+          }
+
+          return HttpResponse.json(createAvailabilityResponse(3))
+        },
+      ),
+    )
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
+    })
+    await createMixedCableBasket(user)
+    deferRefreshes = true
+    await user.click(screen.getByRole('button', { name: 'Confirm booking' }))
+    await screen.findByRole('heading', { name: 'Booking confirmed' })
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    await user.click(screen.getByRole('button', { name: 'Review selection' }))
+    await user.click(screen.getByRole('button', { name: 'Clear selection' }))
+    await clickFirstBookButton(user)
+    await user.click(screen.getByRole('button', { name: 'Add more' }))
+
+    expect(
+      screen.getByRole('button', { name: 'Review selection' }),
+    ).toBeVisible()
+
+    resolveProRefresh?.()
+    resolveEasyRefresh?.()
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Review selection' }),
+      ).toBeVisible()
     })
   })
 
@@ -661,4 +838,44 @@ async function confirmFirstBooking(user: ReturnType<typeof userEvent.setup>) {
   ).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: 'Confirm booking' }))
+}
+
+function createBookingStorage() {
+  const storage = createMemoryStorage()
+
+  saveUserSettings(
+    {
+      email: 'test@example.com',
+      name: 'Test User',
+      phone: '+358401234567',
+      seasonPassCode: 'FIXTURE-DISCOUNT',
+    },
+    storage,
+  )
+
+  return storage
+}
+
+async function createMixedCableBasket(
+  user: ReturnType<typeof userEvent.setup>,
+) {
+  await clickFirstBookButton(user)
+  await user.click(screen.getByRole('button', { name: 'Add more' }))
+  await user.click(screen.getByRole('tab', { name: 'Easy' }))
+
+  const secondDay = await screen.findByRole('heading', { name: 'Thu 21 May' })
+  const secondDaySection = secondDay.closest('section')
+  if (secondDaySection === null) {
+    throw new Error('Expected the second Easy cable day group')
+  }
+
+  const firstAddButton = within(secondDaySection).getAllByRole('button', {
+    name: /^Add /,
+  })[0]
+  if (!firstAddButton) {
+    throw new Error('Expected an Add button in the second Easy cable day group')
+  }
+
+  await user.click(firstAddButton)
+  await user.click(screen.getByRole('button', { name: 'Review selection' }))
 }

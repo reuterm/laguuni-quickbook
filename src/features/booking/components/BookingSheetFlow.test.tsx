@@ -2,10 +2,23 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { localDate } from '../../../../tests/local-date'
-import {
-  BookingSheetFlow,
-  type BookingSheetFlowActions,
-} from './BookingSheetFlow'
+import { BookingSheetFlow } from './BookingSheetFlow'
+
+const bookingConfirmPanelMock = vi.hoisted(() => vi.fn())
+
+vi.mock('./BookingConfirmPanel', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./BookingConfirmPanel')>()
+
+  return {
+    ...actual,
+    BookingConfirmPanel: (
+      props: Parameters<typeof actual.BookingConfirmPanel>[0],
+    ) => {
+      bookingConfirmPanelMock(props)
+      return <actual.BookingConfirmPanel {...props} />
+    },
+  }
+})
 
 const shareOrDownloadCalendarFileMock = vi.fn<
   (
@@ -23,35 +36,20 @@ vi.mock('../../calendar/calendar-share', () => ({
 
 afterEach(() => {
   cleanup()
+  bookingConfirmPanelMock.mockReset()
   shareOrDownloadCalendarFileMock.mockReset()
 })
 
-function createFlowActions(): BookingSheetFlowActions {
-  return {
-    basket: { onClearSelection: vi.fn() },
-    initial: { continuation: 'none' },
-  }
-}
-
-const incompleteInitialActions: BookingSheetFlowActions = {
-  basket: { onClearSelection: vi.fn() },
-  // @ts-expect-error Initial confirmation requires an explicit continuation.
-  initial: {},
-}
-void incompleteInitialActions
-
-const incompleteBasketActions: BookingSheetFlowActions = {
-  // @ts-expect-error Basket confirmation requires its clear action.
-  basket: {},
-  initial: { continuation: 'none' },
-}
-void incompleteBasketActions
-
 describe('BookingSheetFlow', () => {
+  const noContinuationActions = {
+    basket: { onClearSelection: () => {} },
+    initial: { continuation: 'none' as const },
+  }
+
   it('does not render anything while the flow is closed', () => {
     render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{ status: 'closed' }}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
@@ -64,10 +62,10 @@ describe('BookingSheetFlow', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('does not show Add more for an initial confirmation', () => {
+  it('does not show a secondary action for initial confirmations without continuation', () => {
     render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{
           kind: 'initial',
           selections: [
@@ -98,19 +96,22 @@ describe('BookingSheetFlow', () => {
     expect(
       screen.queryByRole('button', { name: 'Clear selection' }),
     ).not.toBeInTheDocument()
+    expect(bookingConfirmPanelMock).toHaveBeenCalledOnce()
+    expect(bookingConfirmPanelMock.mock.calls[0]?.[0]).not.toHaveProperty(
+      'secondaryAction',
+    )
   })
 
   it('adds more from an initial continuation confirmation', async () => {
     const onAddMore = vi.fn()
-    const actions: BookingSheetFlowActions = {
-      basket: { onClearSelection: vi.fn() },
-      initial: { continuation: 'add-more', onAddMore },
-    }
     const user = userEvent.setup()
 
     render(
       <BookingSheetFlow
-        actions={actions}
+        actions={{
+          basket: { onClearSelection: () => {} },
+          initial: { continuation: 'add-more', onAddMore },
+        }}
         bookingSheetState={{
           kind: 'initial',
           selections: [
@@ -135,14 +136,16 @@ describe('BookingSheetFlow', () => {
   })
 
   it('clears and dismisses a basket confirmation', async () => {
-    const actions = createFlowActions()
-    const clearBookingSelection = actions.basket.onClearSelection
+    const onClearSelection = vi.fn()
     const dismissBookingSheet = vi.fn()
     const user = userEvent.setup()
 
     render(
       <BookingSheetFlow
-        actions={actions}
+        actions={{
+          basket: { onClearSelection },
+          initial: { continuation: 'none' },
+        }}
         bookingSheetState={{
           kind: 'basket',
           selections: [
@@ -163,9 +166,9 @@ describe('BookingSheetFlow', () => {
 
     await user.click(screen.getByRole('button', { name: 'Clear selection' }))
 
-    expect(clearBookingSelection).toHaveBeenCalledOnce()
+    expect(onClearSelection).toHaveBeenCalledOnce()
     expect(dismissBookingSheet).toHaveBeenCalledOnce()
-    expect(clearBookingSelection).toHaveBeenCalledBefore(dismissBookingSheet)
+    expect(onClearSelection).toHaveBeenCalledBefore(dismissBookingSheet)
     expect(
       screen.queryByRole('button', { name: 'Add more' }),
     ).not.toBeInTheDocument()
@@ -174,7 +177,7 @@ describe('BookingSheetFlow', () => {
   it('renders a non-dismissible submitting panel while booking is in progress', () => {
     render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{
           selections: [
             {
@@ -203,7 +206,7 @@ describe('BookingSheetFlow', () => {
   it('describes the number of slots while submitting', () => {
     render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{
           selections: [
             {
@@ -237,7 +240,7 @@ describe('BookingSheetFlow', () => {
 
     render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{
           result: {
             errorCode: 'GENERAL_ERROR',
@@ -279,7 +282,7 @@ describe('BookingSheetFlow', () => {
 
     render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{
           result: {
             orderIdentifier: 'fixture-order-id',
@@ -312,7 +315,7 @@ describe('BookingSheetFlow', () => {
 
     render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{
           result: {
             orderIdentifier: 'fixture-mixed-cable-order-id',
@@ -362,7 +365,7 @@ describe('BookingSheetFlow', () => {
 
     render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{
           result: { orderIdentifier: null, status: 'success' },
           selections: [
@@ -401,7 +404,7 @@ describe('BookingSheetFlow', () => {
 
     render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{
           result: {
             orderIdentifier: 'fixture-order-id',
@@ -439,7 +442,7 @@ describe('BookingSheetFlow', () => {
 
     render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{
           result: {
             orderIdentifier: 'fixture-order-id',
@@ -499,7 +502,7 @@ describe('BookingSheetFlow', () => {
 
     const { rerender } = render(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={firstState}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
@@ -509,7 +512,7 @@ describe('BookingSheetFlow', () => {
 
     rerender(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={{ status: 'closed' }}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}
@@ -519,7 +522,7 @@ describe('BookingSheetFlow', () => {
 
     rerender(
       <BookingSheetFlow
-        actions={createFlowActions()}
+        actions={noContinuationActions}
         bookingSheetState={reopenedState}
         confirmBooking={async () => {}}
         dismissBookingSheet={() => {}}

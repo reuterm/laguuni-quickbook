@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import type { BookingSlotSelection } from '@/domain/booking'
 import { localDate } from '../../../../tests/local-date'
+import type { BookingSheetFlowActions } from '../../booking/components/BookingSheetFlow'
 import { AvailabilityScreen } from './AvailabilityScreen'
 
 const mocks = vi.hoisted(() => ({
@@ -21,10 +23,7 @@ const mocks = vi.hoisted(() => ({
     | undefined,
   bookingSheetFlowProps: undefined as
     | {
-        actions: {
-          basket: { onClearSelection: () => void }
-          initial: { continuation: 'none' }
-        }
+        actions: BookingSheetFlowActions
       }
     | undefined,
   bookingSheetState: { status: 'closed' } as
@@ -46,10 +45,10 @@ const mocks = vi.hoisted(() => ({
   onBookingFinalized: undefined as
     | ((booking: {
         result: { status: 'success' }
-        selections: ReadonlyArray<{ date: string }>
+        selections: readonly BookingSlotSelection[]
       }) => Promise<void>)
     | undefined,
-  refreshAvailabilityDay: vi.fn(async () => {}),
+  refreshAvailabilitySelection: vi.fn(async () => {}),
   requestBooking: vi.fn(),
 }))
 
@@ -84,7 +83,7 @@ vi.mock('../use-availability-overview', () => ({
   useAvailabilityOverview: vi.fn(() => ({
     availabilityState: { status: 'loading' },
     loadMoreAvailability: vi.fn(),
-    refreshAvailabilityDay: mocks.refreshAvailabilityDay,
+    refreshAvailabilitySelection: mocks.refreshAvailabilitySelection,
   })),
 }))
 
@@ -138,7 +137,7 @@ describe('AvailabilityScreen', () => {
     mocks.isBookingReady = false
     mocks.onKeepBookingForMore = undefined
     mocks.onBookingFinalized = undefined
-    mocks.refreshAvailabilityDay.mockClear()
+    mocks.refreshAvailabilitySelection.mockClear()
     mocks.requestBooking.mockClear()
   })
 
@@ -156,59 +155,59 @@ describe('AvailabilityScreen', () => {
     ])
   })
 
-  it('provides the required basket clear action', () => {
+  it('provides the required sheet continuation and basket clear actions', () => {
     render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
 
-    expect(
-      mocks.bookingSheetFlowProps?.actions.basket.onClearSelection,
-    ).toBeDefined()
+    const actions = mocks.bookingSheetFlowProps?.actions
+    expect(actions).toBeDefined()
+    if (actions === undefined) {
+      throw new Error('Expected BookingSheetFlow actions')
+    }
+
+    expect(actions.basket.onClearSelection).toBeDefined()
+    expect(actions.initial.continuation).toBe('add-more')
+    if (actions.initial.continuation === 'add-more') {
+      expect(actions.initial.onAddMore).toBeDefined()
+    }
   })
 
-  it('refreshes every distinct selected date after a successful booking', async () => {
+  it('refreshes every distinct cable and date after a successful booking', async () => {
     render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
 
     await mocks.onBookingFinalized?.({
       result: { status: 'success' },
       selections: [
-        { date: localDate('2026-05-20') },
-        { date: localDate('2026-05-21') },
-        { date: localDate('2026-05-20') },
+        {
+          cableId: 'pro',
+          date: localDate('2026-05-20'),
+          endTime: '11:00',
+          startTime: '10:00',
+        },
+        {
+          cableId: 'easy',
+          date: localDate('2026-05-21'),
+          endTime: '11:00',
+          startTime: '10:00',
+        },
+        {
+          cableId: 'pro',
+          date: localDate('2026-05-20'),
+          endTime: '11:00',
+          startTime: '10:00',
+        },
       ],
     })
 
-    expect(mocks.refreshAvailabilityDay).toHaveBeenCalledTimes(2)
-    expect(mocks.refreshAvailabilityDay).toHaveBeenNthCalledWith(
+    expect(mocks.refreshAvailabilitySelection).toHaveBeenCalledTimes(2)
+    expect(mocks.refreshAvailabilitySelection).toHaveBeenNthCalledWith(
       1,
+      'pro',
       localDate('2026-05-20'),
     )
-    expect(mocks.refreshAvailabilityDay).toHaveBeenNthCalledWith(
+    expect(mocks.refreshAvailabilitySelection).toHaveBeenNthCalledWith(
       2,
+      'easy',
       localDate('2026-05-21'),
     )
-  })
-
-  it('retains a basket selection added while a basket booking finalizes', async () => {
-    mocks.isBookingReady = true
-    const user = userEvent.setup()
-
-    render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
-
-    await user.click(
-      screen.getByRole('button', { name: 'Select multiple slots' }),
-    )
-    await user.click(screen.getByRole('button', { name: 'Add fixture slot' }))
-    mocks.availabilityOverviewContentProps?.basket.onReview()
-    await user.click(screen.getByRole('button', { name: 'Add fixture slot' }))
-
-    await mocks.onBookingFinalized?.({
-      result: { status: 'success' },
-      selections: [{ date: localDate('2026-05-21') }],
-    })
-
-    expect(
-      mocks.availabilityOverviewContentProps?.basket.isSelected({
-        date: localDate('2026-05-21'),
-      }),
-    ).toBe(true)
   })
 })

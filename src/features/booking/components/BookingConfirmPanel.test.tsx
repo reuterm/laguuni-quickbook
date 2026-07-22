@@ -15,7 +15,7 @@ describe('BookingConfirmPanel', () => {
     expect(screen.queryAllByRole('button')).toHaveLength(1)
   })
 
-  it('renders and invokes a full-width secondary action after confirm', async () => {
+  it('renders and invokes a configured secondary action', async () => {
     const user = userEvent.setup()
     const onClick = vi.fn()
 
@@ -32,15 +32,15 @@ describe('BookingConfirmPanel', () => {
       'Confirm booking',
       'Add more',
     ])
-    const secondaryButton = buttons[1]
-    expect(secondaryButton).toBeDefined()
-    if (!secondaryButton) {
-      throw new Error('Expected secondary action button')
+    const addMoreButton = buttons[1]
+    expect(addMoreButton).toBeDefined()
+    if (!addMoreButton) {
+      throw new Error('Expected Add more button')
     }
 
-    expect(secondaryButton).toHaveClass('bg-secondary/90', 'w-full')
+    expect(addMoreButton).toHaveClass('bg-secondary/90', 'w-full')
 
-    await user.click(secondaryButton)
+    await user.click(addMoreButton)
 
     expect(onClick).toHaveBeenCalledOnce()
   })

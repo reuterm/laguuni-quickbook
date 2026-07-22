@@ -34,11 +34,15 @@ type UseBookingSheetControllerOptions = {
         selections: readonly BookingSlotSelection[]
       }) => void | Promise<void>)
     | undefined
+  onDiscardInitialBooking?:
+    | ((selection: BookingSlotSelection) => void)
+    | undefined
   onKeepBookingForMore?: ((selection: BookingSlotSelection) => void) | undefined
 }
 
 export function useBookingSheetController({
   onBookingFinalized,
+  onDiscardInitialBooking,
   onKeepBookingForMore,
 }: UseBookingSheetControllerOptions = {}) {
   const { isBookingReady, submitBooking } = useBookingFlow()
@@ -87,9 +91,20 @@ export function useBookingSheetController({
       return
     }
 
+    const dismissedState = bookingSheetState
     const completedSubmission = takeCompletedSubmission()
 
     setBookingSheetState({ status: 'closed' })
+
+    if (
+      dismissedState.status === 'confirm' &&
+      dismissedState.kind === 'initial'
+    ) {
+      const [selection] = dismissedState.selections
+      if (selection !== undefined) {
+        onDiscardInitialBooking?.(selection)
+      }
+    }
 
     if (
       completedSubmission === null ||
@@ -99,7 +114,12 @@ export function useBookingSheetController({
     }
 
     void finalizeDismissedSubmission(completedSubmission)
-  }, [finalizeDismissedSubmission, takeCompletedSubmission])
+  }, [
+    bookingSheetState,
+    finalizeDismissedSubmission,
+    onDiscardInitialBooking,
+    takeCompletedSubmission,
+  ])
 
   const releaseAbandonedCompletedSubmission = useCallback(() => {
     const completedSubmission = takeCompletedSubmission()
@@ -128,11 +148,7 @@ export function useBookingSheetController({
           return currentState
         }
 
-        return {
-          kind,
-          selections,
-          status: 'confirm',
-        }
+        return { kind, selections, status: 'confirm' }
       })
     },
     [],

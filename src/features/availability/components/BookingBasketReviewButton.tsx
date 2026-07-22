@@ -10,9 +10,7 @@ export function BookingBasketReviewButton({
   selections,
   onReview,
 }: BookingBasketReviewButtonProps) {
-  const selectedCount = selections.length
-
-  if (selectedCount === 0) return null
+  if (selections.length === 0) return null
 
   return (
     <Button

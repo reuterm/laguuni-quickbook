@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { expect } from 'storybook/test'
 
 import { createAvailabilitySlot, noop } from '$storybook/fixture-data'
 
@@ -46,14 +47,17 @@ function renderCapacityChip({
   if (interactive) {
     return (
       <AvailabilityCapacityChip
-        disabled={disabled}
+        disabled={disabled ?? false}
         onClick={onClick ?? noop}
+        pressed={false}
         slot={slot}
       />
     )
   }
 
-  return <AvailabilityCapacityChip slot={slot} />
+  return (
+    <AvailabilityCapacityChip disabled={false} pressed={false} slot={slot} />
+  )
 }
 
 export const Default: Story = {
@@ -71,4 +75,12 @@ export const Interactive: Story = {
     onClick: noop,
   },
   render: renderCapacityChip,
+  play: async ({ canvas }) => {
+    await expect(
+      canvas.getByRole('button', {
+        name: 'Book 15:00-16:00, 1 spots free',
+        pressed: false,
+      }),
+    ).toBeInTheDocument()
+  },
 }

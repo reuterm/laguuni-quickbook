@@ -90,13 +90,16 @@ export function AvailabilityCalendarWeek({
             const slot = dayGroup
               ? slotLookup.get(createSlotLookupKey(dayGroup.date, time))
               : null
+            let disabled = false
             let onClick: (() => void) | undefined
-            let disabled: boolean | undefined
+            let pressed = false
 
             if (slot && basket.kind === 'basket') {
-              onClick = basket.isSelected(slot.selection)
-                ? () => basket.onRemoveSelection(slot.selection)
-                : () => basket.onAddSelection(slot.selection)
+              pressed = basket.isSelected(slot.selection)
+              onClick = () =>
+                pressed
+                  ? basket.onRemoveSelection(slot.selection)
+                  : basket.onAddSelection(slot.selection)
             } else if (slot && bookingActionMode !== 'hidden') {
               disabled = bookingActionMode === 'disabled'
               onClick = () => onBookSelection(slot.selection)
@@ -116,6 +119,7 @@ export function AvailabilityCalendarWeek({
                     className="min-w-11 px-2.5 py-1"
                     disabled={disabled}
                     onClick={onClick}
+                    pressed={pressed}
                   />
                 ) : (
                   <span

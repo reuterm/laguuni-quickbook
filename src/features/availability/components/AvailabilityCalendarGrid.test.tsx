@@ -45,6 +45,19 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
         startTime: '15:00',
         totalCapacity: 4,
       },
+      {
+        endTime: '17:00',
+        freeCapacity: 3,
+        id: '2026-05-14-960',
+        selection: {
+          cableId: 'pro',
+          date: localDate('2026-05-14'),
+          endTime: '17:00',
+          startTime: '16:00',
+        },
+        startTime: '16:00',
+        totalCapacity: 4,
+      },
     ],
   },
   {
@@ -142,7 +155,7 @@ describe('AvailabilityCalendarGrid', () => {
     ).not.toBeInTheDocument()
     expect(
       within(firstWeekSection).getByRole('columnheader', {
-        name: /Thu 14 May 2 slots/i,
+        name: /Thu 14 May 3 slots/i,
       }),
     ).toBeInTheDocument()
     expect(
@@ -175,7 +188,7 @@ describe('AvailabilityCalendarGrid', () => {
     )
 
     fireEvent.click(
-      screen.getByRole('button', {
+      within(screen.getByRole('row', { name: '15:00 2' })).getByRole('button', {
         name: 'Book 15:00-16:00, 2 spots free',
       }),
     )
@@ -209,16 +222,22 @@ describe('AvailabilityCalendarGrid', () => {
       />,
     )
 
-    const selected = screen.getByRole('button', {
-      name: 'Book 15:00-16:00, 2 spots free',
+    const selected = within(
+      screen.getByRole('row', { name: '15:00 2' }),
+    ).getByRole('button', {
+      name: 'Remove 15:00-16:00, 2 spots free',
+      pressed: true,
     })
 
-    const unselected = screen.getByRole('button', {
-      name: 'Book 12:00-13:00, 4 spots free',
+    const unselected = within(
+      screen.getByRole('row', { name: '16:00 3' }),
+    ).getByRole('button', {
+      name: 'Book 16:00-17:00, 3 spots free',
+      pressed: false,
     })
 
-    expect(selected).not.toHaveAttribute('aria-pressed')
-    expect(unselected).not.toHaveAttribute('aria-pressed')
+    expect(selected).toHaveAttribute('aria-pressed', 'true')
+    expect(unselected).toHaveAttribute('aria-pressed', 'false')
 
     fireEvent.click(selected)
     fireEvent.click(unselected)
@@ -227,7 +246,7 @@ describe('AvailabilityCalendarGrid', () => {
       expect.objectContaining({ startTime: '15:00' }),
     )
     expect(onAddSelection).toHaveBeenCalledWith(
-      expect.objectContaining({ startTime: '12:00' }),
+      expect.objectContaining({ startTime: '16:00' }),
     )
   })
 
