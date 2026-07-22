@@ -20,7 +20,9 @@ export function BookingBasketReviewButton({
       type="button"
       onClick={onReview}
     >
-      Review selection
+      {selectedCount === 1
+        ? 'Review selection'
+        : `Review ${selectedCount} selected slots`}
     </Button>
   )
 }

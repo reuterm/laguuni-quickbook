@@ -92,36 +92,6 @@ describe('useBookingSheetController', () => {
     })
   })
 
-  it('retains the legacy requestBooking API for existing initial and basket callers', () => {
-    const secondSelection = {
-      cableId: 'easy' as const,
-      date: localDate('2026-05-21'),
-      endTime: '17:00',
-      startTime: '16:00',
-    }
-    mockBookingFlow()
-
-    const { result } = renderHook(() => useBookingSheetController())
-
-    act(() => result.current.requestBooking('initial', [selection]))
-
-    expect(result.current.bookingSheetState).toEqual({
-      selections: [selection],
-      kind: 'initial',
-      status: 'confirm',
-    })
-
-    act(() =>
-      result.current.requestBooking('basket', [selection, secondSelection]),
-    )
-
-    expect(result.current.bookingSheetState).toEqual({
-      selections: [selection, secondSelection],
-      kind: 'basket',
-      status: 'confirm',
-    })
-  })
-
   it('ignores an empty basket request without submitting a booking', async () => {
     mockBookingFlow()
 

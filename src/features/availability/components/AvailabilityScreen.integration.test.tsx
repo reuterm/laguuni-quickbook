@@ -20,7 +20,8 @@ const secondSelection = {
 }
 
 const mocks = vi.hoisted(() => ({
-  requestBooking: vi.fn(),
+  requestBasketReview: vi.fn(),
+  requestInitialBooking: vi.fn(),
 }))
 
 vi.mock('../../../app/providers', () => ({
@@ -71,12 +72,22 @@ vi.mock('../../booking/use-booking-sheet-controller', () => ({
       dismissBookingSheet: () => setBookingSheetState({ status: 'closed' }),
       isBookingInProgress: false,
       isBookingReady: true,
-      requestBooking: (
-        kind: 'basket' | 'initial',
-        selections: readonly (typeof firstSelection)[],
-      ) => {
-        mocks.requestBooking(kind, selections)
-        setBookingSheetState({ kind, selections, status: 'confirm' })
+      keepBookingForMore: () => {
+        if (bookingSheetState.status === 'confirm') {
+          setBookingSheetState({ status: 'closed' })
+        }
+      },
+      requestBasketReview: (selections: readonly (typeof firstSelection)[]) => {
+        mocks.requestBasketReview(selections)
+        setBookingSheetState({ kind: 'basket', selections, status: 'confirm' })
+      },
+      requestInitialBooking: (selection: typeof firstSelection) => {
+        mocks.requestInitialBooking(selection)
+        setBookingSheetState({
+          kind: 'initial',
+          selections: [selection],
+          status: 'confirm',
+        })
       },
     }
   }),
@@ -122,7 +133,7 @@ vi.mock('../use-availability-overview', () => ({
       weekPages: [],
     },
     loadMoreAvailability: async () => {},
-    refreshAvailabilityDay: async () => {},
+    refreshAvailabilitySelection: async () => {},
   }),
 }))
 
@@ -133,10 +144,11 @@ vi.mock('../use-availability-scope', () => ({
 describe('AvailabilityScreen basket flow', () => {
   afterEach(() => {
     cleanup()
-    mocks.requestBooking.mockClear()
+    mocks.requestBasketReview.mockClear()
+    mocks.requestInitialBooking.mockClear()
   })
 
-  it('does not offer Add more when immediately booking a slot', async () => {
+  it('offers Add more when immediately booking a slot', async () => {
     const user = userEvent.setup()
 
     render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
@@ -147,94 +159,9 @@ describe('AvailabilityScreen basket flow', () => {
     }
 
     await user.click(firstBookButton)
-    expect(mocks.requestBooking).toHaveBeenCalledWith('initial', [
-      firstSelection,
-    ])
+    expect(mocks.requestInitialBooking).toHaveBeenCalledWith(firstSelection)
 
-    expect(
-      screen.queryByRole('button', { name: 'Add more' }),
-    ).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add more' })).toBeVisible()
   })
 
-  it('lets a user select, review, and clear multiple slots from an empty basket', async () => {
-    const user = userEvent.setup()
-
-    render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
-
-    await user.click(
-      screen.getByRole('button', { name: 'Select multiple slots' }),
-    )
-    const firstAddButton = screen.getAllByRole('button', {
-      name: /^Add 15:00-16:00/,
-    })[0]
-    if (firstAddButton === undefined) {
-      throw new Error('Expected an addable slot')
-    }
-
-    await user.click(firstAddButton)
-
-    await user.click(screen.getByRole('button', { name: 'Review selection' }))
-    await user.click(screen.getByRole('button', { name: 'Clear selection' }))
-
-    expect(mocks.requestBooking).toHaveBeenCalledWith('basket', [
-      firstSelection,
-    ])
-    expect(
-      screen.queryByRole('button', { name: 'Review selection' }),
-    ).not.toBeInTheDocument()
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Book' })).not.toHaveLength(0)
-  })
-
-  it('returns to immediate booking after removing the final selected slot', async () => {
-    const user = userEvent.setup()
-
-    render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
-
-    await user.click(
-      screen.getByRole('button', { name: 'Select multiple slots' }),
-    )
-    const firstAddButton = screen.getAllByRole('button', {
-      name: /^Add 15:00-16:00/,
-    })[0]
-    if (firstAddButton === undefined) {
-      throw new Error('Expected an addable slot')
-    }
-
-    await user.click(firstAddButton)
-    await user.click(
-      screen.getByRole('button', { name: /^Remove 15:00-16:00/ }),
-    )
-
-    expect(
-      screen.queryByRole('button', { name: 'Review selection' }),
-    ).not.toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Book' })).not.toHaveLength(0)
-  })
-
-  it('clears a successful basket booking and returns to immediate booking', async () => {
-    const user = userEvent.setup()
-
-    render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
-
-    await user.click(
-      screen.getByRole('button', { name: 'Select multiple slots' }),
-    )
-    const firstAddButton = screen.getAllByRole('button', {
-      name: /^Add 15:00-16:00/,
-    })[0]
-    if (firstAddButton === undefined) {
-      throw new Error('Expected an addable slot')
-    }
-
-    await user.click(firstAddButton)
-    await user.click(screen.getByRole('button', { name: 'Review selection' }))
-    await user.click(screen.getByRole('button', { name: 'Confirm booking' }))
-    await user.click(screen.getByRole('button', { name: 'Close' }))
-
-    expect(
-      screen.queryByRole('button', { name: 'Review selection' }),
-    ).not.toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Book' })).not.toHaveLength(0)
-  })
 })

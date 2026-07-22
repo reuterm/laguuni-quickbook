@@ -47,8 +47,8 @@ const mocks = vi.hoisted(() => ({
         selections: ReadonlyArray<{ date: string }>
       }) => Promise<void>)
     | undefined,
-  refreshAvailabilityDay: vi.fn(async () => {}),
-  requestBooking: vi.fn(),
+  refreshAvailabilitySelection: vi.fn(async () => {}),
+  requestInitialBooking: vi.fn(),
 }))
 
 vi.mock('../../../app/providers', () => ({
@@ -72,7 +72,8 @@ vi.mock('../../booking/use-booking-sheet-controller', () => ({
         isBookingReady: mocks.isBookingReady,
         keepBookingForMore: () =>
           mocks.onKeepBookingForMore?.({ date: localDate('2026-05-20') }),
-        requestBooking: mocks.requestBooking,
+        requestBasketReview: vi.fn(),
+        requestInitialBooking: mocks.requestInitialBooking,
       }
     },
   ),
@@ -82,7 +83,7 @@ vi.mock('../use-availability-overview', () => ({
   useAvailabilityOverview: vi.fn(() => ({
     availabilityState: { status: 'loading' },
     loadMoreAvailability: vi.fn(),
-    refreshAvailabilityDay: mocks.refreshAvailabilityDay,
+    refreshAvailabilitySelection: mocks.refreshAvailabilitySelection,
   })),
 }))
 
@@ -136,8 +137,8 @@ describe('AvailabilityScreen', () => {
     mocks.isBookingReady = false
     mocks.onKeepBookingForMore = undefined
     mocks.onBookingFinalized = undefined
-    mocks.refreshAvailabilityDay.mockClear()
-    mocks.requestBooking.mockClear()
+    mocks.refreshAvailabilitySelection.mockClear()
+    mocks.requestInitialBooking.mockClear()
   })
 
   it('requests an initial booking for the rendered immediate-booking slot', async () => {
@@ -149,9 +150,7 @@ describe('AvailabilityScreen', () => {
 
     await user.click(screen.getByRole('button', { name: 'Book fixture slot' }))
 
-    expect(mocks.requestBooking).toHaveBeenCalledWith('initial', [
-      expectedSelection,
-    ])
+    expect(mocks.requestInitialBooking).toHaveBeenCalledWith(expectedSelection)
   })
 
   it('provides the required sheet continuation and basket clear actions', () => {
@@ -161,51 +160,29 @@ describe('AvailabilityScreen', () => {
     expect(mocks.bookingSheetFlowProps?.clearBookingSelection).toBeDefined()
   })
 
-  it('refreshes every distinct selected date after a successful booking', async () => {
+  it('refreshes every distinct cable and date after a successful booking', async () => {
     render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
 
     await mocks.onBookingFinalized?.({
       result: { status: 'success' },
       selections: [
-        { date: localDate('2026-05-20') },
-        { date: localDate('2026-05-21') },
-        { date: localDate('2026-05-20') },
+        { cableId: 'pro', date: localDate('2026-05-20') },
+        { cableId: 'easy', date: localDate('2026-05-21') },
+        { cableId: 'pro', date: localDate('2026-05-20') },
       ],
     })
 
-    expect(mocks.refreshAvailabilityDay).toHaveBeenCalledTimes(2)
-    expect(mocks.refreshAvailabilityDay).toHaveBeenNthCalledWith(
+    expect(mocks.refreshAvailabilitySelection).toHaveBeenCalledTimes(2)
+    expect(mocks.refreshAvailabilitySelection).toHaveBeenNthCalledWith(
       1,
+      'pro',
       localDate('2026-05-20'),
     )
-    expect(mocks.refreshAvailabilityDay).toHaveBeenNthCalledWith(
+    expect(mocks.refreshAvailabilitySelection).toHaveBeenNthCalledWith(
       2,
+      'easy',
       localDate('2026-05-21'),
     )
   })
 
-  it('retains a basket selection added while a basket booking finalizes', async () => {
-    mocks.isBookingReady = true
-    const user = userEvent.setup()
-
-    render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
-
-    await user.click(
-      screen.getByRole('button', { name: 'Select multiple slots' }),
-    )
-    await user.click(screen.getByRole('button', { name: 'Add fixture slot' }))
-    mocks.availabilityOverviewContentProps?.basket.onReview()
-    await user.click(screen.getByRole('button', { name: 'Add fixture slot' }))
-
-    await mocks.onBookingFinalized?.({
-      result: { status: 'success' },
-      selections: [{ date: localDate('2026-05-21') }],
-    })
-
-    expect(
-      mocks.availabilityOverviewContentProps?.basket.isSelected({
-        date: localDate('2026-05-21'),
-      }),
-    ).toBe(true)
-  })
 })
