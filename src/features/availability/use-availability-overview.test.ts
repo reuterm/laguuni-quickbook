@@ -244,7 +244,11 @@ describe('useAvailabilityOverview', () => {
   })
 
   it('refreshes an inactive cable without changing the active availability state', async () => {
-    const { api, getDailyAvailabilityWindow } = createApi()
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: LocalDateString) =>
+        createDailyAvailabilityWindow(date),
+    )
+    const { api } = createApi(getDailyAvailabilityWindow)
 
     const { result } = renderHook(() =>
       useAvailabilityOverview(api, 'pro', new Date('2026-05-14T12:00:00')),

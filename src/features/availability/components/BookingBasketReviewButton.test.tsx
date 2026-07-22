@@ -34,10 +34,10 @@ describe('BookingBasketReviewButton', () => {
     )
 
     const button = screen.getByRole('button', {
-      name: 'Review selection',
+      name: 'Review 2 selected slots',
     })
 
-    expect(button).toHaveTextContent('Review selection')
+    expect(button).toHaveTextContent('Review 2 selected slots')
     expect(button).toHaveClass(
       'fixed',
       'bottom-[calc(env(safe-area-inset-bottom)+1rem)]',

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import type { BookingSlotSelection } from '@/domain/booking'
 import { localDate } from '../../../../tests/local-date'
 import { AvailabilityScreen } from './AvailabilityScreen'
 
@@ -42,9 +43,9 @@ const mocks = vi.hoisted(() => ({
     | ((selection: { date: string }) => void)
     | undefined,
   onBookingFinalized: undefined as
-    | ((booking: {
+   | ((booking: {
         result: { status: 'success' }
-        selections: ReadonlyArray<{ date: string }>
+        selections: readonly BookingSlotSelection[]
       }) => Promise<void>)
     | undefined,
   refreshAvailabilitySelection: vi.fn(async () => {}),
@@ -166,9 +167,24 @@ describe('AvailabilityScreen', () => {
     await mocks.onBookingFinalized?.({
       result: { status: 'success' },
       selections: [
-        { cableId: 'pro', date: localDate('2026-05-20') },
-        { cableId: 'easy', date: localDate('2026-05-21') },
-        { cableId: 'pro', date: localDate('2026-05-20') },
+        {
+          cableId: 'pro',
+          date: localDate('2026-05-20'),
+          endTime: '11:00',
+          startTime: '10:00',
+        },
+        {
+          cableId: 'easy',
+          date: localDate('2026-05-21'),
+          endTime: '11:00',
+          startTime: '10:00',
+        },
+        {
+          cableId: 'pro',
+          date: localDate('2026-05-20'),
+          endTime: '11:00',
+          startTime: '10:00',
+        },
       ],
     })
 
