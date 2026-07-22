@@ -15,7 +15,6 @@ import {
   listCalendarTimes,
 } from '../availability-calendar'
 import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame'
-import type { AvailabilityCapacityChipProps } from './availability-badge'
 import { AvailabilityCapacityChip } from './availability-badge'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { availabilityCalendarColumnClassNames } from './availability-calendar-ui'
@@ -91,31 +90,6 @@ export function AvailabilityCalendarWeek({
             const slot = dayGroup
               ? slotLookup.get(createSlotLookupKey(dayGroup.date, time))
               : null
-            let chipProps: Omit<
-              AvailabilityCapacityChipProps,
-              'className' | 'slot'
-            > = {
-              disabled: false,
-              pressed: false,
-            }
-
-            if (slot && basket.kind === 'basket') {
-              const selected = basket.isSelected(slot.selection)
-              chipProps = {
-                disabled: false,
-                onClick: selected
-                  ? () => basket.onRemoveSelection(slot.selection)
-                  : () => basket.onAddSelection(slot.selection),
-                pressed: selected,
-              }
-            } else if (slot && bookingActionMode !== 'hidden') {
-              chipProps = {
-                disabled: bookingActionMode === 'disabled',
-                onClick: () => onBookSelection(slot.selection),
-                pressed: false,
-              }
-            }
-
             return (
               <td
                 key={`${week.id}-${weekdayLabel}-${time}`}
@@ -124,11 +98,32 @@ export function AvailabilityCalendarWeek({
                   'border-l px-2 py-2 text-center group-hover:bg-white/[0.02]',
                 )}
               >
-                {slot ? (
+                {slot && basket.kind === 'basket' ? (
                   <AvailabilityCapacityChip
                     slot={slot}
                     className="min-w-11 px-2.5 py-1"
-                    {...chipProps}
+                    disabled={false}
+                    onClick={() =>
+                      basket.isSelected(slot.selection)
+                        ? basket.onRemoveSelection(slot.selection)
+                        : basket.onAddSelection(slot.selection)
+                    }
+                    pressed={basket.isSelected(slot.selection)}
+                  />
+                ) : slot && bookingActionMode !== 'hidden' ? (
+                  <AvailabilityCapacityChip
+                    slot={slot}
+                    className="min-w-11 px-2.5 py-1"
+                    disabled={bookingActionMode === 'disabled'}
+                    onClick={() => onBookSelection(slot.selection)}
+                    pressed={false}
+                  />
+                ) : slot ? (
+                  <AvailabilityCapacityChip
+                    slot={slot}
+                    className="min-w-11 px-2.5 py-1"
+                    disabled={false}
+                    pressed={false}
                   />
                 ) : (
                   <span
