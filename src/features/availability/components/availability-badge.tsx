@@ -19,7 +19,7 @@ const availabilityChipInteractiveClassName =
 export type AvailabilityCapacityChipProps = {
   className?: string
   disabled: boolean
-  onClick?: () => void
+  onClick?: (() => void) | undefined
   pressed: boolean
   slot: AvailabilitySlot
 }
