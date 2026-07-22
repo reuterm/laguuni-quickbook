@@ -244,6 +244,73 @@ describe('App', () => {
     ).toBeVisible()
   })
 
+  it('replaces same-cable selections immediately and confirms cross-cable replacements', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+
+    saveUserSettings(
+      {
+        email: 'test@example.com',
+        name: 'Test User',
+        phone: '+358401234567',
+      },
+      storage,
+    )
+
+    renderApp({
+      availabilityReferenceDate: new Date('2026-05-20T12:00:00'),
+      storage,
+    })
+
+    await openFirstBookingSheet(user)
+    await user.click(screen.getByRole('button', { name: 'Add more' }))
+
+    const proSameDayAddButton = screen.getAllByRole('button', {
+      name: /^Add 16:00-17:00/,
+    })[0]
+    if (!proSameDayAddButton) {
+      throw new Error('Expected a same-day Pro slot to add')
+    }
+
+    await user.click(proSameDayAddButton)
+
+    expect(
+      screen.queryByRole('dialog', { name: 'Replace selected slot?' }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(document.body).getByRole(
+        'button',
+        { hidden: true, name: /^Remove 16:00-17:00/ },
+      ),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('button', { name: /^Remove 15:00-16:00/ }),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('tab', { name: 'Easy' }))
+
+    const easySameDay = await screen.findByRole('heading', {
+      name: 'Wed 20 May',
+    })
+    const easySameDaySection = easySameDay.closest('section')
+    if (easySameDaySection === null) {
+      throw new Error('Expected the first Easy cable day group')
+    }
+
+    const easySameDayAddButton = within(easySameDaySection).getAllByRole(
+      'button',
+      { name: /^Add / },
+    )[0]
+    if (!easySameDayAddButton) {
+      throw new Error('Expected a same-day Easy slot to add')
+    }
+    await user.click(easySameDayAddButton)
+
+    expect(
+      screen.getByRole('dialog', { name: 'Replace selected slot?' }),
+    ).toHaveTextContent(/Replace Pro 16:00-17:00 .* with Easy/)
+  })
+
   it('opens the existing booking sheet from a calendar availability badge', async () => {
     const user = userEvent.setup()
     const storage = createMemoryStorage()
