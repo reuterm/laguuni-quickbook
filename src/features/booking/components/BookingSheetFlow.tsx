@@ -84,7 +84,7 @@ export function BookingSheetFlow({
       content = (
         <BookingConfirmPanel
           onConfirm={confirmBooking}
-          secondaryAction={secondaryAction}
+          {...(secondaryAction ? { secondaryAction } : {})}
         />
       )
       break

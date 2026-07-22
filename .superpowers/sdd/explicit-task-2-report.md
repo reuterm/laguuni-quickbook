@@ -20,3 +20,31 @@
   - 5 files passed, 42 tests passed.
 - `rtk tsc --noEmit`
   - No errors found.
+
+## Task 3 Typecheck Blocker Resolution
+
+### Delivered
+
+- Changed `BookingSheetFlow` to omit `BookingConfirmPanel.secondaryAction` when the initial confirmation has no continuation, rather than explicitly passing `undefined`.
+- Preserved the existing Add more and Clear selection secondary-action branches.
+- Added a focused regression assertion that the no-continuation branch does not pass the `secondaryAction` prop.
+
+### TDD Evidence
+
+- Focused `BookingSheetFlow` test failed before the production change because the child received a `secondaryAction` key with `undefined`.
+- The same focused test passed after the conditional prop spread.
+
+### Verification
+
+- `pnpm test src/features/booking/components/BookingSheetFlow.test.tsx`
+  - 1 file passed, 13 tests passed.
+- `pnpm typecheck`
+  - Passed.
+- `pnpm build`
+  - Passed.
+- `rtk lint`
+  - Did not complete: `[warn] Linter process terminated abnormally (possibly out of memory)`.
+
+### Concerns
+
+- Lint remains unavailable in this environment because the linter terminates abnormally, apparently due to memory pressure.

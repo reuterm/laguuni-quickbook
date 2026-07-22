@@ -4,6 +4,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { localDate } from '../../../../tests/local-date'
 import { BookingSheetFlow } from './BookingSheetFlow'
 
+const bookingConfirmPanelMock = vi.hoisted(() => vi.fn())
+
+vi.mock('./BookingConfirmPanel', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./BookingConfirmPanel')>()
+
+  return {
+    ...actual,
+    BookingConfirmPanel: (props: Parameters<typeof actual.BookingConfirmPanel>[0]) => {
+      bookingConfirmPanelMock(props)
+      return <actual.BookingConfirmPanel {...props} />
+    },
+  }
+})
+
 const shareOrDownloadCalendarFileMock = vi.fn<
   (
     _file: File,
@@ -20,6 +34,7 @@ vi.mock('../../calendar/calendar-share', () => ({
 
 afterEach(() => {
   cleanup()
+  bookingConfirmPanelMock.mockReset()
   shareOrDownloadCalendarFileMock.mockReset()
 })
 
@@ -79,6 +94,10 @@ describe('BookingSheetFlow', () => {
     expect(
       screen.queryByRole('button', { name: 'Clear selection' }),
     ).not.toBeInTheDocument()
+    expect(bookingConfirmPanelMock).toHaveBeenCalledOnce()
+    expect(bookingConfirmPanelMock.mock.calls[0]?.[0]).not.toHaveProperty(
+      'secondaryAction',
+    )
   })
 
   it('adds more from an initial continuation confirmation', async () => {
