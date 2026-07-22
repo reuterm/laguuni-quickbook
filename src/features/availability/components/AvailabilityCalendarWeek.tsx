@@ -90,6 +90,21 @@ export function AvailabilityCalendarWeek({
             const slot = dayGroup
               ? slotLookup.get(createSlotLookupKey(dayGroup.date, time))
               : null
+            let disabled = false
+            let onClick: (() => void) | undefined
+            let pressed = false
+
+            if (slot && basket.kind === 'basket') {
+              pressed = basket.isSelected(slot.selection)
+              onClick = () =>
+                pressed
+                  ? basket.onRemoveSelection(slot.selection)
+                  : basket.onAddSelection(slot.selection)
+            } else if (slot && bookingActionMode !== 'hidden') {
+              disabled = bookingActionMode === 'disabled'
+              onClick = () => onBookSelection(slot.selection)
+            }
+
             return (
               <td
                 key={`${week.id}-${weekdayLabel}-${time}`}
@@ -98,32 +113,13 @@ export function AvailabilityCalendarWeek({
                   'border-l px-2 py-2 text-center group-hover:bg-white/[0.02]',
                 )}
               >
-                {slot && basket.kind === 'basket' ? (
+                {slot ? (
                   <AvailabilityCapacityChip
                     slot={slot}
                     className="min-w-11 px-2.5 py-1"
-                    disabled={false}
-                    onClick={() =>
-                      basket.isSelected(slot.selection)
-                        ? basket.onRemoveSelection(slot.selection)
-                        : basket.onAddSelection(slot.selection)
-                    }
-                    pressed={basket.isSelected(slot.selection)}
-                  />
-                ) : slot && bookingActionMode !== 'hidden' ? (
-                  <AvailabilityCapacityChip
-                    slot={slot}
-                    className="min-w-11 px-2.5 py-1"
-                    disabled={bookingActionMode === 'disabled'}
-                    onClick={() => onBookSelection(slot.selection)}
-                    pressed={false}
-                  />
-                ) : slot ? (
-                  <AvailabilityCapacityChip
-                    slot={slot}
-                    className="min-w-11 px-2.5 py-1"
-                    disabled={false}
-                    pressed={false}
+                    disabled={disabled}
+                    onClick={onClick}
+                    pressed={pressed}
                   />
                 ) : (
                   <span
