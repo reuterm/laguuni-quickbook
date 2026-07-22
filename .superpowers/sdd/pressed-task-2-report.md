@@ -202,4 +202,22 @@ Found 1 error.
 check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   × Some errors were emitted while running checks.
+
+## Lint Formatting Repair (2026-07-22)
+
+- Applied Biome's required three-line wrap at `src/features/availability/components/availability-badge.tsx:41`. This is formatting-only; behavior is unchanged.
+
+### Verification Output
+
+| Command | Result |
+| --- | --- |
+| `pnpm lint` | Could not complete: `[warn] Linter process terminated abnormally (possibly out of memory)` |
+| `pnpm test -- src/features/availability/components/AvailabilityCalendarGrid.test.tsx src/features/availability/components/availability-badge.test.tsx src/features/availability/components/AvailabilityCalendarWeek.test.tsx` | Pass: 51 files, 324 tests (Vitest runs the full suite with these arguments) |
+| `pnpm test` | Pass: 51 files, 324 tests |
+| `pnpm typecheck` | Pass: exit 0 |
+| `pnpm build` | Pass: exit 0; Vite production build completed |
+
+### Concern
+
+- The required `pnpm lint` command still terminates abnormally in this environment, including when targeting only the formatted component. The review's sole Biome formatting finding is addressed, but lint does not provide a successful exit status.
   
