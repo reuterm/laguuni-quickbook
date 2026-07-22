@@ -71,13 +71,13 @@ describe('AvailabilityCalendarWeek', () => {
 
     expect(
       screen.getByRole('button', {
-        name: 'Book slot',
+        name: 'Remove 15:00-16:00, 4 spots free',
         pressed: true,
       }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', {
-        name: 'Book slot',
+        name: 'Book 12:00-13:00, 2 spots free',
         pressed: false,
       }),
     ).toBeInTheDocument()
