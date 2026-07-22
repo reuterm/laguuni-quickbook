@@ -341,7 +341,8 @@ describe('booking flow integration', () => {
       http.get(
         `${TEST_API_BASE_URL}/api/laguuni/fi_FI/products/:productId/availabletimes/:date.json`,
         async ({ params, request }) => {
-          if (new URL(request.url).searchParams.get('capacity') !== 'true') return
+          if (new URL(request.url).searchParams.get('capacity') !== 'true')
+            return
 
           const productId = String(params.productId)
           if (deferRefreshes && (productId === '6' || productId === '7')) {
@@ -368,13 +369,17 @@ describe('booking flow integration', () => {
     await clickFirstBookButton(user)
     await user.click(screen.getByRole('button', { name: 'Add more' }))
 
-    expect(screen.getByRole('button', { name: 'Review selection' })).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Review selection' }),
+    ).toBeVisible()
 
     resolveProRefresh?.()
     resolveEasyRefresh?.()
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Review selection' })).toBeVisible()
+      expect(
+        screen.getByRole('button', { name: 'Review selection' }),
+      ).toBeVisible()
     })
   })
 
@@ -851,7 +856,9 @@ function createBookingStorage() {
   return storage
 }
 
-async function createMixedCableBasket(user: ReturnType<typeof userEvent.setup>) {
+async function createMixedCableBasket(
+  user: ReturnType<typeof userEvent.setup>,
+) {
   await clickFirstBookButton(user)
   await user.click(screen.getByRole('button', { name: 'Add more' }))
   await user.click(screen.getByRole('tab', { name: 'Easy' }))
@@ -862,8 +869,13 @@ async function createMixedCableBasket(user: ReturnType<typeof userEvent.setup>) 
     throw new Error('Expected the second Easy cable day group')
   }
 
-  await user.click(
-    within(secondDaySection).getAllByRole('button', { name: /^Add / })[0]!,
-  )
+  const firstAddButton = within(secondDaySection).getAllByRole('button', {
+    name: /^Add /,
+  })[0]
+  if (!firstAddButton) {
+    throw new Error('Expected an Add button in the second Easy cable day group')
+  }
+
+  await user.click(firstAddButton)
   await user.click(screen.getByRole('button', { name: 'Review selection' }))
 }

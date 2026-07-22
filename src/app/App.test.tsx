@@ -226,12 +226,17 @@ describe('App', () => {
       throw new Error('Expected the second Easy cable day group')
     }
 
-    await user.click(
-      within(secondDaySection).getAllByRole('button', { name: /^Add / })[0]!,
-    )
-    await user.click(
-      screen.getByRole('button', { name: 'Review selection' }),
-    )
+    const firstAddButton = within(secondDaySection).getAllByRole('button', {
+      name: /^Add /,
+    })[0]
+    if (!firstAddButton) {
+      throw new Error(
+        'Expected an Add button in the second Easy cable day group',
+      )
+    }
+
+    await user.click(firstAddButton)
+    await user.click(screen.getByRole('button', { name: 'Review selection' }))
     await user.click(screen.getByRole('button', { name: 'Close' }))
 
     expect(
