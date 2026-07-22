@@ -34,11 +34,15 @@ type UseBookingSheetControllerOptions = {
         selections: readonly BookingSlotSelection[]
       }) => void | Promise<void>)
     | undefined
+  onDiscardInitialBooking?:
+    | ((selection: BookingSlotSelection) => void)
+    | undefined
   onKeepBookingForMore?: ((selection: BookingSlotSelection) => void) | undefined
 }
 
 export function useBookingSheetController({
   onBookingFinalized,
+  onDiscardInitialBooking,
   onKeepBookingForMore,
 }: UseBookingSheetControllerOptions = {}) {
   const { isBookingReady, submitBooking } = useBookingFlow()
@@ -87,9 +91,20 @@ export function useBookingSheetController({
       return
     }
 
+    const dismissedState = bookingSheetState
     const completedSubmission = takeCompletedSubmission()
 
     setBookingSheetState({ status: 'closed' })
+
+    if (
+      dismissedState.status === 'confirm' &&
+      dismissedState.kind === 'initial'
+    ) {
+      const [selection] = dismissedState.selections
+      if (selection !== undefined) {
+        onDiscardInitialBooking?.(selection)
+      }
+    }
 
     if (
       completedSubmission === null ||
@@ -99,7 +114,12 @@ export function useBookingSheetController({
     }
 
     void finalizeDismissedSubmission(completedSubmission)
-  }, [finalizeDismissedSubmission, takeCompletedSubmission])
+  }, [
+    bookingSheetState,
+    finalizeDismissedSubmission,
+    onDiscardInitialBooking,
+    takeCompletedSubmission,
+  ])
 
   const releaseAbandonedCompletedSubmission = useCallback(() => {
     const completedSubmission = takeCompletedSubmission()
@@ -114,26 +134,25 @@ export function useBookingSheetController({
     void completedSubmission.releaseReservation()
   }, [takeCompletedSubmission])
 
-  const requestBooking = useCallback(
-    (
-      kind: 'initial' | 'basket',
-      selections: readonly BookingSlotSelection[],
-    ) => {
+  const requestInitialBooking = useCallback((selection: BookingSlotSelection) => {
+    setBookingSheetState((currentState) =>
+      currentState.status === 'submitting'
+        ? currentState
+        : { kind: 'initial', selections: [selection], status: 'confirm' },
+    )
+  }, [])
+
+  const requestBasketReview = useCallback(
+    (selections: readonly BookingSlotSelection[]) => {
       if (selections.length === 0) {
         return
       }
 
-      setBookingSheetState((currentState) => {
-        if (currentState.status === 'submitting') {
-          return currentState
-        }
-
-        return {
-          kind,
-          selections,
-          status: 'confirm',
-        }
-      })
+      setBookingSheetState((currentState) =>
+        currentState.status === 'submitting'
+          ? currentState
+          : { kind: 'basket', selections, status: 'confirm' },
+      )
     },
     [],
   )
@@ -207,6 +226,7 @@ export function useBookingSheetController({
     isBookingInProgress: bookingSheetState.status === 'submitting',
     isBookingReady,
     keepBookingForMore,
-    requestBooking,
+    requestBasketReview,
+    requestInitialBooking,
   }
 }
