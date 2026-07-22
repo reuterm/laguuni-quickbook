@@ -69,6 +69,7 @@ export function AvailabilityScreen({
     dismissBookingSheet,
     isBookingInProgress,
     isBookingReady,
+    keepBookingForMore,
     requestBooking,
   } = useBookingSheetController({
     onBookingFinalized: async ({ result, selections }) => {
@@ -132,13 +133,11 @@ export function AvailabilityScreen({
     <section aria-labelledby="availability-title" className="space-y-6">
       <ContentRail className="space-y-5">
         <BookingSheetFlow
-          actions={{
-            basket: { onClearSelection: clearBasketSelections },
-            initial: { continuation: 'none' },
-          }}
           bookingSheetState={bookingSheetState}
+          clearBookingSelection={clearBasketSelections}
           confirmBooking={confirmBooking}
           dismissBookingSheet={dismissBookingSheet}
+          keepBookingForMore={keepBookingForMore}
           onExportTrace={handleExportTrace}
         />
 

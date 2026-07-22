@@ -15,14 +15,14 @@ describe('BookingConfirmPanel', () => {
     expect(screen.queryAllByRole('button')).toHaveLength(1)
   })
 
-  it('renders and invokes a full-width secondary action after confirm', async () => {
+  it('renders and invokes Add more', async () => {
     const user = userEvent.setup()
-    const onClick = vi.fn()
+    const onAddMore = vi.fn()
 
     render(
       <BookingConfirmPanel
         onConfirm={async () => {}}
-        secondaryAction={{ label: 'Add more', onClick }}
+        onAddMore={onAddMore}
       />,
     )
 
@@ -32,17 +32,33 @@ describe('BookingConfirmPanel', () => {
       'Confirm booking',
       'Add more',
     ])
-    const secondaryButton = buttons[1]
-    expect(secondaryButton).toBeDefined()
-    if (!secondaryButton) {
-      throw new Error('Expected secondary action button')
+    const addMoreButton = buttons[1]
+    expect(addMoreButton).toBeDefined()
+    if (!addMoreButton) {
+      throw new Error('Expected Add more button')
     }
 
-    expect(secondaryButton).toHaveClass('bg-secondary/90', 'w-full')
+    expect(addMoreButton).toHaveClass('bg-secondary/90', 'w-full')
 
-    await user.click(secondaryButton)
+    await user.click(addMoreButton)
 
-    expect(onClick).toHaveBeenCalledOnce()
+    expect(onAddMore).toHaveBeenCalledOnce()
+  })
+
+  it('renders and invokes Clear selection', async () => {
+    const user = userEvent.setup()
+    const onClearSelection = vi.fn()
+
+    render(
+      <BookingConfirmPanel
+        onClearSelection={onClearSelection}
+        onConfirm={async () => {}}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Clear selection' }))
+
+    expect(onClearSelection).toHaveBeenCalledOnce()
   })
 
   it('invokes the confirm action', async () => {

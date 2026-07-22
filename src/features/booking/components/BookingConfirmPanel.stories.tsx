@@ -20,10 +20,10 @@ export const Default: Story = {
   },
 }
 
-export const SecondaryAction: Story = {
+export const AddMore: Story = {
   args: {
     onConfirm: fn(),
-    secondaryAction: { label: 'Add more', onClick: fn() },
+    onAddMore: fn(),
   },
   play: async ({ args, canvas }) => {
     await userEvent.click(
@@ -32,6 +32,20 @@ export const SecondaryAction: Story = {
     await userEvent.click(canvas.getByRole('button', { name: 'Add more' }))
 
     await expect(args.onConfirm).toHaveBeenCalled()
-    await expect(args.secondaryAction?.onClick).toHaveBeenCalled()
+    await expect(args.onAddMore).toHaveBeenCalled()
+  },
+}
+
+export const ClearSelection: Story = {
+  args: {
+    onClearSelection: fn(),
+    onConfirm: noopAsync,
+  },
+  play: async ({ args, canvas }) => {
+    await userEvent.click(
+      canvas.getByRole('button', { name: 'Clear selection' }),
+    )
+
+    await expect(args.onClearSelection).toHaveBeenCalled()
   },
 }

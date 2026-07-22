@@ -21,10 +21,8 @@ const mocks = vi.hoisted(() => ({
     | undefined,
   bookingSheetFlowProps: undefined as
     | {
-        actions: {
-          basket: { onClearSelection: () => void }
-          initial: { continuation: 'none' }
-        }
+        clearBookingSelection?: () => void
+        keepBookingForMore?: () => void
       }
     | undefined,
   bookingSheetState: { status: 'closed' } as
@@ -156,12 +154,11 @@ describe('AvailabilityScreen', () => {
     ])
   })
 
-  it('provides the required basket clear action', () => {
+  it('provides the required sheet continuation and basket clear actions', () => {
     render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
 
-    expect(
-      mocks.bookingSheetFlowProps?.actions.basket.onClearSelection,
-    ).toBeDefined()
+    expect(mocks.bookingSheetFlowProps?.keepBookingForMore).toBeDefined()
+    expect(mocks.bookingSheetFlowProps?.clearBookingSelection).toBeDefined()
   })
 
   it('refreshes every distinct selected date after a successful booking', async () => {
