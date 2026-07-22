@@ -23,9 +23,15 @@ export function BookingReplacementSheet({
   onKeepCurrentSelection,
   onReplace,
 }: BookingReplacementSheetProps) {
+  if (pendingReplacement === null) {
+    return null
+  }
+
+  const replacementMessage = getBookingReplacementMessage(pendingReplacement)
+
   return (
     <Sheet
-      open={pendingReplacement !== null}
+      open
       onOpenChange={(open) => {
         if (!open) onKeepCurrentSelection()
       }}
@@ -36,11 +42,7 @@ export function BookingReplacementSheet({
       >
         <SheetHeader className="pr-10 text-left">
           <SheetTitle>Replace selected slot?</SheetTitle>
-          <SheetDescription>
-            {pendingReplacement
-              ? getBookingReplacementMessage(pendingReplacement)
-              : null}
-          </SheetDescription>
+          <SheetDescription>{replacementMessage}</SheetDescription>
         </SheetHeader>
         <SheetFooter>
           <Button

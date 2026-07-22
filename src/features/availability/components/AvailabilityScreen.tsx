@@ -16,6 +16,7 @@ import {
   useLaguuniApi,
   useReadOnlyNoticeStore,
 } from '../../../app/providers'
+import type { BookingSlotSelection } from '../../../domain/booking'
 import { getCableById } from '../../../domain/cable'
 import { getBookingSlotSelectionKey } from '../../booking/booking-selections'
 import { BookingSheetFlow } from '../../booking/components/BookingSheetFlow'
@@ -38,6 +39,25 @@ import { emptyBookingBasket } from './booking-basket-props'
 type AvailabilityScreenProps = {
   isOnline: boolean
   onOpenSettings: () => void
+}
+
+function getPendingSelectionForCable(
+  pendingReplacement: PendingBookingReplacement | null,
+  cableId: BookingSlotSelection['cableId'],
+) {
+  if (pendingReplacement === null) {
+    return undefined
+  }
+
+  if (pendingReplacement.current.cableId === cableId) {
+    return pendingReplacement.current
+  }
+
+  if (pendingReplacement.proposed.cableId === cableId) {
+    return pendingReplacement.proposed
+  }
+
+  return undefined
 }
 
 export function AvailabilityScreen({
@@ -115,12 +135,10 @@ export function AvailabilityScreen({
       return
     }
 
-    const selection =
-      pendingReplacement.current.cableId === selectedCable
-        ? pendingReplacement.current
-        : pendingReplacement.proposed.cableId === selectedCable
-          ? pendingReplacement.proposed
-          : undefined
+    const selection = getPendingSelectionForCable(
+      pendingReplacement,
+      selectedCable,
+    )
 
     if (selection === undefined) {
       return
@@ -179,17 +197,15 @@ export function AvailabilityScreen({
   const reviewBasket = () => {
     requestBooking('basket', bookingBasket.selections)
   }
-  const basket =
-    bookingBasket.selections.length === 0
-      ? { ...emptyBookingBasket, onAddSelection: handleSlotIntent }
-      : {
-          isSelected: bookingBasket.isSelected,
-          kind: 'basket' as const,
-          onAddSelection: handleSlotIntent,
-          onRemoveSelection: handleRemoveSelection,
-          onReview: reviewBasket,
-          selections: bookingBasket.selections,
-        }
+  const basket = { ...emptyBookingBasket, onAddSelection: handleSlotIntent }
+
+  if (bookingBasket.selections.length > 0) {
+    basket.isSelected = bookingBasket.isSelected
+    basket.kind = 'basket'
+    basket.onRemoveSelection = handleRemoveSelection
+    basket.onReview = reviewBasket
+    basket.selections = bookingBasket.selections
+  }
 
   function handleSlotIntent(
     selection: Parameters<typeof bookingBasket.addSelection>[0],
