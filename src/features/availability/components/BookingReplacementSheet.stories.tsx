@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { expect, userEvent, within } from 'storybook/test'
+import { expect, userEvent, waitFor, within } from 'storybook/test'
 
 import { localDate } from '../../../../tests/local-date'
 import type { PendingBookingReplacement } from '../booking-replacement'
@@ -59,6 +59,8 @@ export const CrossCableReplacement: Story = {
       page.getByRole('button', { name: 'Keep current' }),
     )
 
-    await expect(page.queryByRole('dialog')).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(page.queryByRole('dialog')).not.toBeInTheDocument()
+    })
   },
 }
