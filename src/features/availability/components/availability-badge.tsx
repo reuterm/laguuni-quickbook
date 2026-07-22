@@ -47,7 +47,7 @@ export function AvailabilityCapacityChip({
   return (
     <button
       className={chipClassName}
-      aria-label="Book slot"
+      aria-label={getAvailabilityChipAccessibleName(slot, pressed)}
       aria-pressed={pressed}
       disabled={disabled}
       onClick={onClick}
@@ -60,6 +60,13 @@ export function AvailabilityCapacityChip({
 
 function getAvailabilityBadgeLabel(slot: AvailabilitySlot) {
   return `${slot.freeCapacity}`
+}
+
+function getAvailabilityChipAccessibleName(
+  slot: AvailabilitySlot,
+  pressed: boolean,
+) {
+  return `${pressed ? 'Remove' : 'Book'} ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`
 }
 
 function getAvailabilityChipClassName(slot: AvailabilitySlot) {

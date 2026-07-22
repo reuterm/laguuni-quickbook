@@ -31,10 +31,27 @@ describe('AvailabilityCapacityChip', () => {
       />,
     )
 
-    const chip = screen.getByRole('button', { name: 'Book slot' })
+    const chip = screen.getByRole('button', {
+      name: 'Remove 15:00-16:00, 4 spots free',
+    })
 
     expect(chip).toHaveAttribute('aria-pressed', 'true')
     expect(chip).toHaveClass('border-primary')
+
+    render(
+      <AvailabilityCapacityChip
+        disabled={false}
+        onClick={vi.fn()}
+        pressed={false}
+        slot={slot}
+      />,
+    )
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Book 15:00-16:00, 4 spots free',
+      }),
+    ).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('renders static chips without button semantics', () => {
