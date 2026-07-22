@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -6,6 +6,19 @@ import type { BookingSlotSelection } from '@/domain/booking'
 import { localDate } from '../../../../tests/local-date'
 import type { BookingSheetFlowActions } from '../../booking/components/BookingSheetFlow'
 import { AvailabilityScreen } from './AvailabilityScreen'
+
+const currentSelection = {
+  cableId: 'pro' as const,
+  date: localDate('2026-05-20'),
+  endTime: '16:00',
+  startTime: '15:00',
+}
+const proposedSelection = {
+  cableId: 'easy' as const,
+  date: localDate('2026-05-20'),
+  endTime: '13:00',
+  startTime: '12:00',
+}
 
 const mocks = vi.hoisted(() => ({
   availabilityOverviewContentProps: undefined as
@@ -26,6 +39,18 @@ const mocks = vi.hoisted(() => ({
         actions: BookingSheetFlowActions
       }
     | undefined,
+  bookingReplacementProps: undefined as
+    | { pendingReplacement: unknown }
+    | undefined,
+  bookingBasket: {
+    addSelection: vi.fn(),
+    clearSelections: vi.fn(),
+    clearSelectionsIfUnchanged: vi.fn(),
+    isSelected: vi.fn(() => false),
+    removeSelection: vi.fn(),
+    revision: 0,
+    selections: [] as readonly BookingSlotSelection[],
+  },
   bookingSheetState: { status: 'closed' } as
     | { status: 'closed' }
     | {
@@ -50,6 +75,8 @@ const mocks = vi.hoisted(() => ({
     | undefined,
   refreshAvailabilitySelection: vi.fn(async () => {}),
   requestBooking: vi.fn(),
+  selectedCable: 'pro' as 'easy' | 'hietsu' | 'pro',
+  availabilityState: { status: 'loading' } as unknown,
 }))
 
 vi.mock('../../../app/providers', () => ({
@@ -81,7 +108,7 @@ vi.mock('../../booking/use-booking-sheet-controller', () => ({
 
 vi.mock('../use-availability-overview', () => ({
   useAvailabilityOverview: vi.fn(() => ({
-    availabilityState: { status: 'loading' },
+    availabilityState: mocks.availabilityState,
     loadMoreAvailability: vi.fn(),
     refreshAvailabilitySelection: mocks.refreshAvailabilitySelection,
   })),
@@ -90,8 +117,12 @@ vi.mock('../use-availability-overview', () => ({
 vi.mock('../use-availability-scope', () => ({
   useAvailabilityScope: vi.fn(() => ({
     selectCable: vi.fn(),
-    selectedCable: 'pro',
+    selectedCable: mocks.selectedCable,
   })),
+}))
+
+vi.mock('../use-booking-basket', () => ({
+  useBookingBasket: vi.fn(() => mocks.bookingBasket),
 }))
 
 vi.mock('./AvailabilityOverviewContent', () => ({
@@ -129,16 +160,35 @@ vi.mock('../../booking/components/BookingSheetFlow', () => ({
   }),
 }))
 
+vi.mock('./BookingReplacementSheet', () => ({
+  BookingReplacementSheet: vi.fn((props) => {
+    mocks.bookingReplacementProps = props
+    return null
+  }),
+}))
+
 describe('AvailabilityScreen', () => {
   afterEach(() => {
     mocks.availabilityOverviewContentProps = undefined
     mocks.bookingSheetFlowProps = undefined
+    mocks.bookingReplacementProps = undefined
+    mocks.bookingBasket = {
+      addSelection: vi.fn(),
+      clearSelections: vi.fn(),
+      clearSelectionsIfUnchanged: vi.fn(),
+      isSelected: vi.fn(() => false),
+      removeSelection: vi.fn(),
+      revision: 0,
+      selections: [],
+    }
     mocks.bookingSheetState = { status: 'closed' }
     mocks.isBookingReady = false
     mocks.onKeepBookingForMore = undefined
     mocks.onBookingFinalized = undefined
     mocks.refreshAvailabilitySelection.mockClear()
     mocks.requestBooking.mockClear()
+    mocks.selectedCable = 'pro'
+    mocks.availabilityState = { status: 'loading' }
   })
 
   it('requests an initial booking for the rendered immediate-booking slot', async () => {
@@ -210,4 +260,137 @@ describe('AvailabilityScreen', () => {
       localDate('2026-05-21'),
     )
   })
+
+  it('clears a pending replacement before availability refreshes finish after booking', async () => {
+    let resolveRefresh: (() => void) | undefined
+    mocks.refreshAvailabilitySelection.mockImplementation(
+      () => new Promise<void>((resolve) => {
+        resolveRefresh = resolve
+      }),
+    )
+    const { rerender } = renderPendingReplacement()
+
+    const onBookingFinalized = mocks.onBookingFinalized
+    if (!onBookingFinalized) throw new Error('Expected booking finalization callback')
+
+    const finalization = onBookingFinalized({
+      result: { status: 'success' },
+      selections: [currentSelection],
+    })
+
+    await act(async () => {})
+    expect(mocks.bookingReplacementProps?.pendingReplacement).toBeNull()
+
+    resolveRefresh?.()
+    await finalization
+    rerender(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
+  })
+
+  it('clears a pending replacement when its current cable availability no longer renders the slot', () => {
+    const { rerender } = renderPendingReplacement()
+    mocks.selectedCable = 'pro'
+    mocks.availabilityState = readyAvailability([])
+
+    rerender(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
+
+    expect(mocks.bookingReplacementProps?.pendingReplacement).toBeNull()
+  })
+
+  it('clears a pending replacement when its proposed cable availability no longer renders the slot', () => {
+    const { rerender } = renderPendingReplacement()
+    mocks.selectedCable = 'easy'
+    mocks.availabilityState = {
+      ...readyAvailability([]),
+      status: 'refreshing' as const,
+    }
+
+    rerender(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
+
+    expect(mocks.bookingReplacementProps?.pendingReplacement).toBeNull()
+  })
+
+  it('keeps a pending replacement when an inactive cable view does not render either slot', () => {
+    const { rerender } = renderPendingReplacement()
+    mocks.selectedCable = 'hietsu'
+    mocks.availabilityState = readyAvailability([])
+
+    rerender(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
+
+    expect(mocks.bookingReplacementProps?.pendingReplacement).toEqual({
+      current: currentSelection,
+      proposed: proposedSelection,
+    })
+  })
+
+  it('keeps a pending replacement while its selected current slot remains rendered', () => {
+    const { rerender } = renderPendingReplacement()
+    mocks.selectedCable = 'pro'
+    mocks.availabilityState = readyAvailability([currentSelection])
+
+    rerender(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
+
+    expect(mocks.bookingReplacementProps?.pendingReplacement).toEqual({
+      current: currentSelection,
+      proposed: proposedSelection,
+    })
+  })
+
+  it('clears a pending replacement when its current selection is removed', () => {
+    renderPendingReplacement()
+    const removeSelection = mocks.availabilityOverviewContentProps?.basket
+      .onRemoveSelection
+    if (!removeSelection) throw new Error('Expected remove selection action')
+
+    act(() => {
+      removeSelection(currentSelection)
+    })
+
+    expect(mocks.bookingReplacementProps?.pendingReplacement).toBeNull()
+  })
+
+  it('clears a pending replacement when the review selection is cleared', () => {
+    renderPendingReplacement()
+    const clearSelection = mocks.bookingSheetFlowProps?.actions.basket
+      .onClearSelection
+    if (!clearSelection) throw new Error('Expected clear selection action')
+
+    act(() => {
+      clearSelection()
+    })
+
+    expect(mocks.bookingReplacementProps?.pendingReplacement).toBeNull()
+  })
 })
+
+function renderPendingReplacement() {
+  mocks.bookingBasket.selections = [currentSelection]
+  mocks.selectedCable = 'easy'
+  mocks.availabilityState = readyAvailability([proposedSelection])
+
+  const rendered = render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
+
+  const addSelection = mocks.availabilityOverviewContentProps?.basket.onAddSelection
+  if (!addSelection) throw new Error('Expected add selection action')
+
+  act(() => {
+    addSelection(proposedSelection)
+  })
+
+  expect(mocks.bookingReplacementProps?.pendingReplacement).toEqual({
+    current: currentSelection,
+    proposed: proposedSelection,
+  })
+
+  return rendered
+}
+
+function readyAvailability(selections: readonly BookingSlotSelection[]) {
+  return {
+    dayGroups: selections.map((selection) => ({
+      date: selection.date,
+      displayDate: 'Wed 20 May',
+      slots: [selection],
+    })),
+    status: 'ready' as const,
+  }
+}

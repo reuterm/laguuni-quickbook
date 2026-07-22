@@ -83,6 +83,7 @@ export function AvailabilityScreen({
   } = useBookingSheetController({
     onKeepBookingForMore: bookingBasket.addSelection,
     onBookingFinalized: async ({ result, selections }) => {
+      setPendingReplacement(null)
       const submittedBasketRevision = bookingBasket.revision
       const uniqueSelections = [
         ...new Map(
@@ -102,25 +103,31 @@ export function AvailabilityScreen({
       if (result.status === 'success') {
         bookingBasket.clearSelectionsIfUnchanged(submittedBasketRevision)
       }
-
-      setPendingReplacement(null)
     },
   })
 
   useEffect(() => {
     if (
       pendingReplacement === null ||
-      pendingReplacement.proposed.cableId !== selectedCable ||
       (availabilityState.status !== 'ready' &&
         availabilityState.status !== 'refreshing')
     ) {
       return
     }
 
-    const proposedSelectionKey = getBookingSlotSelectionKey(
-      pendingReplacement.proposed,
-    )
-    const proposedSelectionIsRendered = availabilityState.dayGroups.some(
+    const selection =
+      pendingReplacement.current.cableId === selectedCable
+        ? pendingReplacement.current
+        : pendingReplacement.proposed.cableId === selectedCable
+          ? pendingReplacement.proposed
+          : undefined
+
+    if (selection === undefined) {
+      return
+    }
+
+    const selectionKey = getBookingSlotSelectionKey(selection)
+    const selectionIsRendered = availabilityState.dayGroups.some(
       (dayGroup) =>
         dayGroup.slots.some(
           (slot) =>
@@ -129,11 +136,11 @@ export function AvailabilityScreen({
               date: dayGroup.date,
               endTime: slot.endTime,
               startTime: slot.startTime,
-            }) === proposedSelectionKey,
+            }) === selectionKey,
         ),
     )
 
-    if (!proposedSelectionIsRendered) {
+    if (!selectionIsRendered) {
       setPendingReplacement(null)
     }
   }, [availabilityState, pendingReplacement, selectedCable])
