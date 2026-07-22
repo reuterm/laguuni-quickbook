@@ -13,21 +13,26 @@ import { BookingResultPanel } from './BookingResultPanel'
 import { BookingSheet } from './BookingSheet'
 import { BookingSubmittingPanel } from './BookingSubmittingPanel'
 
+export type BookingSheetFlowActions = {
+  basket: { onClearSelection: () => void }
+  initial:
+    | { continuation: 'none' }
+    | { continuation: 'add-more'; onAddMore: () => void }
+}
+
 type BookingSheetFlowProps = {
+  actions: BookingSheetFlowActions
   bookingSheetState: BookingSheetState
-  clearBookingSelection?: () => void
   confirmBooking: () => Promise<void>
   dismissBookingSheet: () => void
-  keepBookingForMore?: () => void
   onExportTrace: (traceId: string) => Promise<void>
 }
 
 export function BookingSheetFlow({
+  actions,
   bookingSheetState,
-  clearBookingSelection,
   confirmBooking,
   dismissBookingSheet,
-  keepBookingForMore,
   onExportTrace,
 }: BookingSheetFlowProps) {
   const renderedStateRef = useRef<Exclude<
@@ -58,14 +63,23 @@ export function BookingSheetFlow({
       content = (
         <BookingConfirmPanel
           onConfirm={confirmBooking}
-          {...(renderedState.kind === 'initial' && keepBookingForMore
-            ? { onAddMore: keepBookingForMore }
-            : {})}
-          {...(renderedState.kind === 'basket' && clearBookingSelection
+          {...(renderedState.kind === 'initial' &&
+          actions.initial.continuation === 'add-more'
             ? {
-                onClearSelection: () => {
-                  clearBookingSelection()
-                  dismissBookingSheet()
+                secondaryAction: {
+                  label: 'Add more',
+                  onClick: actions.initial.onAddMore,
+                },
+              }
+            : {})}
+          {...(renderedState.kind === 'basket'
+            ? {
+                secondaryAction: {
+                  label: 'Clear selection',
+                  onClick: () => {
+                    actions.basket.onClearSelection()
+                    dismissBookingSheet()
+                  },
                 },
               }
             : {})}

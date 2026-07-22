@@ -148,11 +148,16 @@ export function AvailabilityScreen({
     <section aria-labelledby="availability-title" className="space-y-6">
       <ContentRail className="space-y-5">
         <BookingSheetFlow
+          actions={{
+            basket: { onClearSelection: clearBasketSelections },
+            initial: {
+              continuation: 'add-more',
+              onAddMore: keepBookingForMore,
+            },
+          }}
           bookingSheetState={bookingSheetState}
-          clearBookingSelection={clearBasketSelections}
           confirmBooking={confirmBooking}
           dismissBookingSheet={dismissBookingSheet}
-          keepBookingForMore={keepBookingForMore}
           onExportTrace={handleExportTrace}
         />
 

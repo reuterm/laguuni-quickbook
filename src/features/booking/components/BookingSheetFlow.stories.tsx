@@ -23,8 +23,14 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
+const noContinuationActions = {
+  basket: { onClearSelection: noop },
+  initial: { continuation: 'none' as const },
+}
+
 export const Confirm: Story = {
   args: {
+    actions: noContinuationActions,
     bookingSheetState: createBookingSheetState('confirm'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
@@ -34,6 +40,10 @@ export const Confirm: Story = {
 
 export const InitialConfirmation: Story = {
   args: {
+    actions: {
+      basket: { onClearSelection: noop },
+      initial: { continuation: 'add-more', onAddMore: fn() },
+    },
     bookingSheetState: {
       kind: 'initial',
       selections: [createSelection()],
@@ -41,17 +51,20 @@ export const InitialConfirmation: Story = {
     },
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
-    keepBookingForMore: fn(),
     onExportTrace: noopAsync,
   },
   play: async ({ args, canvas }) => {
     await canvas.getByRole('button', { name: 'Add more' }).click()
-    await expect(args.keepBookingForMore).toHaveBeenCalledOnce()
+    if (args.actions.initial.continuation !== 'add-more') {
+      throw new Error('Expected the Add more continuation action.')
+    }
+    await expect(args.actions.initial.onAddMore).toHaveBeenCalledOnce()
   },
 }
 
 export const Submitting: Story = {
   args: {
+    actions: noContinuationActions,
     bookingSheetState: createBookingSheetState('submitting'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
@@ -61,6 +74,7 @@ export const Submitting: Story = {
 
 export const Completed: Story = {
   args: {
+    actions: noContinuationActions,
     bookingSheetState: createCompletedBookingSheetState('failed'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
@@ -70,6 +84,7 @@ export const Completed: Story = {
 
 export const CompletedSuccessfulBooking: Story = {
   args: {
+    actions: noContinuationActions,
     bookingSheetState: createCompletedBookingSheetState('success'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
@@ -79,6 +94,7 @@ export const CompletedSuccessfulBooking: Story = {
 
 export const CompletedPaymentRequired: Story = {
   args: {
+    actions: noContinuationActions,
     bookingSheetState: createCompletedBookingSheetState('payment_required'),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
@@ -103,12 +119,12 @@ const multiSlotSelections = [
 
 export const MixedCableBasketReview: Story = {
   args: {
+    actions: { ...noContinuationActions, basket: { onClearSelection: fn() } },
     bookingSheetState: {
       kind: 'basket',
       selections: multiSlotSelections,
       status: 'confirm',
     },
-    clearBookingSelection: fn(),
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
     onExportTrace: noopAsync,
@@ -122,6 +138,7 @@ export const MixedCableBasketReview: Story = {
 
 export const CompletedSuccessfulMultiSlotBooking: Story = {
   args: {
+    actions: noContinuationActions,
     bookingSheetState: {
       result: {
         orderIdentifier: 'fixture-multi-slot-order-id',

@@ -249,7 +249,7 @@ describe('booking flow integration', () => {
     await user.click(screen.getByRole('button', { name: 'Close' }))
 
     expect(
-      screen.getByRole('button', { name: 'Review 2 selected slots' }),
+      screen.getByRole('button', { name: 'Review selection' }),
     ).toBeVisible()
   })
 
@@ -306,20 +306,20 @@ describe('booking flow integration', () => {
     )
     await user.click(screen.getByRole('button', { name: 'Close' }))
     expect(
-      screen.getByRole('button', { name: 'Review 2 selected slots' }),
+      screen.getByRole('button', { name: 'Review selection' }),
     ).toBeVisible()
 
     resolveProRefresh?.()
     await waitFor(() => {
       expect(
-        screen.getByRole('button', { name: 'Review 2 selected slots' }),
+        screen.getByRole('button', { name: 'Review selection' }),
       ).toBeVisible()
     })
 
     resolveEasyRefresh?.()
     await waitFor(() => {
       expect(
-        screen.queryByRole('button', { name: 'Review 2 selected slots' }),
+        screen.queryByRole('button', { name: 'Review selection' }),
       ).not.toBeInTheDocument()
     })
   })
@@ -363,7 +363,7 @@ describe('booking flow integration', () => {
     await screen.findByRole('heading', { name: 'Booking confirmed' })
 
     await user.click(screen.getByRole('button', { name: 'Close' }))
-    await user.click(screen.getByRole('button', { name: 'Review 2 selected slots' }))
+    await user.click(screen.getByRole('button', { name: 'Review selection' }))
     await user.click(screen.getByRole('button', { name: 'Clear selection' }))
     await clickFirstBookButton(user)
     await user.click(screen.getByRole('button', { name: 'Add more' }))
@@ -865,5 +865,5 @@ async function createMixedCableBasket(user: ReturnType<typeof userEvent.setup>) 
   await user.click(
     within(secondDaySection).getAllByRole('button', { name: /^Add / })[0]!,
   )
-  await user.click(screen.getByRole('button', { name: 'Review 2 selected slots' }))
+  await user.click(screen.getByRole('button', { name: 'Review selection' }))
 }

@@ -230,12 +230,12 @@ describe('App', () => {
       within(secondDaySection).getAllByRole('button', { name: /^Add / })[0]!,
     )
     await user.click(
-      screen.getByRole('button', { name: 'Review 2 selected slots' }),
+      screen.getByRole('button', { name: 'Review selection' }),
     )
     await user.click(screen.getByRole('button', { name: 'Close' }))
 
     expect(
-      screen.getByRole('button', { name: 'Review 2 selected slots' }),
+      screen.getByRole('button', { name: 'Review selection' }),
     ).toBeVisible()
   })
 

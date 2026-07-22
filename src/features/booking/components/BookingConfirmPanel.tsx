@@ -6,15 +6,13 @@ import {
 } from './BookingStatePanel'
 
 type BookingConfirmPanelProps = {
-  onAddMore?: () => void
-  onClearSelection?: () => void
   onConfirm: () => Promise<void>
+  secondaryAction?: { label: string; onClick: () => void }
 }
 
 export function BookingConfirmPanel({
-  onAddMore,
-  onClearSelection,
   onConfirm,
+  secondaryAction,
 }: BookingConfirmPanelProps) {
   return (
     <BookingStatePanel
@@ -30,24 +28,14 @@ export function BookingConfirmPanel({
           >
             Confirm booking
           </Button>
-          {onAddMore ? (
+          {secondaryAction ? (
             <Button
               type="button"
               className="w-full"
               variant="secondary"
-              onClick={onAddMore}
+              onClick={secondaryAction.onClick}
             >
-              Add more
-            </Button>
-          ) : null}
-          {onClearSelection ? (
-            <Button
-              type="button"
-              className="w-full"
-              variant="secondary"
-              onClick={onClearSelection}
-            >
-              Clear selection
+              {secondaryAction.label}
             </Button>
           ) : null}
         </div>
