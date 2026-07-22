@@ -5,19 +5,16 @@ import {
   bookingNeutralToneClassName,
 } from './BookingStatePanel'
 
-export type BookingConfirmSecondaryAction = {
-  label: string
-  onClick: () => void
-}
-
 type BookingConfirmPanelProps = {
+  onAddMore?: () => void
+  onClearSelection?: () => void
   onConfirm: () => Promise<void>
-  secondaryAction?: BookingConfirmSecondaryAction | undefined
 }
 
 export function BookingConfirmPanel({
+  onAddMore,
+  onClearSelection,
   onConfirm,
-  secondaryAction,
 }: BookingConfirmPanelProps) {
   return (
     <BookingStatePanel
@@ -33,14 +30,24 @@ export function BookingConfirmPanel({
           >
             Confirm booking
           </Button>
-          {secondaryAction ? (
+          {onAddMore ? (
             <Button
               type="button"
               className="w-full"
               variant="secondary"
-              onClick={secondaryAction.onClick}
+              onClick={onAddMore}
             >
-              {secondaryAction.label}
+              Add more
+            </Button>
+          ) : null}
+          {onClearSelection ? (
+            <Button
+              type="button"
+              className="w-full"
+              variant="secondary"
+              onClick={onClearSelection}
+            >
+              Clear selection
             </Button>
           ) : null}
         </div>

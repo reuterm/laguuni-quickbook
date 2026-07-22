@@ -8,32 +8,26 @@ import { getBookingSelectionsPresentation } from '../booking-selections'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
 import {
   BookingConfirmPanel,
-  type BookingConfirmSecondaryAction,
 } from './BookingConfirmPanel'
 import { BookingResultPanel } from './BookingResultPanel'
 import { BookingSheet } from './BookingSheet'
 import { BookingSubmittingPanel } from './BookingSubmittingPanel'
 
-export type BookingSheetFlowActions = {
-  basket: { onClearSelection: () => void }
-  initial:
-    | { continuation: 'none' }
-    | { continuation: 'add-more'; onAddMore: () => void }
-}
-
 type BookingSheetFlowProps = {
-  actions: BookingSheetFlowActions
   bookingSheetState: BookingSheetState
+  clearBookingSelection?: () => void
   confirmBooking: () => Promise<void>
   dismissBookingSheet: () => void
+  keepBookingForMore?: () => void
   onExportTrace: (traceId: string) => Promise<void>
 }
 
 export function BookingSheetFlow({
-  actions,
   bookingSheetState,
+  clearBookingSelection,
   confirmBooking,
   dismissBookingSheet,
+  keepBookingForMore,
   onExportTrace,
 }: BookingSheetFlowProps) {
   const renderedStateRef = useRef<Exclude<
@@ -61,30 +55,20 @@ export function BookingSheetFlow({
 
   switch (renderedState.status) {
     case 'confirm': {
-      let secondaryAction: BookingConfirmSecondaryAction | undefined
-
-      if (
-        renderedState.kind === 'initial' &&
-        actions.initial.continuation === 'add-more'
-      ) {
-        secondaryAction = {
-          label: 'Add more',
-          onClick: actions.initial.onAddMore,
-        }
-      } else if (renderedState.kind === 'basket') {
-        secondaryAction = {
-          label: 'Clear selection',
-          onClick: () => {
-            actions.basket.onClearSelection()
-            dismissBookingSheet()
-          },
-        }
-      }
-
       content = (
         <BookingConfirmPanel
           onConfirm={confirmBooking}
-          secondaryAction={secondaryAction}
+          {...(renderedState.kind === 'initial' && keepBookingForMore
+            ? { onAddMore: keepBookingForMore }
+            : {})}
+          {...(renderedState.kind === 'basket' && clearBookingSelection
+            ? {
+                onClearSelection: () => {
+                  clearBookingSelection()
+                  dismissBookingSheet()
+                },
+              }
+            : {})}
         />
       )
       break
