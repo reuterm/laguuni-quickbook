@@ -90,17 +90,26 @@ export function AvailabilityCalendarWeek({
             const slot = dayGroup
               ? slotLookup.get(createSlotLookupKey(dayGroup.date, time))
               : null
-            let onClick: (() => void) | undefined
-            let disabled: boolean | undefined
-
-            if (slot && basket.kind === 'basket') {
-              onClick = basket.isSelected(slot.selection)
-                ? () => basket.onRemoveSelection(slot.selection)
-                : () => basket.onAddSelection(slot.selection)
-            } else if (slot && bookingActionMode !== 'hidden') {
-              disabled = bookingActionMode === 'disabled'
-              onClick = () => onBookSelection(slot.selection)
-            }
+            const selected = slot ? basket.isSelected(slot.selection) : false
+            const slotAction =
+              slot && basket.kind === 'basket'
+                ? {
+                    actionLabel: `${selected ? 'Remove' : 'Add'} ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`,
+                    disabled: false,
+                    onClick: () =>
+                      (selected
+                        ? basket.onRemoveSelection
+                        : basket.onAddSelection)(slot.selection),
+                    pressed: selected,
+                  }
+                : slot && bookingActionMode !== 'hidden'
+                  ? {
+                      actionLabel: `Book ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`,
+                      disabled: bookingActionMode === 'disabled',
+                      onClick: () => onBookSelection(slot.selection),
+                      pressed: false,
+                    }
+                  : null
 
             return (
               <td
@@ -114,8 +123,7 @@ export function AvailabilityCalendarWeek({
                   <AvailabilityCapacityChip
                     slot={slot}
                     className="min-w-11 px-2.5 py-1"
-                    disabled={disabled}
-                    onClick={onClick}
+                    {...(slotAction ?? {})}
                   />
                 ) : (
                   <span

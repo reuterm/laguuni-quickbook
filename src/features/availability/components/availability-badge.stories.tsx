@@ -46,8 +46,10 @@ function renderCapacityChip({
   if (interactive) {
     return (
       <AvailabilityCapacityChip
-        disabled={disabled}
+        actionLabel={`Book ${slot.startTime}-${slot.endTime}, ${slot.freeCapacity} spots free`}
+        disabled={disabled ?? false}
         onClick={onClick ?? noop}
+        pressed={false}
         slot={slot}
       />
     )

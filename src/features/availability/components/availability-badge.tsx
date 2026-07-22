@@ -16,26 +16,33 @@ const availabilityChipBaseClassName =
 const availabilityChipInteractiveClassName =
   'h-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50'
 
-type AvailabilityCapacityChipProps = {
-  className?: string
-  disabled?: boolean | undefined
-  onClick?: (() => void) | undefined
-  slot: AvailabilitySlot
-}
+type AvailabilityCapacityChipProps =
+  | {
+      className?: string
+      slot: AvailabilitySlot
+    }
+  | {
+      actionLabel: string
+      className?: string
+      disabled: boolean
+      onClick: () => void
+      pressed: boolean
+      slot: AvailabilitySlot
+    }
 
 export function AvailabilityCapacityChip({
-  className,
-  disabled,
-  onClick,
-  slot,
+  ...props
 }: AvailabilityCapacityChipProps) {
+  const { className, slot } = props
+  const isInteractive = 'onClick' in props
   const chipClassName = cn(
     getAvailabilityChipClassName(slot),
-    onClick !== undefined && availabilityChipInteractiveClassName,
+    isInteractive && availabilityChipInteractiveClassName,
+    isInteractive && props.pressed && 'border-primary bg-primary/25 text-primary ring-2 ring-primary/50',
     className,
   )
 
-  if (onClick === undefined) {
+  if (!isInteractive) {
     return (
       <span className={chipClassName}>{getAvailabilityBadgeLabel(slot)}</span>
     )
@@ -44,9 +51,10 @@ export function AvailabilityCapacityChip({
   return (
     <button
       className={chipClassName}
-      disabled={disabled}
-      onClick={onClick}
-      aria-label={`Book ${slot.startTime}-${slot.endTime}, ${getAvailabilityBadgeLabel(slot)} spots free`}
+      disabled={props.disabled}
+      onClick={props.onClick}
+      aria-label={props.actionLabel}
+      aria-pressed={props.pressed}
       type="button"
     >
       {getAvailabilityBadgeLabel(slot)}
