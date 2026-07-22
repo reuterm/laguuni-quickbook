@@ -134,13 +134,16 @@ export function useBookingSheetController({
     void completedSubmission.releaseReservation()
   }, [takeCompletedSubmission])
 
-  const requestInitialBooking = useCallback((selection: BookingSlotSelection) => {
-    setBookingSheetState((currentState) =>
-      currentState.status === 'submitting'
-        ? currentState
-        : { kind: 'initial', selections: [selection], status: 'confirm' },
-    )
-  }, [])
+  const requestInitialBooking = useCallback(
+    (selection: BookingSlotSelection) => {
+      setBookingSheetState((currentState) =>
+        currentState.status === 'submitting'
+          ? currentState
+          : { kind: 'initial', selections: [selection], status: 'confirm' },
+      )
+    },
+    [],
+  )
 
   const requestBasketReview = useCallback(
     (selections: readonly BookingSlotSelection[]) => {

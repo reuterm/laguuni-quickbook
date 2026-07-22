@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { BookingSlotSelection } from '@/domain/booking'
-import type { BookingSheetFlowActions } from '../../booking/components/BookingSheetFlow'
 import { localDate } from '../../../../tests/local-date'
+import type { BookingSheetFlowActions } from '../../booking/components/BookingSheetFlow'
 import { AvailabilityScreen } from './AvailabilityScreen'
 
 const mocks = vi.hoisted(() => ({
@@ -43,7 +43,7 @@ const mocks = vi.hoisted(() => ({
     | ((selection: { date: string }) => void)
     | undefined,
   onBookingFinalized: undefined as
-   | ((booking: {
+    | ((booking: {
         result: { status: 'success' }
         selections: readonly BookingSlotSelection[]
       }) => Promise<void>)
@@ -209,5 +209,4 @@ describe('AvailabilityScreen', () => {
       localDate('2026-05-21'),
     )
   })
-
 })

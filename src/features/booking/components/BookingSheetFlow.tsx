@@ -6,9 +6,7 @@ import type {
 import { useBookingCalendarAction } from '../../calendar/use-booking-calendar-action'
 import { getBookingSelectionsPresentation } from '../booking-selections'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
-import {
-  BookingConfirmPanel,
-} from './BookingConfirmPanel'
+import { BookingConfirmPanel } from './BookingConfirmPanel'
 import { BookingResultPanel } from './BookingResultPanel'
 import { BookingSheet } from './BookingSheet'
 import { BookingSubmittingPanel } from './BookingSubmittingPanel'

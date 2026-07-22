@@ -191,14 +191,12 @@ describe('useBookingSheetController', () => {
     })
 
     await act(async () => {
-      result.current.requestInitialBooking(
-        {
-          cableId: 'easy',
-          date: localDate('2026-05-21'),
-          endTime: '17:00',
-          startTime: '16:00',
-        },
-      )
+      result.current.requestInitialBooking({
+        cableId: 'easy',
+        date: localDate('2026-05-21'),
+        endTime: '17:00',
+        startTime: '16:00',
+      })
     })
 
     expect(result.current.bookingSheetState).toEqual({

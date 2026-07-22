@@ -163,5 +163,4 @@ describe('AvailabilityScreen basket flow', () => {
 
     expect(screen.getByRole('button', { name: 'Add more' })).toBeVisible()
   })
-
 })

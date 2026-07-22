@@ -52,10 +52,9 @@ export function AvailabilityScreen({
     availabilityState,
     loadMoreAvailability,
     refreshAvailabilitySelection,
-  } =
-    useAvailabilityOverview(api, selectedCable, availabilityReferenceDate, {
-      enabled: isOnline,
-    })
+  } = useAvailabilityOverview(api, selectedCable, availabilityReferenceDate, {
+    enabled: isOnline,
+  })
   const handleExportTrace = useCallback(
     async (traceId: string) => {
       await exportDiagnosticsForTrace(
