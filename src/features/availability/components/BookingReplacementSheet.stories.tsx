@@ -50,17 +50,16 @@ export const CrossCableReplacement: Story = {
   render: () => <ReplacementSheetStory />,
   play: async ({ canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
+    const dialog = page.getByRole('dialog')
 
-    await expect(page.getByRole('dialog')).toHaveTextContent(
-      /Replace Pro .* with Easy/,
-    )
+    await expect(dialog).toHaveTextContent(/Replace Pro .* with Easy/)
 
     await userEvent.click(
       page.getByRole('button', { name: 'Keep current' }),
     )
 
     await waitFor(() => {
-      expect(page.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(dialog).toHaveAttribute('data-state', 'closed')
     })
   },
 }
