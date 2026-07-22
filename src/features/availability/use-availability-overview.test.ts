@@ -270,6 +270,67 @@ describe('useAvailabilityOverview', () => {
     expect(result.current.availabilityState.status).toBe('ready')
   })
 
+  it('refreshes a selected cable day in the active availability state', async () => {
+    const getDailyAvailabilityWindow = vi.fn(
+      async (_cableId: CableId, date: LocalDateString) =>
+        createDailyAvailabilityWindow(date),
+    )
+    const { api } = createApi(getDailyAvailabilityWindow)
+
+    const { result } = renderHook(() =>
+      useAvailabilityOverview(api, 'pro', new Date('2026-05-14T12:00:00')),
+    )
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    getDailyAvailabilityWindow.mockImplementation(
+      async (_cableId: CableId, date: LocalDateString) =>
+        createDailyAvailabilityWindow(date, { freeCapacity: 1 }),
+    )
+    getDailyAvailabilityWindow.mockClear()
+
+    await act(async () => {
+      await result.current.refreshAvailabilitySelection(
+        'pro',
+        localDate('2026-05-20'),
+      )
+    })
+
+    expect(getDailyAvailabilityWindow).toHaveBeenCalledExactlyOnceWith(
+      'pro',
+      '2026-05-20',
+    )
+    if (result.current.availabilityState.status !== 'ready') {
+      throw new Error('Expected ready availability state')
+    }
+    expect(
+      result.current.availabilityState.dayGroups.find(
+        (dayGroup) => dayGroup.date === localDate('2026-05-20'),
+      )?.slots[0]?.freeCapacity,
+    ).toBe(1)
+  })
+
+  it('does not refresh a selection while availability is disabled', async () => {
+    const { api, getDailyAvailabilityWindow } = createApi()
+
+    const { result } = renderHook(() =>
+      useAvailabilityOverview(api, 'pro', new Date('2026-05-14T12:00:00'), {
+        enabled: false,
+      }),
+    )
+
+    await act(async () => {
+      await result.current.refreshAvailabilitySelection(
+        'pro',
+        localDate('2026-05-20'),
+      )
+    })
+
+    expect(getDailyAvailabilityWindow).not.toHaveBeenCalled()
+  })
+
   it('keeps existing content visible when refreshing a single day fails', async () => {
     const getDailyAvailabilityWindow = vi.fn(
       async (_cableId: CableId, date: LocalDateString) => {

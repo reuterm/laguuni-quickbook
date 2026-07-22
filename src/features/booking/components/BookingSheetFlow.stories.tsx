@@ -32,6 +32,24 @@ export const Confirm: Story = {
   },
 }
 
+export const InitialConfirmation: Story = {
+  args: {
+    bookingSheetState: {
+      kind: 'initial',
+      selections: [createSelection()],
+      status: 'confirm',
+    },
+    confirmBooking: noopAsync,
+    dismissBookingSheet: noop,
+    keepBookingForMore: fn(),
+    onExportTrace: noopAsync,
+  },
+  play: async ({ args, canvas }) => {
+    await canvas.getByRole('button', { name: 'Add more' }).click()
+    await expect(args.keepBookingForMore).toHaveBeenCalledOnce()
+  },
+}
+
 export const Submitting: Story = {
   args: {
     bookingSheetState: createBookingSheetState('submitting'),
@@ -83,7 +101,7 @@ const multiSlotSelections = [
   }),
 ] as const
 
-export const MultiSlotReview: Story = {
+export const MixedCableBasketReview: Story = {
   args: {
     bookingSheetState: {
       kind: 'basket',
@@ -94,6 +112,11 @@ export const MultiSlotReview: Story = {
     confirmBooking: noopAsync,
     dismissBookingSheet: noop,
     onExportTrace: noopAsync,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('2 slots')).toBeVisible()
+    await expect(canvas.getByText('Pro')).toBeVisible()
+    await expect(canvas.getByText('Easy')).toBeVisible()
   },
 }
 
