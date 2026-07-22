@@ -56,3 +56,55 @@ exit 0
 ## Concerns
 
 None. Storybook documentation was checked before story edits. Story preview URL resolution was unavailable for the isolated worktree paths, but Storybook typechecking passed.
+
+## Review Correction
+
+### Finding
+
+The direct `AvailabilityScreen` unit test still captured and asserted the removed optional `keepBookingForMore` and `clearBookingSelection` props on `BookingSheetFlow`. This failed at runtime because `AvailabilityScreen` correctly supplies the required `actions` contract.
+
+### Change
+
+- Updated only `src/features/availability/components/AvailabilityScreen.test.tsx`.
+- Typed the `BookingSheetFlow` mock's required `actions` property as `BookingSheetFlowActions`.
+- Replaced removed callback assertions with checks for `actions.basket.onClearSelection` and the narrowed `actions.initial` `add-more` branch's `onAddMore` callback.
+- Did not modify production code.
+
+### Red Evidence
+
+```text
+pnpm test src/features/availability/components/AvailabilityScreen.test.tsx
+
+FAIL src/features/availability/components/AvailabilityScreen.test.tsx > AvailabilityScreen > provides the required sheet continuation and basket clear actions
+AssertionError: expected undefined to be defined
+src/features/availability/components/AvailabilityScreen.test.tsx:160:61
+
+Test Files  1 failed (1)
+Tests       1 failed | 2 passed (3)
+```
+
+### Verification Output
+
+```text
+pnpm test src/features/availability/components/AvailabilityScreen.test.tsx
+
+Test Files  1 passed (1)
+Tests       3 passed (3)
+Duration    1.34s
+```
+
+```text
+pnpm test src/features/availability/components/BookingBasketReviewButton.test.tsx src/features/booking/components/BookingConfirmPanel.test.tsx src/features/booking/components/BookingSheetFlow.test.tsx src/app/App.test.tsx src/features/booking/booking-flow.integration.test.tsx
+
+Test Files  5 passed (5)
+Tests       40 passed (40)
+Duration    4.18s
+```
+
+```text
+pnpm typecheck
+
+> tsc -b && tsc -p tsconfig.storybook.json
+
+exit 0
+```

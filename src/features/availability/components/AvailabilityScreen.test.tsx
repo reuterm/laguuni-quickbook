@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { BookingSlotSelection } from '@/domain/booking'
+import type { BookingSheetFlowActions } from '../../booking/components/BookingSheetFlow'
 import { localDate } from '../../../../tests/local-date'
 import { AvailabilityScreen } from './AvailabilityScreen'
 
@@ -22,8 +23,7 @@ const mocks = vi.hoisted(() => ({
     | undefined,
   bookingSheetFlowProps: undefined as
     | {
-        clearBookingSelection?: () => void
-        keepBookingForMore?: () => void
+        actions: BookingSheetFlowActions
       }
     | undefined,
   bookingSheetState: { status: 'closed' } as
@@ -157,8 +157,17 @@ describe('AvailabilityScreen', () => {
   it('provides the required sheet continuation and basket clear actions', () => {
     render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
 
-    expect(mocks.bookingSheetFlowProps?.keepBookingForMore).toBeDefined()
-    expect(mocks.bookingSheetFlowProps?.clearBookingSelection).toBeDefined()
+    const actions = mocks.bookingSheetFlowProps?.actions
+    expect(actions).toBeDefined()
+    if (actions === undefined) {
+      throw new Error('Expected BookingSheetFlow actions')
+    }
+
+    expect(actions.basket.onClearSelection).toBeDefined()
+    expect(actions.initial.continuation).toBe('add-more')
+    if (actions.initial.continuation === 'add-more') {
+      expect(actions.initial.onAddMore).toBeDefined()
+    }
   })
 
   it('refreshes every distinct cable and date after a successful booking', async () => {
