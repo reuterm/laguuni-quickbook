@@ -150,7 +150,9 @@ describe('AvailabilityScreen', () => {
 
     await user.click(screen.getByRole('button', { name: 'Book fixture slot' }))
 
-    expect(mocks.requestBooking).toHaveBeenCalledWith('initial', [expectedSelection])
+    expect(mocks.requestBooking).toHaveBeenCalledWith('initial', [
+      expectedSelection,
+    ])
   })
 
   it('provides the required sheet continuation and basket clear actions', () => {

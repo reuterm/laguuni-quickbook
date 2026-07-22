@@ -425,7 +425,9 @@ describe('useBookingSheetController', () => {
       useBookingSheetController({ onDiscardInitialBooking }),
     )
 
-    act(() => result.current.requestBooking('basket', [selection, secondSelection]))
+    act(() =>
+      result.current.requestBooking('basket', [selection, secondSelection]),
+    )
     act(() => result.current.dismissBookingSheet())
 
     expect(result.current.bookingSheetState).toEqual({ status: 'closed' })

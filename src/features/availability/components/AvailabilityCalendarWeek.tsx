@@ -15,8 +15,8 @@ import {
   listCalendarTimes,
 } from '../availability-calendar'
 import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame'
-import { AvailabilityCapacityChip } from './availability-badge'
 import type { AvailabilityCapacityChipProps } from './availability-badge'
+import { AvailabilityCapacityChip } from './availability-badge'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { availabilityCalendarColumnClassNames } from './availability-calendar-ui'
 import type { BookingBasketProps } from './booking-basket-props'

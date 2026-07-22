@@ -11,7 +11,9 @@ vi.mock('./BookingConfirmPanel', async (importOriginal) => {
 
   return {
     ...actual,
-    BookingConfirmPanel: (props: Parameters<typeof actual.BookingConfirmPanel>[0]) => {
+    BookingConfirmPanel: (
+      props: Parameters<typeof actual.BookingConfirmPanel>[0],
+    ) => {
       bookingConfirmPanelMock(props)
       return <actual.BookingConfirmPanel {...props} />
     },

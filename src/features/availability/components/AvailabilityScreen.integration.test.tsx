@@ -152,7 +152,9 @@ describe('AvailabilityScreen basket flow', () => {
     }
 
     await user.click(firstBookButton)
-    expect(mocks.requestBooking).toHaveBeenCalledWith('initial', [firstSelection])
+    expect(mocks.requestBooking).toHaveBeenCalledWith('initial', [
+      firstSelection,
+    ])
 
     expect(screen.getByRole('button', { name: 'Add more' })).toBeVisible()
   })
