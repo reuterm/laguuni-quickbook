@@ -243,6 +243,33 @@ describe('useAvailabilityOverview', () => {
     )
   })
 
+  it('refreshes an inactive cable without changing the active availability state', async () => {
+    const { api, getDailyAvailabilityWindow } = createApi()
+
+    const { result } = renderHook(() =>
+      useAvailabilityOverview(api, 'pro', new Date('2026-05-14T12:00:00')),
+    )
+
+    await waitFor(() => {
+      expect(result.current.availabilityState.status).toBe('ready')
+    })
+
+    getDailyAvailabilityWindow.mockClear()
+
+    await act(async () => {
+      await result.current.refreshAvailabilitySelection(
+        'easy',
+        localDate('2026-05-20'),
+      )
+    })
+
+    expect(getDailyAvailabilityWindow).toHaveBeenCalledExactlyOnceWith(
+      'easy',
+      '2026-05-20',
+    )
+    expect(result.current.availabilityState.status).toBe('ready')
+  })
+
   it('keeps existing content visible when refreshing a single day fails', async () => {
     const getDailyAvailabilityWindow = vi.fn(
       async (_cableId: CableId, date: LocalDateString) => {

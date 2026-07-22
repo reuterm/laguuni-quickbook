@@ -31,6 +31,10 @@ type UseAvailabilityOverviewResult = {
   availabilityState: AvailabilityState
   loadMoreAvailability: () => Promise<void>
   refreshAvailabilityDay: (date: LocalDateString) => Promise<void>
+  refreshAvailabilitySelection: (
+    cableId: CableId,
+    date: LocalDateString,
+  ) => Promise<void>
   refreshAvailability: () => Promise<void>
 }
 
@@ -221,6 +225,22 @@ export function useAvailabilityOverview(
     [api, beginDayRefreshRequest, enabled, selectedCable],
   )
 
+  const refreshAvailabilitySelection = useCallback(
+    async (cableId: CableId, date: LocalDateString) => {
+      if (!enabled) {
+        return
+      }
+
+      if (cableId === selectedCable) {
+        await refreshAvailabilityDay(date)
+        return
+      }
+
+      await loadAvailabilityDay(api, cableId, date)
+    },
+    [api, enabled, refreshAvailabilityDay, selectedCable],
+  )
+
   const loadMoreAvailability = useCallback(async () => {
     if (!enabled) {
       return
@@ -316,6 +336,7 @@ export function useAvailabilityOverview(
     availabilityState,
     loadMoreAvailability,
     refreshAvailabilityDay,
+    refreshAvailabilitySelection,
     refreshAvailability,
   }
 }
