@@ -189,7 +189,7 @@ describe('AvailabilityCalendarGrid', () => {
 
     fireEvent.click(
       within(screen.getByRole('row', { name: '15:00 2' })).getByRole('button', {
-        name: 'Book slot',
+        name: 'Book 15:00-16:00, 2 spots free',
       }),
     )
 
@@ -225,14 +225,14 @@ describe('AvailabilityCalendarGrid', () => {
     const selected = within(
       screen.getByRole('row', { name: '15:00 2' }),
     ).getByRole('button', {
-      name: 'Book slot',
+      name: 'Remove 15:00-16:00, 2 spots free',
       pressed: true,
     })
 
     const unselected = within(
       screen.getByRole('row', { name: '16:00 3' }),
     ).getByRole('button', {
-      name: 'Book slot',
+      name: 'Book 16:00-17:00, 3 spots free',
       pressed: false,
     })
 
