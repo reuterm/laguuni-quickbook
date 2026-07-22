@@ -21,6 +21,10 @@ import { getBookingSlotSelectionKey } from '../../booking/booking-selections'
 import { BookingSheetFlow } from '../../booking/components/BookingSheetFlow'
 import { useBookingSheetController } from '../../booking/use-booking-sheet-controller'
 import { exportDiagnosticsForTrace } from '../../diagnostics/export'
+import {
+  getSelectionForDate,
+  type PendingBookingReplacement,
+} from '../booking-replacement'
 import { useAvailabilityOverview } from '../use-availability-overview'
 import { useAvailabilityScope } from '../use-availability-scope'
 import { useBookingBasket } from '../use-booking-basket'
@@ -30,10 +34,6 @@ import { getAvailabilityBookingActionProps } from './availability-booking-action
 import { BookingBasketReviewButton } from './BookingBasketReviewButton'
 import { BookingReplacementSheet } from './BookingReplacementSheet'
 import { emptyBookingBasket } from './booking-basket-props'
-import {
-  getSelectionForDate,
-  type PendingBookingReplacement,
-} from '../booking-replacement'
 
 type AvailabilityScreenProps = {
   isOnline: boolean
