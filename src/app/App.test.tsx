@@ -284,10 +284,10 @@ describe('App', () => {
       screen.queryByRole('dialog', { name: 'Replace selected slot?' }),
     ).not.toBeInTheDocument()
     expect(
-      within(document.body).getByRole(
-        'button',
-        { hidden: true, name: /^Remove 16:00-17:00/ },
-      ),
+      within(document.body).getByRole('button', {
+        hidden: true,
+        name: /^Remove 16:00-17:00/,
+      }),
     ).toBeVisible()
     expect(
       screen.queryByRole('button', { name: /^Remove 15:00-16:00/ }),
@@ -435,7 +435,9 @@ function createBookingStorage() {
   return storage
 }
 
-async function openPendingReplacement(user: ReturnType<typeof userEvent.setup>) {
+async function openPendingReplacement(
+  user: ReturnType<typeof userEvent.setup>,
+) {
   await openFirstBookingSheet(user)
   await user.click(screen.getByRole('button', { name: 'Add more' }))
   await user.click(screen.getByRole('tab', { name: 'Easy' }))
@@ -476,7 +478,9 @@ async function selectProCable(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole('heading', { name: 'Wed 20 May' })
 }
 
-async function reopenPendingReplacement(user: ReturnType<typeof userEvent.setup>) {
+async function reopenPendingReplacement(
+  user: ReturnType<typeof userEvent.setup>,
+) {
   const easySameDay = await screen.findByRole('heading', { name: 'Wed 20 May' })
   const easySameDaySection = easySameDay.closest('section')
   if (easySameDaySection === null) {

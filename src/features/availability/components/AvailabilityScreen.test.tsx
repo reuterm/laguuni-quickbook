@@ -264,14 +264,16 @@ describe('AvailabilityScreen', () => {
   it('clears a pending replacement before availability refreshes finish after booking', async () => {
     let resolveRefresh: (() => void) | undefined
     mocks.refreshAvailabilitySelection.mockImplementation(
-      () => new Promise<void>((resolve) => {
-        resolveRefresh = resolve
-      }),
+      () =>
+        new Promise<void>((resolve) => {
+          resolveRefresh = resolve
+        }),
     )
     const { rerender } = renderPendingReplacement()
 
     const onBookingFinalized = mocks.onBookingFinalized
-    if (!onBookingFinalized) throw new Error('Expected booking finalization callback')
+    if (!onBookingFinalized)
+      throw new Error('Expected booking finalization callback')
 
     const finalization = onBookingFinalized({
       result: { status: 'success' },
@@ -337,8 +339,8 @@ describe('AvailabilityScreen', () => {
 
   it('clears a pending replacement when its current selection is removed', () => {
     renderPendingReplacement()
-    const removeSelection = mocks.availabilityOverviewContentProps?.basket
-      .onRemoveSelection
+    const removeSelection =
+      mocks.availabilityOverviewContentProps?.basket.onRemoveSelection
     if (!removeSelection) throw new Error('Expected remove selection action')
 
     act(() => {
@@ -350,8 +352,8 @@ describe('AvailabilityScreen', () => {
 
   it('clears a pending replacement when the review selection is cleared', () => {
     renderPendingReplacement()
-    const clearSelection = mocks.bookingSheetFlowProps?.actions.basket
-      .onClearSelection
+    const clearSelection =
+      mocks.bookingSheetFlowProps?.actions.basket.onClearSelection
     if (!clearSelection) throw new Error('Expected clear selection action')
 
     act(() => {
@@ -367,9 +369,12 @@ function renderPendingReplacement() {
   mocks.selectedCable = 'easy'
   mocks.availabilityState = readyAvailability([proposedSelection])
 
-  const rendered = render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
+  const rendered = render(
+    <AvailabilityScreen isOnline onOpenSettings={vi.fn()} />,
+  )
 
-  const addSelection = mocks.availabilityOverviewContentProps?.basket.onAddSelection
+  const addSelection =
+    mocks.availabilityOverviewContentProps?.basket.onAddSelection
   if (!addSelection) throw new Error('Expected add selection action')
 
   act(() => {

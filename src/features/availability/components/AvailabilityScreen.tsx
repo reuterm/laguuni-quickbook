@@ -127,17 +127,16 @@ export function AvailabilityScreen({
     }
 
     const selectionKey = getBookingSlotSelectionKey(selection)
-    const selectionIsRendered = availabilityState.dayGroups.some(
-      (dayGroup) =>
-        dayGroup.slots.some(
-          (slot) =>
-            getBookingSlotSelectionKey({
-              cableId: selectedCable,
-              date: dayGroup.date,
-              endTime: slot.endTime,
-              startTime: slot.startTime,
-            }) === selectionKey,
-        ),
+    const selectionIsRendered = availabilityState.dayGroups.some((dayGroup) =>
+      dayGroup.slots.some(
+        (slot) =>
+          getBookingSlotSelectionKey({
+            cableId: selectedCable,
+            date: dayGroup.date,
+            endTime: slot.endTime,
+            startTime: slot.startTime,
+          }) === selectionKey,
+      ),
     )
 
     if (!selectionIsRendered) {
@@ -167,8 +166,10 @@ export function AvailabilityScreen({
 
     if (
       pendingReplacement !== null &&
-      (getBookingSlotSelectionKey(pendingReplacement.current) === selectionKey ||
-        getBookingSlotSelectionKey(pendingReplacement.proposed) === selectionKey)
+      (getBookingSlotSelectionKey(pendingReplacement.current) ===
+        selectionKey ||
+        getBookingSlotSelectionKey(pendingReplacement.proposed) ===
+          selectionKey)
     ) {
       setPendingReplacement(null)
     }
@@ -203,7 +204,10 @@ export function AvailabilityScreen({
       return
     }
 
-    const current = getSelectionForDate(bookingBasket.selections, selection.date)
+    const current = getSelectionForDate(
+      bookingBasket.selections,
+      selection.date,
+    )
     if (current === undefined || current.cableId === selection.cableId) {
       bookingBasket.addSelection(selection)
       return

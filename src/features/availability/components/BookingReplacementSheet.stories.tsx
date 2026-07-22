@@ -54,9 +54,7 @@ export const CrossCableReplacement: Story = {
 
     await expect(dialog).toHaveTextContent(/Replace Pro .* with Easy/)
 
-    await userEvent.click(
-      page.getByRole('button', { name: 'Keep current' }),
-    )
+    await userEvent.click(page.getByRole('button', { name: 'Keep current' }))
 
     await waitFor(() => {
       expect(dialog).toHaveAttribute('data-state', 'closed')

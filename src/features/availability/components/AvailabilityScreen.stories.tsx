@@ -292,9 +292,9 @@ export const CrossCableReplacement: Story = {
     await waitFor(() => {
       expect(replacementSheet).toHaveAttribute('data-state', 'closed')
     })
-    await expect(canvas.getByRole('button', { name: 'Review selection' })).toHaveTextContent(
-      '1 slot',
-    )
+    await expect(
+      canvas.getByRole('button', { name: 'Review selection' }),
+    ).toHaveTextContent('1 slot')
   },
 }
 

@@ -20,7 +20,9 @@ describe('booking replacement helpers', () => {
   }
 
   it('returns the selection for the requested date', () => {
-    expect(getSelectionForDate([proSelection], proSelection.date)).toBe(proSelection)
+    expect(getSelectionForDate([proSelection], proSelection.date)).toBe(
+      proSelection,
+    )
     expect(
       getSelectionForDate([proSelection], toLocalDateString('2026-05-15')),
     ).toBeUndefined()
