@@ -45,6 +45,19 @@ const FIXTURE_DAY_GROUPS: readonly AvailabilityDayGroup[] = [
         startTime: '15:00',
         totalCapacity: 4,
       },
+      {
+        endTime: '17:00',
+        freeCapacity: 3,
+        id: '2026-05-14-960',
+        selection: {
+          cableId: 'pro',
+          date: localDate('2026-05-14'),
+          endTime: '17:00',
+          startTime: '16:00',
+        },
+        startTime: '16:00',
+        totalCapacity: 4,
+      },
     ],
   },
   {
@@ -142,7 +155,7 @@ describe('AvailabilityCalendarGrid', () => {
     ).not.toBeInTheDocument()
     expect(
       within(firstWeekSection).getByRole('columnheader', {
-        name: /Thu 14 May 2 slots/i,
+        name: /Thu 14 May 3 slots/i,
       }),
     ).toBeInTheDocument()
     expect(
@@ -214,7 +227,7 @@ describe('AvailabilityCalendarGrid', () => {
     })
 
     const unselected = screen.getByRole('button', {
-      name: /^Add 12:00-13:00/,
+      name: /^Add 16:00-17:00/,
     })
 
     expect(selected).toHaveAttribute('aria-pressed', 'true')
@@ -227,7 +240,7 @@ describe('AvailabilityCalendarGrid', () => {
       expect.objectContaining({ startTime: '15:00' }),
     )
     expect(onAddSelection).toHaveBeenCalledWith(
-      expect.objectContaining({ startTime: '12:00' }),
+      expect.objectContaining({ startTime: '16:00' }),
     )
   })
 

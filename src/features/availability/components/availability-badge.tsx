@@ -38,9 +38,7 @@ export function AvailabilityCapacityChip({
   const chipClassName = cn(
     getAvailabilityChipClassName(slot),
     isInteractive && availabilityChipInteractiveClassName,
-    isInteractive &&
-      props.pressed &&
-      'border-primary bg-primary/25 text-primary ring-2 ring-primary/50',
+    isInteractive && props.pressed && 'border-primary bg-primary/25 text-primary ring-2 ring-primary/50',
     className,
   )
 
