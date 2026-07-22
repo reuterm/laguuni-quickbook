@@ -5,9 +5,14 @@ import {
   bookingNeutralToneClassName,
 } from './BookingStatePanel'
 
+export type BookingConfirmSecondaryAction = {
+  label: string
+  onClick: () => void
+}
+
 type BookingConfirmPanelProps = {
   onConfirm: () => Promise<void>
-  secondaryAction?: { label: string; onClick: () => void }
+  secondaryAction?: BookingConfirmSecondaryAction
 }
 
 export function BookingConfirmPanel({

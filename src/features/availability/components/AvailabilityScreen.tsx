@@ -71,8 +71,7 @@ export function AvailabilityScreen({
     isBookingInProgress,
     isBookingReady,
     keepBookingForMore,
-    requestBasketReview,
-    requestInitialBooking,
+    requestBooking,
   } = useBookingSheetController({
     onKeepBookingForMore: bookingBasket.addSelection,
     onBookingFinalized: async ({ result, selections }) => {
@@ -113,7 +112,7 @@ export function AvailabilityScreen({
     bookingBasket.clearSelections()
   }
   const reviewBasket = () => {
-    requestBasketReview(bookingBasket.selections)
+    requestBooking('basket', bookingBasket.selections)
   }
   const basket =
     bookingBasket.selections.length === 0
@@ -131,7 +130,7 @@ export function AvailabilityScreen({
     selection: Parameters<typeof bookingBasket.addSelection>[0],
   ) {
     if (bookingBasket.selections.length === 0) {
-      requestInitialBooking(selection)
+      requestBooking('initial', [selection])
       return
     }
 

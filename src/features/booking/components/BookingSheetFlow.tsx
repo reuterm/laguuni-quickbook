@@ -6,7 +6,10 @@ import type {
 import { useBookingCalendarAction } from '../../calendar/use-booking-calendar-action'
 import { getBookingSelectionsPresentation } from '../booking-selections'
 import type { BookingSheetState } from '../use-booking-sheet-controller'
-import { BookingConfirmPanel } from './BookingConfirmPanel'
+import {
+  BookingConfirmPanel,
+  type BookingConfirmSecondaryAction,
+} from './BookingConfirmPanel'
 import { BookingResultPanel } from './BookingResultPanel'
 import { BookingSheet } from './BookingSheet'
 import { BookingSubmittingPanel } from './BookingSubmittingPanel'
@@ -58,29 +61,30 @@ export function BookingSheetFlow({
 
   switch (renderedState.status) {
     case 'confirm': {
+      let secondaryAction: BookingConfirmSecondaryAction | undefined
+
+      if (
+        renderedState.kind === 'initial' &&
+        actions.initial.continuation === 'add-more'
+      ) {
+        secondaryAction = {
+          label: 'Add more',
+          onClick: actions.initial.onAddMore,
+        }
+      } else if (renderedState.kind === 'basket') {
+        secondaryAction = {
+          label: 'Clear selection',
+          onClick: () => {
+            actions.basket.onClearSelection()
+            dismissBookingSheet()
+          },
+        }
+      }
+
       content = (
         <BookingConfirmPanel
           onConfirm={confirmBooking}
-          {...(renderedState.kind === 'initial' &&
-          actions.initial.continuation === 'add-more'
-            ? {
-                secondaryAction: {
-                  label: 'Add more',
-                  onClick: actions.initial.onAddMore,
-                },
-              }
-            : {})}
-          {...(renderedState.kind === 'basket'
-            ? {
-                secondaryAction: {
-                  label: 'Clear selection',
-                  onClick: () => {
-                    actions.basket.onClearSelection()
-                    dismissBookingSheet()
-                  },
-                },
-              }
-            : {})}
+          secondaryAction={secondaryAction}
         />
       )
       break

@@ -20,8 +20,7 @@ const secondSelection = {
 }
 
 const mocks = vi.hoisted(() => ({
-  requestBasketReview: vi.fn(),
-  requestInitialBooking: vi.fn(),
+  requestBooking: vi.fn(),
 }))
 
 vi.mock('../../../app/providers', () => ({
@@ -77,17 +76,12 @@ vi.mock('../../booking/use-booking-sheet-controller', () => ({
           setBookingSheetState({ status: 'closed' })
         }
       },
-      requestBasketReview: (selections: readonly (typeof firstSelection)[]) => {
-        mocks.requestBasketReview(selections)
-        setBookingSheetState({ kind: 'basket', selections, status: 'confirm' })
-      },
-      requestInitialBooking: (selection: typeof firstSelection) => {
-        mocks.requestInitialBooking(selection)
-        setBookingSheetState({
-          kind: 'initial',
-          selections: [selection],
-          status: 'confirm',
-        })
+      requestBooking: (
+        kind: 'basket' | 'initial',
+        selections: readonly (typeof firstSelection)[],
+      ) => {
+        mocks.requestBooking(kind, selections)
+        setBookingSheetState({ kind, selections, status: 'confirm' })
       },
     }
   }),
@@ -144,8 +138,7 @@ vi.mock('../use-availability-scope', () => ({
 describe('AvailabilityScreen basket flow', () => {
   afterEach(() => {
     cleanup()
-    mocks.requestBasketReview.mockClear()
-    mocks.requestInitialBooking.mockClear()
+    mocks.requestBooking.mockClear()
   })
 
   it('offers Add more when immediately booking a slot', async () => {
@@ -159,7 +152,7 @@ describe('AvailabilityScreen basket flow', () => {
     }
 
     await user.click(firstBookButton)
-    expect(mocks.requestInitialBooking).toHaveBeenCalledWith(firstSelection)
+    expect(mocks.requestBooking).toHaveBeenCalledWith('initial', [firstSelection])
 
     expect(screen.getByRole('button', { name: 'Add more' })).toBeVisible()
   })

@@ -49,7 +49,7 @@ const mocks = vi.hoisted(() => ({
       }) => Promise<void>)
     | undefined,
   refreshAvailabilitySelection: vi.fn(async () => {}),
-  requestInitialBooking: vi.fn(),
+  requestBooking: vi.fn(),
 }))
 
 vi.mock('../../../app/providers', () => ({
@@ -73,8 +73,7 @@ vi.mock('../../booking/use-booking-sheet-controller', () => ({
         isBookingReady: mocks.isBookingReady,
         keepBookingForMore: () =>
           mocks.onKeepBookingForMore?.({ date: localDate('2026-05-20') }),
-        requestBasketReview: vi.fn(),
-        requestInitialBooking: mocks.requestInitialBooking,
+        requestBooking: mocks.requestBooking,
       }
     },
   ),
@@ -139,7 +138,7 @@ describe('AvailabilityScreen', () => {
     mocks.onKeepBookingForMore = undefined
     mocks.onBookingFinalized = undefined
     mocks.refreshAvailabilitySelection.mockClear()
-    mocks.requestInitialBooking.mockClear()
+    mocks.requestBooking.mockClear()
   })
 
   it('requests an initial booking for the rendered immediate-booking slot', async () => {
@@ -151,7 +150,7 @@ describe('AvailabilityScreen', () => {
 
     await user.click(screen.getByRole('button', { name: 'Book fixture slot' }))
 
-    expect(mocks.requestInitialBooking).toHaveBeenCalledWith(expectedSelection)
+    expect(mocks.requestBooking).toHaveBeenCalledWith('initial', [expectedSelection])
   })
 
   it('provides the required sheet continuation and basket clear actions', () => {
