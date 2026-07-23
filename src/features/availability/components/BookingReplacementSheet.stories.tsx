@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useState } from 'react'
-import { expect, userEvent, waitFor, within } from 'storybook/test'
+import { expect, userEvent, within } from 'storybook/test'
 
+import { noop } from '$storybook/fixture-data'
 import { localDate } from '../../../../tests/local-date'
 import type { PendingBookingReplacement } from '../booking-replacement'
 import { BookingReplacementSheet } from './BookingReplacementSheet'
@@ -22,14 +22,11 @@ const pendingReplacement: PendingBookingReplacement = {
 }
 
 function ReplacementSheetStory() {
-  const [replacement, setReplacement] =
-    useState<PendingBookingReplacement | null>(pendingReplacement)
-
   return (
     <BookingReplacementSheet
-      pendingReplacement={replacement}
-      onKeepCurrentSelection={() => setReplacement(null)}
-      onReplace={() => setReplacement(null)}
+      pendingReplacement={pendingReplacement}
+      onKeepCurrentSelection={noop}
+      onReplace={noop}
     />
   )
 }
@@ -54,10 +51,19 @@ export const CrossCableReplacement: Story = {
 
     await expect(dialog).toHaveTextContent(/Replace Pro .* with Easy/)
 
+    await expect(
+      page.getByRole('button', { name: 'Keep current' }),
+    ).toHaveClass('w-full')
+    await expect(page.getByRole('button', { name: 'Replace' })).toHaveClass(
+      'w-full',
+    )
+
     await userEvent.click(page.getByRole('button', { name: 'Keep current' }))
 
-    await waitFor(() => {
-      expect(dialog).toHaveAttribute('data-state', 'closed')
-    })
+    await expect(dialog).toBeVisible()
+
+    await userEvent.click(page.getByRole('button', { name: 'Replace' }))
+
+    await expect(dialog).toBeVisible()
   },
 }

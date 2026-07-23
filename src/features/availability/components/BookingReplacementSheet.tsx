@@ -3,7 +3,6 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
@@ -40,22 +39,23 @@ export function BookingReplacementSheet({
         side="bottom"
         className="rounded-t-[2rem] px-5 pb-7 pt-6 sm:mx-auto sm:max-w-lg"
       >
-        <SheetHeader className="pr-10 text-left">
+        <SheetHeader className="pr-10 text-center">
           <SheetTitle>Replace selected slot?</SheetTitle>
           <SheetDescription>{replacementMessage}</SheetDescription>
         </SheetHeader>
-        <SheetFooter>
+        <div className="grid gap-2">
           <Button
             type="button"
+            className="w-full"
             variant="secondary"
             onClick={onKeepCurrentSelection}
           >
             Keep current
           </Button>
-          <Button type="button" onClick={onReplace}>
+          <Button type="button" className="w-full" onClick={onReplace}>
             Replace
           </Button>
-        </SheetFooter>
+        </div>
       </SheetContent>
     </Sheet>
   )
