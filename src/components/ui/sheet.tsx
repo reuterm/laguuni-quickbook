@@ -109,7 +109,10 @@ function SheetContent({
     <SheetPortal>
       <SheetOverlay />
       <DialogPrimitive.Content
-        className={cn(sheetVariants({ className, side }))}
+        className={cn(
+          sheetVariants({ className, side }),
+          side === 'right' && 'pt-[calc(env(safe-area-inset-top)+1.25rem)]',
+        )}
         data-slot="sheet-content"
         {...props}
       >
