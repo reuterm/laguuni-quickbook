@@ -15,6 +15,23 @@ afterEach(() => {
 })
 
 describe('Sheet', () => {
+  it('bounds right-side sheets to the viewport and transitions only transforms', () => {
+    render(
+      <Sheet open>
+        <SheetContent side="right">
+          <SheetTitle>Test sheet</SheetTitle>
+          <SheetDescription>Test description</SheetDescription>
+        </SheetContent>
+      </Sheet>,
+    )
+
+    expect(screen.getByTestId('sheet-content')).toHaveClass(
+      'h-svh',
+      'h-dvh',
+      'transition-transform',
+    )
+  })
+
   it('renders the default close button', async () => {
     const user = userEvent.setup()
 

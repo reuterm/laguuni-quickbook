@@ -74,14 +74,14 @@ function SheetOverlay({
 }
 
 const sheetVariants = cva(
-  `fixed z-50 flex flex-col gap-4 p-5 transition ease-in-out data-[state=closed]:animate-out data-[state=open]:animate-in sm:p-6 ${sheetSurfaceClassName}`,
+  `fixed z-50 flex flex-col gap-4 p-5 data-[state=closed]:animate-out data-[state=open]:animate-in sm:p-6 ${sheetSurfaceClassName}`,
   {
     variants: {
       side: {
         top: `inset-x-0 top-0 data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top ${sheetEdgeClassNames.top}`,
         bottom: `inset-x-0 bottom-0 rounded-t-3xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom ${sheetEdgeClassNames.bottom}`,
         left: `inset-y-0 left-0 h-full w-3/4 data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm ${sheetEdgeClassNames.left}`,
-        right: `inset-y-0 right-0 h-full w-full data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-lg ${sheetEdgeClassNames.right}`,
+        right: `inset-y-0 right-0 h-svh h-dvh w-full transition-transform data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-lg ${sheetEdgeClassNames.right}`,
       },
     },
     defaultVariants: {
@@ -104,8 +104,9 @@ function SheetContent({
     <SheetPortal>
       <SheetOverlay />
       <DialogPrimitive.Content
-        className={cn(sheetVariants({ className, side }))}
+        className={sheetVariants({ className, side })}
         data-slot="sheet-content"
+        data-testid="sheet-content"
         {...props}
       >
         {children}
