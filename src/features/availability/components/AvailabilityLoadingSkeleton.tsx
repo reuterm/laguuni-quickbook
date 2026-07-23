@@ -1,6 +1,6 @@
-import type { AvailabilityOverviewContentModel } from './availability-overview-content-model'
 import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
 import { AvailabilityCardLoadingSkeleton } from './AvailabilityCardLoadingSkeleton'
+import type { AvailabilityOverviewContentModel } from './availability-overview-content-model'
 
 type AvailabilityLoadingSkeletonProps = {
   availabilityReferenceDate?: Date | undefined

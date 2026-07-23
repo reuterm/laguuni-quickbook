@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-
-import type { AvailabilityOverviewContentModel } from './availability-overview-content-model'
 import { AvailabilityLoadingSkeleton } from './AvailabilityLoadingSkeleton'
+import type { AvailabilityOverviewContentModel } from './availability-overview-content-model'
 
 describe('AvailabilityLoadingSkeleton', () => {
   it('renders card skeletons when cards are the active presentation', () => {
@@ -30,7 +29,9 @@ describe('AvailabilityLoadingSkeleton', () => {
     )
 
     expect(screen.getAllByRole('table')).toHaveLength(2)
-    expect(screen.queryByTestId('availability-card-skeleton')).not.toBeInTheDocument()
+    expect(
+      screen.queryByTestId('availability-card-skeleton'),
+    ).not.toBeInTheDocument()
   })
 })
 
