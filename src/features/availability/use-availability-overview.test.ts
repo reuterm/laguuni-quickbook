@@ -431,16 +431,13 @@ describe('useAvailabilityOverview', () => {
     })
 
     await waitFor(() => {
-      expect(result.current.availabilityState.status).toBe('refreshing')
+      expect(result.current.availabilityState.status).toBe('ready')
     })
 
     resolveSecondRefresh()
 
     await waitFor(() => {
-      if (
-        result.current.availabilityState.status !== 'ready' &&
-        result.current.availabilityState.status !== 'refreshing'
-      ) {
+      if (result.current.availabilityState.status !== 'ready') {
         throw new Error('Expected loaded availability state')
       }
 
@@ -525,16 +522,13 @@ describe('useAvailabilityOverview', () => {
     })
 
     await waitFor(() => {
-      expect(result.current.availabilityState.status).toBe('refreshing')
+      expect(result.current.availabilityState.status).toBe('ready')
     })
 
     resolveSecondRefresh()
 
     await waitFor(() => {
-      if (
-        result.current.availabilityState.status !== 'ready' &&
-        result.current.availabilityState.status !== 'refreshing'
-      ) {
+      if (result.current.availabilityState.status !== 'ready') {
         throw new Error('Expected loaded availability state')
       }
 
@@ -800,16 +794,13 @@ describe('useAvailabilityOverview', () => {
     })
 
     await waitFor(() => {
-      expect(result.current.availabilityState.status).toBe('refreshing')
+      expect(result.current.availabilityState.status).toBe('ready')
     })
 
     resolveAppendWeek()
 
     await waitFor(() => {
-      if (
-        result.current.availabilityState.status !== 'ready' &&
-        result.current.availabilityState.status !== 'refreshing'
-      ) {
+      if (result.current.availabilityState.status !== 'ready') {
         throw new Error('Expected loaded availability state')
       }
 
@@ -899,16 +890,13 @@ describe('useAvailabilityOverview', () => {
     })
 
     await waitFor(() => {
-      expect(result.current.availabilityState.status).toBe('refreshing')
+      expect(result.current.availabilityState.status).toBe('ready')
     })
 
     resolveDayRefresh()
 
     await waitFor(() => {
-      if (
-        result.current.availabilityState.status !== 'ready' &&
-        result.current.availabilityState.status !== 'refreshing'
-      ) {
+      if (result.current.availabilityState.status !== 'ready') {
         throw new Error('Expected loaded availability state')
       }
 
@@ -976,7 +964,7 @@ describe('useAvailabilityOverview', () => {
     })
 
     await waitFor(() => {
-      expect(result.current.availabilityState.status).toBe('refreshing')
+      expect(result.current.availabilityState.status).toBe('loading')
     })
 
     await act(async () => {
@@ -1051,7 +1039,7 @@ describe('useAvailabilityOverview', () => {
     })
 
     await waitFor(() => {
-      expect(result.current.availabilityState.status).toBe('refreshing')
+      expect(result.current.availabilityState.status).toBe('ready')
     })
 
     rerender({

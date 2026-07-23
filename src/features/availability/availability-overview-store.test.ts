@@ -151,7 +151,7 @@ describe('availabilityOverviewStore', () => {
     })
   })
 
-  it('blocks append and day refresh while a range refresh is active', () => {
+  it('clears loaded week pages into loading when a range refresh starts', () => {
     const initialRange = getInitialAvailabilityRange(
       new Date('2026-05-14T12:00:00'),
     )
@@ -167,6 +167,8 @@ describe('availabilityOverviewStore', () => {
       type: 'refreshRangeStarted',
     })
 
+    expect(refreshingStore.phase).toBe('loading')
+    expect(refreshingStore.weekPages).toEqual([])
     expect(canAppendWeek(refreshingStore, false)).toBe(false)
     expect(canRefreshDay(refreshingStore)).toBe(false)
   })

@@ -2,21 +2,17 @@ import { useAvailabilityReferenceDate } from '@/app/providers'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTitle } from '@/components/ui/alert-title'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Spinner } from '@/components/ui/spinner'
-import {
-  eyebrowClassName,
-  panelSurfaceClassName,
-  subtleSurfaceBackgroundClassName,
-} from '@/components/ui/styles'
+import { subtleSurfaceBackgroundClassName } from '@/components/ui/styles'
+import { addCalendarDays } from '@/lib/date'
 import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
 import { useUserSettings } from '../../settings/use-user-settings'
 import { AVAILABILITY_CALENDAR_BREAKPOINT_QUERY } from '../availability-calendar'
+import { AVAILABILITY_WEEK_DAY_COUNT } from '../availability-service'
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
-import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
 import { AvailabilityDayGroups } from './AvailabilityDayGroups'
+import { AvailabilityLoadingSkeleton } from './AvailabilityLoadingSkeleton'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
 import type { BookingBasketProps } from './booking-basket-props'
@@ -76,31 +72,12 @@ export function AvailabilityOverviewContent({
   }
 
   if (availabilityState.status === 'loading') {
-    if (contentModel.isCalendarView) {
-      return (
-        <AvailabilityCalendarLoadingGrid
-          availabilityReferenceDate={availabilityReferenceDate}
-        />
-      )
-    }
-
     return (
-      <output aria-live="polite" className="space-y-6">
-        <p className="sr-only">Loading availability…</p>
-        {[0, 1, 2].map((index) => (
-          <div
-            key={index}
-            className={cn(panelSurfaceClassName, 'overflow-hidden p-4 sm:p-5')}
-          >
-            <Skeleton className="h-5 w-28" />
-            <div className="mt-4 space-y-2">
-              {[0, 1, 2].map((slotIndex) => (
-                <Skeleton key={slotIndex} className="h-18 w-full rounded-xl" />
-              ))}
-            </div>
-          </div>
-        ))}
-      </output>
+      <AvailabilityLoadingSkeleton
+        availabilityReferenceDate={availabilityReferenceDate}
+        contentModel={contentModel}
+        skeletonCount={availabilityState.skeletonWeekCount}
+      />
     )
   }
 
@@ -114,12 +91,6 @@ export function AvailabilityOverviewContent({
   }
 
   const appendErrorMessage = availabilityState.appendErrorMessage
-  const refreshNotice = contentModel.isRefreshing ? (
-    <p className={eyebrowClassName} role="status" aria-live="polite">
-      Refreshing availability…
-    </p>
-  ) : null
-
   function renderAvailability() {
     if (contentModel.hasRenderedAvailability) {
       return (
@@ -186,17 +157,26 @@ export function AvailabilityOverviewContent({
       return null
     }
 
+    const lastWeekPage = availabilityState.weekPages.at(-1)
+
     return (
-      <output aria-live="polite" className="flex justify-center px-1 py-2">
-        <Spinner className="size-5" />
-        <span className="sr-only">Loading another week…</span>
-      </output>
+      <AvailabilityLoadingSkeleton
+        availabilityReferenceDate={
+          lastWeekPage
+            ? addCalendarDays(
+                lastWeekPage.weekStartDate,
+                AVAILABILITY_WEEK_DAY_COUNT,
+              )
+            : availabilityReferenceDate
+        }
+        contentModel={contentModel}
+        skeletonCount={1}
+      />
     )
   }
 
   return (
     <div className="space-y-3">
-      {refreshNotice}
       {renderAvailability()}
       {renderAppendError()}
       {renderLoadingMore()}

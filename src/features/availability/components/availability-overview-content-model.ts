@@ -8,7 +8,6 @@ type AvailabilityOverviewContentModel = {
   hasLoadedDayGroups: boolean
   hasRenderedAvailability: boolean
   isCalendarView: boolean
-  isRefreshing: boolean
   renderedCardDayGroups: readonly AvailabilityDayGroup[]
   renderedDayGroups: readonly AvailabilityDayGroup[]
 }
@@ -18,9 +17,7 @@ export function getAvailabilityOverviewContentModel(
   availabilityView: AvailabilityOverviewViewMode,
   isCalendarBreakpoint: boolean,
 ): AvailabilityOverviewContentModel {
-  const hasLoadedDayGroups =
-    availabilityState.status === 'ready' ||
-    availabilityState.status === 'refreshing'
+  const hasLoadedDayGroups = availabilityState.status === 'ready'
   const renderedDayGroups = hasLoadedDayGroups
     ? availabilityState.dayGroups
     : []
@@ -34,7 +31,6 @@ export function getAvailabilityOverviewContentModel(
       (dayGroup) => dayGroup.slots.length > 0,
     ),
     isCalendarView,
-    isRefreshing: availabilityState.status === 'refreshing',
     renderedCardDayGroups: renderedDayGroups.filter(
       (dayGroup) => dayGroup.slots.length > 0,
     ),

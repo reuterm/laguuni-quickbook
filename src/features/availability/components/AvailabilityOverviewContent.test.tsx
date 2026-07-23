@@ -12,6 +12,7 @@ import { localDate } from '../../../../tests/local-date'
 import { UserSettingsProvider } from '../../settings/use-user-settings'
 import type { AvailabilityDayGroup } from '../availability-service'
 import type { AvailabilityState } from '../use-availability-overview'
+import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 import type { BookingBasketProps } from './booking-basket-props'
 
@@ -48,10 +49,12 @@ describe('AvailabilityOverviewContent', () => {
 
     renderContent({
       isLoadingMore: false,
+      skeletonWeekCount: 2,
       status: 'loading',
     })
 
-    expect(screen.getByText('Loading availability…')).toBeInTheDocument()
+    expect(screen.getAllByTestId('availability-card-skeleton')).toHaveLength(2)
+    expect(screen.queryByText('Loading availability…')).not.toBeInTheDocument()
   })
 
   it('renders a calendar-shaped loading state at the calendar breakpoint when cards are preferred', () => {
@@ -59,10 +62,10 @@ describe('AvailabilityOverviewContent', () => {
 
     renderContent({
       isLoadingMore: false,
+      skeletonWeekCount: 2,
       status: 'loading',
     })
 
-    expect(screen.getByText('Loading availability…')).toBeInTheDocument()
     expect(screen.getAllByRole('table')).toHaveLength(2)
     expect(screen.getByText('11 May - 17 May')).toBeInTheDocument()
     expect(screen.getByText('18 May - 24 May')).toBeInTheDocument()
@@ -74,27 +77,58 @@ describe('AvailabilityOverviewContent', () => {
     renderContent(
       {
         isLoadingMore: false,
+        skeletonWeekCount: 2,
         status: 'loading',
       },
       undefined,
       { availabilityView: 'calendar' },
     )
 
-    expect(screen.getByText('Loading availability…')).toBeInTheDocument()
-    expect(
-      screen.queryByText('Refreshing availability…'),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Loading availability…')).not.toBeInTheDocument()
     expect(screen.getAllByRole('table')).toHaveLength(2)
     expect(screen.getByText('11 May - 17 May')).toBeInTheDocument()
     expect(screen.getByText('18 May - 24 May')).toBeInTheDocument()
   })
 
-  it('keeps rendered slots visible while refreshing availability', () => {
-    renderContent(createLoadedState('refreshing'))
+  it('renders the requested number of calendar skeleton weeks while refreshing', () => {
+    stubMatchMedia(false)
 
-    expect(screen.getByText('Refreshing availability…')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
-    expect(screen.queryByText('Loading availability…')).not.toBeInTheDocument()
+    renderContent(
+      {
+        isLoadingMore: false,
+        skeletonWeekCount: 3,
+        status: 'loading',
+      },
+      undefined,
+      { availabilityView: 'calendar' },
+    )
+
+    expect(screen.getAllByRole('table')).toHaveLength(3)
+    expect(screen.getByText('25 May - 31 May')).toBeInTheDocument()
+  })
+
+  it('renders one calendar skeleton week when requested', () => {
+    stubMatchMedia(true)
+
+    render(
+      <TestProviders>
+        <AvailabilityCalendarLoadingGrid skeletonWeekCount={1} />
+      </TestProviders>,
+    )
+
+    expect(screen.getAllByRole('table')).toHaveLength(1)
+  })
+
+  it('replaces rendered slots with skeletons while refreshing availability', () => {
+    renderContent({
+      isLoadingMore: false,
+      skeletonWeekCount: 2,
+      status: 'loading',
+    })
+
+    expect(screen.getAllByTestId('availability-card-skeleton')).toHaveLength(2)
+    expect(screen.queryByText('3')).not.toBeInTheDocument()
+    expect(screen.queryByText(/loading|refreshing/i)).not.toBeInTheDocument()
   })
 
   it('renders weekly matrix tables when the saved view is calendar', () => {
@@ -264,13 +298,28 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.queryByTestId('availability-content')).not.toBeInTheDocument()
   })
 
-  it('shows a bottom loading state while appending another week', () => {
+  it('appends card skeletons while loading another week', () => {
     renderContent(
       createLoadedState('ready', undefined, { isLoadingMore: true }),
     )
 
-    expect(screen.getByText('Loading another week…')).toHaveClass('sr-only')
-    expect(screen.getByLabelText('Loading')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.getAllByTestId('availability-card-skeleton')).toHaveLength(1)
+    expect(screen.queryByText(/loading|refreshing/i)).not.toBeInTheDocument()
+  })
+
+  it('appends one calendar skeleton week while loading another week', () => {
+    stubMatchMedia(false)
+
+    renderContent(
+      createLoadedState('ready', undefined, { isLoadingMore: true }),
+      undefined,
+      { availabilityView: 'calendar' },
+    )
+
+    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.getAllByRole('table')).toHaveLength(2)
+    expect(screen.queryByText(/loading|refreshing/i)).not.toBeInTheDocument()
   })
 
   it('triggers loading more when the sentinel enters the viewport', async () => {
@@ -605,7 +654,7 @@ function createBasket(
 }
 
 function createLoadedState(
-  status: 'ready' | 'refreshing',
+  status: 'ready',
   dayGroups: readonly AvailabilityDayGroup[] = [createBookableDayGroup()],
   overrides: Partial<
     Extract<AvailabilityState, { status: 'ready' | 'refreshing' }>
