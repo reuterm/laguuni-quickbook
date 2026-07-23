@@ -237,7 +237,7 @@ export const BasketSelection: Story = {
         reviewSheet.getByTestId('booking-selected-slots').children,
         (row) => row.textContent,
       ),
-    ).toEqual(['Wed 13 MayPro · 15:00-16:00', 'Thu 14 MayPro · 15:00-16:00'])
+    ).toEqual(['ProWed, 13 May, 15:00-16:00', 'ProThu, 14 May, 15:00-16:00'])
     await userEvent.click(
       reviewSheet.getByRole('button', { name: 'Clear selection' }),
     )
