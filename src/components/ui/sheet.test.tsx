@@ -25,7 +25,7 @@ describe('Sheet', () => {
       </Sheet>,
     )
 
-    expect(screen.getByTestId('sheet-content')).toHaveClass(
+    expect(document.querySelector('[data-slot="sheet-content"]')).toHaveClass(
       'h-dvh',
       'transition-transform',
     )
@@ -41,8 +41,12 @@ describe('Sheet', () => {
       </Sheet>,
     )
 
-    expect(screen.getByTestId('sheet-content')).toHaveClass('p-0')
-    expect(screen.getByTestId('sheet-content')).not.toHaveClass('p-5')
+    expect(document.querySelector('[data-slot="sheet-content"]')).toHaveClass(
+      'p-0',
+    )
+    expect(
+      document.querySelector('[data-slot="sheet-content"]'),
+    ).not.toHaveClass('p-5')
   })
 
   it('renders the default close button', async () => {

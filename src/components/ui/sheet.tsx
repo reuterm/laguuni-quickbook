@@ -111,7 +111,6 @@ function SheetContent({
       <DialogPrimitive.Content
         className={cn(sheetVariants({ className, side }))}
         data-slot="sheet-content"
-        data-testid="sheet-content"
         {...props}
       >
         {children}
