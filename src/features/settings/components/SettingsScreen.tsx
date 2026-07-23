@@ -138,6 +138,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
     event.preventDefault()
     saveSettings(draftSettings)
     handleOpenChange(false)
+    setDraftSettings(draftSettings)
   }
 
   function handleOpenChange(nextOpen: boolean) {
