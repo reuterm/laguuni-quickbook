@@ -111,7 +111,7 @@ function SheetContent({
     <SheetPortal>
       <SheetOverlay />
       <DialogPrimitive.Content
-        className={sheetVariants({ className, side })}
+        className={cn(sheetVariants({ className, side }))}
         data-slot="sheet-content"
         data-testid="sheet-content"
         {...props}

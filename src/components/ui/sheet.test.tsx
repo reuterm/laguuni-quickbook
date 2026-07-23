@@ -26,10 +26,23 @@ describe('Sheet', () => {
     )
 
     expect(screen.getByTestId('sheet-content')).toHaveClass(
-      'h-svh',
       'h-dvh',
       'transition-transform',
     )
+  })
+
+  it('allows content padding to be overridden', () => {
+    render(
+      <Sheet open>
+        <SheetContent className="p-0">
+          <SheetTitle>Test sheet</SheetTitle>
+          <SheetDescription>Test description</SheetDescription>
+        </SheetContent>
+      </Sheet>,
+    )
+
+    expect(screen.getByTestId('sheet-content')).toHaveClass('p-0')
+    expect(screen.getByTestId('sheet-content')).not.toHaveClass('p-5')
   })
 
   it('renders the default close button', async () => {
