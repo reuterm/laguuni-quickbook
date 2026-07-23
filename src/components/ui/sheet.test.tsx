@@ -32,7 +32,7 @@ describe('Sheet', () => {
     )
   })
 
-  it('allows content padding to be overridden', () => {
+  it('allows content padding to be overridden while preserving right-side safe-area top padding', () => {
     render(
       <Sheet open>
         <SheetContent className="p-0">
@@ -48,6 +48,9 @@ describe('Sheet', () => {
     expect(
       document.querySelector('[data-slot="sheet-content"]'),
     ).not.toHaveClass('p-5')
+    expect(document.querySelector('[data-slot="sheet-content"]')).toHaveClass(
+      'pt-[calc(env(safe-area-inset-top)+1.25rem)]',
+    )
   })
 
   it('renders the default close button', async () => {

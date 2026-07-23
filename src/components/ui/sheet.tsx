@@ -86,7 +86,7 @@ const sheetVariants = cva(
         top: `inset-x-0 top-0 data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top ${sheetEdgeClassNames.top}`,
         bottom: `inset-x-0 bottom-0 rounded-t-3xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom ${sheetEdgeClassNames.bottom}`,
         left: `inset-y-0 left-0 h-full w-3/4 data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm ${sheetEdgeClassNames.left}`,
-        right: `inset-y-0 right-0 h-svh h-dvh w-full pt-[calc(env(safe-area-inset-top)+1.25rem)] transition-transform data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-lg ${sheetEdgeClassNames.right}`,
+        right: `inset-y-0 right-0 h-svh h-dvh w-full transition-transform data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-lg ${sheetEdgeClassNames.right}`,
       },
     },
     defaultVariants: {
@@ -109,7 +109,10 @@ function SheetContent({
     <SheetPortal>
       <SheetOverlay />
       <DialogPrimitive.Content
-        className={cn(sheetVariants({ className, side }))}
+        className={cn(
+          sheetVariants({ className, side }),
+          side === 'right' && 'pt-[calc(env(safe-area-inset-top)+1.25rem)]',
+        )}
         data-slot="sheet-content"
         {...props}
       >
