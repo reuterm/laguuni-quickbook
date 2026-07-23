@@ -161,7 +161,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
         showCloseButton={false}
       >
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="space-y-6">
+          <div className="space-y-5 sm:space-y-6">
             <SheetHeader className="space-y-2 pr-10 text-left">
               <SheetTitle>Booking details</SheetTitle>
               <SheetDescription>
@@ -179,7 +179,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
               </Alert>
             ) : null}
 
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
               <div className="grid gap-4 sm:grid-cols-2">
                 {settingsFieldDefinitions.map((field) => (
                   <SettingsTextField
@@ -287,7 +287,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
             </div>
           ) : null}
 
-          <div className="mt-6 border-t pt-6">
+          <div className="mt-5 border-t pt-3 sm:mt-6 sm:pt-6">
             <button
               type="button"
               className="cursor-default text-xs text-muted-foreground"
