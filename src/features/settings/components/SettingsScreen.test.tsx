@@ -72,6 +72,20 @@ describe('Settings screen integration', () => {
     )
   })
 
+  it('shows saved settings when the sheet reopens without remounting', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+
+    renderApp({ storage })
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+    setInputValue('Name', 'Test User')
+    await user.click(screen.getByRole('button', { name: 'Save settings' }))
+
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    expect(screen.getByLabelText('Name')).toHaveValue('Test User')
+  })
+
   it('maps the stored cards preference back to the Auto label', async () => {
     const user = userEvent.setup()
     const storage = createMemoryStorage()
