@@ -248,6 +248,56 @@ export const BasketSelection: Story = {
   },
 }
 
+export const CrossCableReplacement: Story = {
+  args: {
+    isOnline: true,
+    onOpenSettings: noop,
+  },
+  parameters: {
+    settings: BOOKING_ENABLED_SETTINGS,
+  },
+  render: renderAvailabilityScreen,
+  play: async ({ canvas, canvasElement }) => {
+    const page = within(canvasElement.ownerDocument.body)
+    const firstBookButton = await getFirstBookButton(canvas)
+
+    await userEvent.click(firstBookButton)
+    await userEvent.click(page.getByRole('button', { name: 'Add more' }))
+    await userEvent.click(canvas.getByRole('tab', { name: 'Easy' }))
+
+    const sameDay = await canvas.findByRole('heading', { name: 'Wed 13 May' })
+    const sameDaySection = sameDay.closest('section')
+    if (sameDaySection === null) {
+      throw new Error('Expected the first Easy cable day group')
+    }
+
+    const sameDayAddButton = within(sameDaySection).getAllByRole('button', {
+      name: /^Add /,
+    })[0]
+    if (!sameDayAddButton) {
+      throw new Error('Expected a same-day Easy slot to add')
+    }
+
+    await userEvent.click(sameDayAddButton)
+
+    const replacementSheet = await page.findByRole('dialog', {
+      name: 'Replace selected slot?',
+    })
+    await expect(replacementSheet).toHaveTextContent(/Replace Pro .* with Easy/)
+
+    await userEvent.click(
+      within(replacementSheet).getByRole('button', { name: 'Keep current' }),
+    )
+
+    await waitFor(() => {
+      expect(replacementSheet).toHaveAttribute('data-state', 'closed')
+    })
+    await expect(
+      canvas.getByRole('button', { name: 'Review selection' }),
+    ).toHaveTextContent('1 slot')
+  },
+}
+
 async function getFirstBookButton(
   canvas: Pick<ReturnType<typeof within>, 'getAllByRole'>,
 ) {

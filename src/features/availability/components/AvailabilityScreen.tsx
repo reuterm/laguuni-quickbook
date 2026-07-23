@@ -1,5 +1,5 @@
 import { X } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTitle } from '@/components/ui/alert-title'
@@ -16,10 +16,16 @@ import {
   useLaguuniApi,
   useReadOnlyNoticeStore,
 } from '../../../app/providers'
+import type { BookingSlotSelection } from '../../../domain/booking'
 import { getCableById } from '../../../domain/cable'
+import { getBookingSlotSelectionKey } from '../../booking/booking-selections'
 import { BookingSheetFlow } from '../../booking/components/BookingSheetFlow'
 import { useBookingSheetController } from '../../booking/use-booking-sheet-controller'
 import { exportDiagnosticsForTrace } from '../../diagnostics/export'
+import {
+  getBookingReplacementDecision,
+  type PendingBookingReplacement,
+} from '../booking-replacement'
 import { useAvailabilityOverview } from '../use-availability-overview'
 import { useAvailabilityScope } from '../use-availability-scope'
 import { useBookingBasket } from '../use-booking-basket'
@@ -27,11 +33,31 @@ import { AvailabilityCableSelector } from './AvailabilityCableSelector'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 import { getAvailabilityBookingActionProps } from './availability-booking-action'
 import { BookingBasketReviewButton } from './BookingBasketReviewButton'
+import { BookingReplacementSheet } from './BookingReplacementSheet'
 import { emptyBookingBasket } from './booking-basket-props'
 
 type AvailabilityScreenProps = {
   isOnline: boolean
   onOpenSettings: () => void
+}
+
+function getPendingSelectionForCable(
+  pendingReplacement: PendingBookingReplacement | null,
+  cableId: BookingSlotSelection['cableId'],
+) {
+  if (pendingReplacement === null) {
+    return undefined
+  }
+
+  if (pendingReplacement.current.cableId === cableId) {
+    return pendingReplacement.current
+  }
+
+  if (pendingReplacement.proposed.cableId === cableId) {
+    return pendingReplacement.proposed
+  }
+
+  return undefined
 }
 
 export function AvailabilityScreen({
@@ -47,6 +73,8 @@ export function AvailabilityScreen({
   )
   const { selectedCable, selectCable } = useAvailabilityScope()
   const bookingBasket = useBookingBasket()
+  const [pendingReplacement, setPendingReplacement] =
+    useState<PendingBookingReplacement | null>(null)
   const activeCable = getCableById(selectedCable)
   const {
     availabilityState,
@@ -75,6 +103,7 @@ export function AvailabilityScreen({
   } = useBookingSheetController({
     onKeepBookingForMore: bookingBasket.addSelection,
     onBookingFinalized: async ({ result, selections }) => {
+      setPendingReplacement(null)
       const submittedBasketRevision = bookingBasket.revision
       const uniqueSelections = [
         ...new Map(
@@ -97,6 +126,38 @@ export function AvailabilityScreen({
     },
   })
 
+  useEffect(() => {
+    if (availabilityState.status !== 'ready') {
+      return
+    }
+
+    const selection = getPendingSelectionForCable(
+      pendingReplacement,
+      selectedCable,
+    )
+
+    if (selection === undefined) {
+      return
+    }
+
+    const selectionKey = getBookingSlotSelectionKey(selection)
+    const selectionIsRendered = availabilityState.dayGroups.some((dayGroup) =>
+      dayGroup.slots.some(
+        (slot) =>
+          getBookingSlotSelectionKey({
+            cableId: selectedCable,
+            date: dayGroup.date,
+            endTime: slot.endTime,
+            startTime: slot.startTime,
+          }) === selectionKey,
+      ),
+    )
+
+    if (!selectionIsRendered) {
+      setPendingReplacement(null)
+    }
+  }, [availabilityState, pendingReplacement, selectedCable])
+
   const handleDismissReadOnlyNotice = useCallback(() => {
     readOnlyNoticeStore.dismiss()
     setIsReadOnlyNoticeDismissed(true)
@@ -108,23 +169,39 @@ export function AvailabilityScreen({
     isBookingInProgress,
     handleSlotIntent,
   )
-  const clearBasketSelections = () => {
+  const handleClearSelections = () => {
     bookingBasket.clearSelections()
+    setPendingReplacement(null)
+  }
+  const handleRemoveSelection = (
+    selection: Parameters<typeof bookingBasket.removeSelection>[0],
+  ) => {
+    const selectionKey = getBookingSlotSelectionKey(selection)
+
+    if (
+      pendingReplacement !== null &&
+      (getBookingSlotSelectionKey(pendingReplacement.current) ===
+        selectionKey ||
+        getBookingSlotSelectionKey(pendingReplacement.proposed) ===
+          selectionKey)
+    ) {
+      setPendingReplacement(null)
+    }
+
+    bookingBasket.removeSelection(selection)
   }
   const reviewBasket = () => {
     requestBooking('basket', bookingBasket.selections)
   }
-  const basket =
-    bookingBasket.selections.length === 0
-      ? { ...emptyBookingBasket, onAddSelection: handleSlotIntent }
-      : {
-          isSelected: bookingBasket.isSelected,
-          kind: 'basket' as const,
-          onAddSelection: handleSlotIntent,
-          onRemoveSelection: bookingBasket.removeSelection,
-          onReview: reviewBasket,
-          selections: bookingBasket.selections,
-        }
+  const basket = { ...emptyBookingBasket, onAddSelection: handleSlotIntent }
+
+  if (bookingBasket.selections.length > 0) {
+    basket.isSelected = bookingBasket.isSelected
+    basket.kind = 'basket'
+    basket.onRemoveSelection = handleRemoveSelection
+    basket.onReview = reviewBasket
+    basket.selections = bookingBasket.selections
+  }
 
   function handleSlotIntent(
     selection: Parameters<typeof bookingBasket.addSelection>[0],
@@ -135,11 +212,26 @@ export function AvailabilityScreen({
     }
 
     if (bookingBasket.isSelected(selection)) {
-      bookingBasket.removeSelection(selection)
+      handleRemoveSelection(selection)
       return
     }
 
-    bookingBasket.addSelection(selection)
+    const replacementDecision = getBookingReplacementDecision(
+      bookingBasket.selections,
+      selection,
+    )
+
+    if (replacementDecision.kind === 'add') {
+      bookingBasket.addSelection(selection)
+      return
+    }
+
+    if (replacementDecision.kind === 'confirm') {
+      setPendingReplacement({
+        current: replacementDecision.current,
+        proposed: selection,
+      })
+    }
   }
 
   return (
@@ -147,7 +239,7 @@ export function AvailabilityScreen({
       <ContentRail className="space-y-5">
         <BookingSheetFlow
           actions={{
-            basket: { onClearSelection: clearBasketSelections },
+            basket: { onClearSelection: handleClearSelections },
             initial: {
               continuation: 'add-more',
               onAddMore: keepBookingForMore,
@@ -157,6 +249,16 @@ export function AvailabilityScreen({
           confirmBooking={confirmBooking}
           dismissBookingSheet={dismissBookingSheet}
           onExportTrace={handleExportTrace}
+        />
+        <BookingReplacementSheet
+          pendingReplacement={pendingReplacement}
+          onKeepCurrentSelection={() => setPendingReplacement(null)}
+          onReplace={() => {
+            if (pendingReplacement !== null) {
+              bookingBasket.addSelection(pendingReplacement.proposed)
+            }
+            setPendingReplacement(null)
+          }}
         />
 
         {showReadOnlyNotice ? (
