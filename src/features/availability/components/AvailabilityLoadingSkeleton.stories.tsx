@@ -9,6 +9,9 @@ import type { AvailabilityOverviewContentModel } from './availability-overview-c
 
 const meta = {
   component: AvailabilityLoadingSkeleton,
+  parameters: {
+    layout: 'fullscreen',
+  },
   title: 'Availability/LoadingSkeleton',
 } satisfies Meta<typeof AvailabilityLoadingSkeleton>
 

@@ -4,6 +4,9 @@ import { AvailabilityCardLoadingSkeleton } from './AvailabilityCardLoadingSkelet
 
 const meta = {
   component: AvailabilityCardLoadingSkeleton,
+  parameters: {
+    layout: 'fullscreen',
+  },
   title: 'Availability/CardLoadingSkeleton',
 } satisfies Meta<typeof AvailabilityCardLoadingSkeleton>
 
