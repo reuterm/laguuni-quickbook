@@ -269,6 +269,7 @@ describe('AvailabilityOverviewContent', () => {
     [{ isLoadingMore: false, message: 'Fixture outage', status: 'error' }],
     [createLoadedState('ready', createEmptyDayGroups())],
     [createLoadedState('ready')],
+    [createLoadedState('refreshing')],
   ] as const)('renders basket review access for a retained selection', (availabilityState) => {
     const onReview = vi.fn()
 
