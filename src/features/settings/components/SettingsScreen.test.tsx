@@ -20,6 +20,17 @@ describe('Settings screen integration', () => {
     vi.unstubAllGlobals()
   })
 
+  it('focuses the close button when the sheet opens', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+
+    renderApp({ storage })
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus()
+    expect(screen.getByLabelText('Name')).not.toHaveFocus()
+  })
+
   it('persists settings locally and restores the saved default cable', async () => {
     const user = userEvent.setup()
     const storage = createMemoryStorage()
