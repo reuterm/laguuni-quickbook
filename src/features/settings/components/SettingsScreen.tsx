@@ -149,17 +149,21 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="right" className="flex w-full flex-col sm:max-w-lg">
+      <SheetContent
+        side="right"
+        className="flex w-full flex-col sm:max-w-lg"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <SheetHeader className="space-y-2 pr-10 text-left">
-            <SheetTitle>Booking details</SheetTitle>
-            <SheetDescription>
-              Your name, phone, email, season pass code, and default cable are
-              saved only in this browser for faster checkout.
-            </SheetDescription>
-          </SheetHeader>
-
           <div className="space-y-6">
+            <SheetHeader className="space-y-2 pr-10 text-left">
+              <SheetTitle>Booking details</SheetTitle>
+              <SheetDescription>
+                Your name, phone, email, season pass code, and default cable
+                are saved only in this browser for faster checkout.
+              </SheetDescription>
+            </SheetHeader>
+
             {recoveryIssue !== null ? (
               <Alert role="alert">
                 <AlertTitle>Saved settings were reset</AlertTitle>
@@ -232,61 +236,61 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
               </div>
             </form>
           </div>
-        </div>
 
-        {developerModeEnabled ? (
-          <div className="flex flex-1 flex-col border-t pt-6">
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <h3 className="text-sm font-medium">Developer tools</h3>
-                <p className="text-sm text-muted-foreground">
-                  Diagnostics and debugging actions for this device.
-                </p>
+          {developerModeEnabled ? (
+            <div className="mt-6 border-t pt-6">
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium">Developer tools</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Diagnostics and debugging actions for this device.
+                  </p>
+                </div>
+                <DiagnosticsCopyAction
+                  buttonContent="Export all diagnostics logs"
+                  buttonClassName="w-full justify-start sm:w-auto"
+                  buttonVariant="outline"
+                  onCopy={() =>
+                    exportDiagnostics((options) =>
+                      diagnostics.exportLogs(options),
+                    )
+                  }
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={() => {
+                    diagnostics.clear()
+                  }}
+                >
+                  Clear diagnostics log
+                </Button>
               </div>
-              <DiagnosticsCopyAction
-                buttonContent="Export all diagnostics logs"
-                buttonClassName="w-full justify-start sm:w-auto"
-                buttonVariant="outline"
-                onCopy={() =>
-                  exportDiagnostics((options) =>
-                    diagnostics.exportLogs(options),
-                  )
-                }
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full sm:w-auto"
-                onClick={() => {
-                  diagnostics.clear()
-                }}
-              >
-                Clear diagnostics log
-              </Button>
-            </div>
 
-            <div className="mt-auto pt-6">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full sm:w-auto"
-                onClick={disableDeveloperMode}
-              >
-                Disable developer mode
-              </Button>
+              <div className="pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={disableDeveloperMode}
+                >
+                  Disable developer mode
+                </Button>
+              </div>
             </div>
+          ) : null}
+
+          <div className="mt-6 border-t pt-6">
+            <button
+              type="button"
+              className="cursor-default text-xs text-muted-foreground"
+              aria-label={`App version ${appVersion}`}
+              onClick={registerVersionTap}
+            >
+              Version {appVersion}
+            </button>
           </div>
-        ) : null}
-
-        <div className="border-t pt-6">
-          <button
-            type="button"
-            className="cursor-default text-xs text-muted-foreground"
-            aria-label={`App version ${appVersion}`}
-            onClick={registerVersionTap}
-          >
-            Version {appVersion}
-          </button>
         </div>
       </SheetContent>
     </Sheet>
