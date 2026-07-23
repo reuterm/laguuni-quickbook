@@ -44,7 +44,7 @@ const SheetCloseButton = forwardRef<
       ref={ref}
       type="button"
       className={cn(
-        'absolute top-4 right-4 rounded-full p-2 text-muted-foreground transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none sm:top-5 sm:right-5',
+        'absolute right-4 rounded-full p-2 text-muted-foreground transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none sm:top-5 sm:right-5',
         interactiveGhostSurfaceClassName,
         className,
       )}
@@ -117,7 +117,15 @@ function SheetContent({
         {...props}
       >
         {children}
-        {showCloseButton ? <SheetCloseButton /> : null}
+        {showCloseButton ? (
+          <SheetCloseButton
+            className={
+              side === 'right'
+                ? 'top-[calc(env(safe-area-inset-top)+1rem)]'
+                : 'top-4'
+            }
+          />
+        ) : null}
       </DialogPrimitive.Content>
     </SheetPortal>
   )

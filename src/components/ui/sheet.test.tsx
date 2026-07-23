@@ -72,6 +72,28 @@ describe('Sheet', () => {
       'data-slot',
       'sheet-close',
     )
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(
+      'top-[calc(env(safe-area-inset-top)+1rem)]',
+    )
+    expect(screen.getByRole('button', { name: 'Close' })).not.toHaveClass(
+      'top-4',
+    )
+  })
+
+  it('keeps bottom-sheet close buttons at their sheet edge', () => {
+    render(
+      <Sheet open>
+        <SheetContent side="bottom">
+          <SheetTitle>Test sheet</SheetTitle>
+          <SheetDescription>Test description</SheetDescription>
+        </SheetContent>
+      </Sheet>,
+    )
+
+    expect(screen.getByRole('button', { name: 'Close' })).not.toHaveClass(
+      'top-[calc(env(safe-area-inset-top)+1rem)]',
+    )
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveClass('top-4')
   })
 
   it('omits the close button when opted out', async () => {
