@@ -269,22 +269,17 @@ describe('AvailabilityOverviewContent', () => {
     [{ isLoadingMore: false, message: 'Fixture outage', status: 'error' }],
     [createLoadedState('ready', createEmptyDayGroups())],
     [createLoadedState('ready')],
-  ] as const)(
-    'renders basket review access for a retained selection',
-    (availabilityState) => {
-      const onReview = vi.fn()
+  ] as const)('renders basket review access for a retained selection', (availabilityState) => {
+    const onReview = vi.fn()
 
-      renderContent(availabilityState, {
-        basket: { onReview, selections: [selectedSlot] },
-      })
+    renderContent(availabilityState, {
+      basket: { onReview, selections: [selectedSlot] },
+    })
 
-      fireEvent.click(
-        screen.getByRole('button', { name: 'Review selection' }),
-      )
+    fireEvent.click(screen.getByRole('button', { name: 'Review selection' }))
 
-      expect(onReview).toHaveBeenCalledOnce()
-    },
-  )
+    expect(onReview).toHaveBeenCalledOnce()
+  })
 
   it('renders basket review access offline for a retained selection', () => {
     const onReview = vi.fn()
@@ -307,25 +302,18 @@ describe('AvailabilityOverviewContent', () => {
     [{ isLoadingMore: false, message: 'Fixture outage', status: 'error' }],
     [createLoadedState('ready', createEmptyDayGroups())],
     [createLoadedState('ready')],
-  ] as const)(
-    'does not render basket review access without selections',
-    (availabilityState) => {
-      renderContent(availabilityState)
+  ] as const)('does not render basket review access without selections', (availabilityState) => {
+    renderContent(availabilityState)
 
-      expect(
-        screen.queryByRole('button', { name: 'Review selection' }),
-      ).toBeNull()
-    },
-  )
+    expect(
+      screen.queryByRole('button', { name: 'Review selection' }),
+    ).toBeNull()
+  })
 
   it('does not render basket review access offline without selections', () => {
-    renderContent(
-      createLoadedState('ready'),
-      undefined,
-      undefined,
-      undefined,
-      { isOffline: true },
-    )
+    renderContent(createLoadedState('ready'), undefined, undefined, undefined, {
+      isOffline: true,
+    })
 
     expect(
       screen.queryByRole('button', { name: 'Review selection' }),

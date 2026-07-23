@@ -17,9 +17,9 @@ import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
 import { AvailabilityDayGroups } from './AvailabilityDayGroups'
-import { BasketReviewAction } from './BasketReviewAction'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
+import { BasketReviewAction } from './BasketReviewAction'
 import type { BookingBasketProps } from './booking-basket-props'
 import { useAvailabilityAutoLoad } from './use-availability-auto-load'
 
@@ -106,12 +106,18 @@ export function AvailabilityOverviewContent({
           {[0, 1, 2].map((index) => (
             <div
               key={index}
-              className={cn(panelSurfaceClassName, 'overflow-hidden p-4 sm:p-5')}
+              className={cn(
+                panelSurfaceClassName,
+                'overflow-hidden p-4 sm:p-5',
+              )}
             >
               <Skeleton className="h-5 w-28" />
               <div className="mt-4 space-y-2">
                 {[0, 1, 2].map((slotIndex) => (
-                  <Skeleton key={slotIndex} className="h-18 w-full rounded-xl" />
+                  <Skeleton
+                    key={slotIndex}
+                    className="h-18 w-full rounded-xl"
+                  />
                 ))}
               </div>
             </div>

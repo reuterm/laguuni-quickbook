@@ -54,9 +54,7 @@ describe('BasketReviewAction', () => {
     )
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
 
-    rerender(
-      <BasketReviewAction onReview={vi.fn()} selections={[first]} />,
-    )
+    rerender(<BasketReviewAction onReview={vi.fn()} selections={[first]} />)
     expect(
       screen.getByRole('button', { name: 'Review selection' }),
     ).toBeInTheDocument()
