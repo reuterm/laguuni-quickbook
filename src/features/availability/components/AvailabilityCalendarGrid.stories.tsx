@@ -9,7 +9,7 @@ import {
 } from '$storybook/fixture-data'
 
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
-import { BookingBasketReviewButton } from './BookingBasketReviewButton'
+import { BasketReviewAction } from './BasketReviewAction'
 import { emptyBookingBasket } from './booking-basket-props'
 
 const meta = {
@@ -73,7 +73,7 @@ function BasketSelectionCalendar() {
 
   return (
     <>
-      <BookingBasketReviewButton
+      <BasketReviewAction
         selections={bookingBasket.selections}
         onReview={bookingBasket.onReview}
       />

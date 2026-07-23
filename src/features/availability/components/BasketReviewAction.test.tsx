@@ -4,9 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { BookingSlotSelection } from '@/domain/booking'
 import { localDate } from '../../../../tests/local-date'
-import { BookingBasketReviewButton } from './BookingBasketReviewButton'
+import { BasketReviewAction } from './BasketReviewAction'
 
-describe('BookingBasketReviewButton', () => {
+describe('BasketReviewAction', () => {
   afterEach(cleanup)
 
   const first: BookingSlotSelection = {
@@ -27,10 +27,7 @@ describe('BookingBasketReviewButton', () => {
     const user = userEvent.setup()
 
     render(
-      <BookingBasketReviewButton
-        onReview={onReview}
-        selections={[first, second]}
-      />,
+      <BasketReviewAction onReview={onReview} selections={[first, second]} />,
     )
 
     const button = screen.getByRole('button', { name: 'Review selection' })
@@ -53,13 +50,11 @@ describe('BookingBasketReviewButton', () => {
 
   it('uses the same accessible label for one selection and returns nothing when empty', () => {
     const { rerender } = render(
-      <BookingBasketReviewButton onReview={vi.fn()} selections={[]} />,
+      <BasketReviewAction onReview={vi.fn()} selections={[]} />,
     )
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
 
-    rerender(
-      <BookingBasketReviewButton onReview={vi.fn()} selections={[first]} />,
-    )
+    rerender(<BasketReviewAction onReview={vi.fn()} selections={[first]} />)
     expect(
       screen.getByRole('button', { name: 'Review selection' }),
     ).toBeInTheDocument()

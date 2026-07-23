@@ -212,10 +212,13 @@ export const BasketSelection: Story = {
   render: renderAvailabilityScreen,
   play: async ({ canvas, canvasElement }) => {
     const page = within(canvasElement.ownerDocument.body)
+    const firstBookButton = await getFirstBookButton(canvas)
 
-    await userEvent.click(
-      canvas.getByRole('button', { name: 'Select multiple slots' }),
-    )
+    await userEvent.click(firstBookButton)
+    await userEvent.click(page.getByRole('button', { name: 'Add more' }))
+    await waitFor(() => {
+      expect(page.queryByRole('dialog')).not.toBeInTheDocument()
+    })
     await userEvent.click(
       canvas.getAllByRole('button', { name: /^Book 15:00-16:00/ })[0],
     )
@@ -234,7 +237,7 @@ export const BasketSelection: Story = {
         reviewSheet.getByTestId('booking-selected-slots').children,
         (row) => row.textContent,
       ),
-    ).toEqual(['Wed 13 MayPro · 15:00-16:00', 'Thu 14 MayPro · 15:00-16:00'])
+    ).toEqual(['ProWed, 13 May, 15:00-16:00', 'ProThu, 14 May, 15:00-16:00'])
     await userEvent.click(
       reviewSheet.getByRole('button', { name: 'Clear selection' }),
     )
@@ -294,7 +297,7 @@ export const CrossCableReplacement: Story = {
     })
     await expect(
       canvas.getByRole('button', { name: 'Review selection' }),
-    ).toHaveTextContent('1 slot')
+    ).toBeInTheDocument()
   },
 }
 

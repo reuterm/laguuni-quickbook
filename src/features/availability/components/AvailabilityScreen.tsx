@@ -32,7 +32,7 @@ import { useBookingBasket } from '../use-booking-basket'
 import { AvailabilityCableSelector } from './AvailabilityCableSelector'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 import { getAvailabilityBookingActionProps } from './availability-booking-action'
-import { BookingBasketReviewButton } from './BookingBasketReviewButton'
+import { BasketReviewAction } from './BasketReviewAction'
 import { BookingReplacementSheet } from './BookingReplacementSheet'
 import { emptyBookingBasket } from './booking-basket-props'
 
@@ -327,7 +327,7 @@ export function AvailabilityScreen({
           onLoadMore={loadMoreAvailability}
           {...bookingActionProps}
         />
-        <BookingBasketReviewButton
+        <BasketReviewAction
           selections={basket.selections}
           onReview={basket.onReview}
         />

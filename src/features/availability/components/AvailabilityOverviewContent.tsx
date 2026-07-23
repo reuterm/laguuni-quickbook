@@ -58,7 +58,6 @@ export function AvailabilityOverviewContent({
     loadedDayGroupCount: contentModel.renderedDayGroups.length,
     onLoadMore,
   })
-
   if (isOffline) {
     return (
       <Alert

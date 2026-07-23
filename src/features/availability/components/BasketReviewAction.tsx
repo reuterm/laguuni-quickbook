@@ -1,15 +1,15 @@
 import { Button } from '@/components/ui/button'
 import type { BookingSlotSelection } from '@/domain/booking'
 
-type BookingBasketReviewButtonProps = {
+type BasketReviewActionProps = {
   selections: readonly BookingSlotSelection[]
   onReview: () => void
 }
 
-export function BookingBasketReviewButton({
+export function BasketReviewAction({
   selections,
   onReview,
-}: BookingBasketReviewButtonProps) {
+}: BasketReviewActionProps): React.JSX.Element | null {
   if (selections.length === 0) return null
 
   return (
