@@ -214,7 +214,7 @@ export const BasketSelection: Story = {
     const page = within(canvasElement.ownerDocument.body)
 
     await userEvent.click(
-      canvas.getByRole('button', { name: 'Select multiple slots' }),
+      await canvas.findByRole('button', { name: 'Select multiple slots' }),
     )
     await userEvent.click(
       canvas.getAllByRole('button', { name: /^Book 15:00-16:00/ })[0],
