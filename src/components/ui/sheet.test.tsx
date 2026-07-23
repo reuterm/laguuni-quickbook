@@ -72,6 +72,9 @@ describe('Sheet', () => {
       'data-slot',
       'sheet-close',
     )
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveClass(
+      'top-[calc(env(safe-area-inset-top)+1rem)]',
+    )
   })
 
   it('omits the close button when opted out', async () => {
