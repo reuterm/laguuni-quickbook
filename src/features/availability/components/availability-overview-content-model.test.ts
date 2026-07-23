@@ -10,6 +10,7 @@ describe('getAvailabilityOverviewContentModel', () => {
     const model = getAvailabilityOverviewContentModel(
       {
         isLoadingMore: false,
+        skeletonWeekCount: 2,
         status: 'loading',
       },
       'cards',
@@ -21,22 +22,20 @@ describe('getAvailabilityOverviewContentModel', () => {
       hasLoadedDayGroups: false,
       hasRenderedAvailability: false,
       isCalendarView: false,
-      isRefreshing: false,
       renderedCardDayGroups: [],
       renderedDayGroups: [],
     })
   })
 
-  it('marks refreshing calendar state and keeps loaded day groups', () => {
+  it('keeps loaded calendar day groups', () => {
     const dayGroups = [createBookableDayGroup()]
 
     const model = getAvailabilityOverviewContentModel(
-      createLoadedState('refreshing', dayGroups),
+      createLoadedState('ready', dayGroups),
       'calendar',
       false,
     )
 
-    expect(model.isRefreshing).toBe(true)
     expect(model.isCalendarView).toBe(true)
     expect(model.hasLoadedDayGroups).toBe(true)
     expect(model.hasRenderedAvailability).toBe(true)
@@ -60,7 +59,6 @@ describe('getAvailabilityOverviewContentModel', () => {
     expect(model.hasLoadedDayGroups).toBe(true)
     expect(model.hasRenderedAvailability).toBe(false)
     expect(model.isCalendarView).toBe(false)
-    expect(model.isRefreshing).toBe(false)
     expect(model.renderedDayGroups).toEqual(emptyDayGroups)
     expect(model.renderedCardDayGroups).toEqual([])
   })
@@ -106,11 +104,9 @@ describe('getAvailabilityOverviewContentModel', () => {
 })
 
 function createLoadedState(
-  status: 'ready' | 'refreshing',
+  status: 'ready',
   dayGroups: readonly AvailabilityDayGroup[] = [createBookableDayGroup()],
-  overrides: Partial<
-    Extract<AvailabilityState, { status: 'ready' | 'refreshing' }>
-  > = {},
+  overrides: Partial<Extract<AvailabilityState, { status: 'ready' }>> = {},
 ): AvailabilityState {
   return {
     appendErrorMessage: null,

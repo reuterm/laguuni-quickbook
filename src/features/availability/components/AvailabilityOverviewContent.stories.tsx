@@ -3,10 +3,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import {
   BOOKABLE_DAY_GROUPS,
   BOOKING_ENABLED_SETTINGS,
-  CALENDAR_DAY_GROUPS,
   CALENDAR_VIEW_SETTINGS,
   createReadyAvailabilityState,
-  createRefreshingAvailabilityState,
   EMPTY_DAY_GROUPS,
   noop,
   noopAsync,
@@ -27,23 +25,13 @@ type Story = StoryObj<typeof meta>
 export const Loading: Story = {
   args: {
     activeCableLabel: 'Pro',
-    availabilityState: { isLoadingMore: false, status: 'loading' },
+    availabilityState: {
+      isLoadingMore: false,
+      skeletonWeekCount: 2,
+      status: 'loading',
+    },
     bookingActionMode: 'hidden',
     basket: emptyBookingBasket,
-    onLoadMore: noopAsync,
-  },
-  parameters: {
-    settings: CALENDAR_VIEW_SETTINGS,
-  },
-}
-
-export const Refreshing: Story = {
-  args: {
-    activeCableLabel: 'Pro',
-    availabilityState: createRefreshingAvailabilityState(CALENDAR_DAY_GROUPS),
-    bookingActionMode: 'enabled',
-    basket: emptyBookingBasket,
-    onBookSelection: noop,
     onLoadMore: noopAsync,
   },
   parameters: {

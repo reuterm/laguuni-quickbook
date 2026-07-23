@@ -437,9 +437,7 @@ describe('useAvailabilityOverview', () => {
     resolveSecondRefresh()
 
     await waitFor(() => {
-      if (
-        result.current.availabilityState.status !== 'ready'
-      ) {
+      if (result.current.availabilityState.status !== 'ready') {
         throw new Error('Expected loaded availability state')
       }
 
@@ -530,9 +528,7 @@ describe('useAvailabilityOverview', () => {
     resolveSecondRefresh()
 
     await waitFor(() => {
-      if (
-        result.current.availabilityState.status !== 'ready'
-      ) {
+      if (result.current.availabilityState.status !== 'ready') {
         throw new Error('Expected loaded availability state')
       }
 
@@ -804,9 +800,7 @@ describe('useAvailabilityOverview', () => {
     resolveAppendWeek()
 
     await waitFor(() => {
-      if (
-        result.current.availabilityState.status !== 'ready'
-      ) {
+      if (result.current.availabilityState.status !== 'ready') {
         throw new Error('Expected loaded availability state')
       }
 
@@ -902,9 +896,7 @@ describe('useAvailabilityOverview', () => {
     resolveDayRefresh()
 
     await waitFor(() => {
-      if (
-        result.current.availabilityState.status !== 'ready'
-      ) {
+      if (result.current.availabilityState.status !== 'ready') {
         throw new Error('Expected loaded availability state')
       }
 

@@ -12,6 +12,7 @@ import {
   listCalendarSkeletonWeeks,
   listVisibleWeekdayIndices,
 } from '../availability-calendar'
+import { AVAILABILITY_WEEK_DAY_COUNT } from '../availability-service'
 import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame'
 import { availabilityCalendarColumnClassNames } from './availability-calendar-ui'
 
@@ -32,13 +33,11 @@ export function AvailabilityCalendarLoadingGrid({
   )
   const loadingWeekStartDates = listCalendarSkeletonWeeks(
     rangeStartDate,
-    skeletonWeekCount,
+    skeletonWeekCount * AVAILABILITY_WEEK_DAY_COUNT,
   )
 
   return (
-    <output aria-live="polite" className="space-y-4">
-      <p className="sr-only">Loading availability…</p>
-
+    <div className="space-y-4">
       {loadingWeekStartDates.map((weekStartDate) => (
         <AvailabilityCalendarLoadingWeek
           key={formatLocalDate(weekStartDate)}
@@ -48,7 +47,7 @@ export function AvailabilityCalendarLoadingGrid({
           weekStartDate={weekStartDate}
         />
       ))}
-    </output>
+    </div>
   )
 }
 
@@ -70,7 +69,7 @@ function AvailabilityCalendarLoadingWeek({
     weekStartDate,
     rangeStartDate,
     showFullWeekColumns,
-    skeletonWeekCount,
+    skeletonWeekCount * AVAILABILITY_WEEK_DAY_COUNT,
     [],
   )
   const dayHeaders = visibleDayIndices.map((dayIndex) => (

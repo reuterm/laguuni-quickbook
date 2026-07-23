@@ -19,6 +19,7 @@ type LoadedAvailabilityData = {
 type AvailabilityState =
   | {
       isLoadingMore: false
+      skeletonWeekCount: number
       status: 'loading'
     }
   | ({
@@ -306,6 +307,7 @@ function deriveAvailabilityState(
   if (store.phase === 'loading') {
     return {
       isLoadingMore: false,
+      skeletonWeekCount: store.loadedRange.weekCount,
       status: 'loading',
     }
   }
