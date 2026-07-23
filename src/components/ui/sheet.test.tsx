@@ -28,6 +28,7 @@ describe('Sheet', () => {
     expect(document.querySelector('[data-slot="sheet-content"]')).toHaveClass(
       'h-dvh',
       'transition-transform',
+      'pt-[calc(env(safe-area-inset-top)+1.25rem)]',
     )
   })
 
