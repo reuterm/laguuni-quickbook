@@ -1,6 +1,7 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { X } from 'lucide-react'
+import { forwardRef } from 'react'
 import type * as React from 'react'
 
 import { cn } from '@/lib/utils'
@@ -31,12 +32,13 @@ function SheetClose(props: React.ComponentProps<typeof DialogPrimitive.Close>) {
   return <DialogPrimitive.Close data-slot="sheet-close" {...props} />
 }
 
-function SheetCloseButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+const SheetCloseButton = forwardRef<
+  React.ComponentRef<typeof DialogPrimitive.Close>,
+  React.ComponentProps<typeof DialogPrimitive.Close>
+>(function SheetCloseButton({ className, ...props }, ref) {
   return (
-    <SheetClose
+    <DialogPrimitive.Close
+      ref={ref}
       type="button"
       className={cn(
         'absolute top-4 right-4 rounded-full p-2 text-muted-foreground transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none sm:top-5 sm:right-5',
@@ -47,9 +49,9 @@ function SheetCloseButton({
     >
       <X className="size-4" />
       <span className="sr-only">Close</span>
-    </SheetClose>
+    </DialogPrimitive.Close>
   )
-}
+})
 
 function SheetPortal(
   props: React.ComponentProps<typeof DialogPrimitive.Portal>,

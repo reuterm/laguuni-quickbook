@@ -1,5 +1,5 @@
 import type * as React from 'react'
-import { type ChangeEvent, useState } from 'react'
+import { type ChangeEvent, useRef, useState } from 'react'
 
 import { useAppVersion, useDiagnostics } from '@/app/providers'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -11,6 +11,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control'
 import { NativeSelect } from '@/components/ui/select'
 import {
   Sheet,
+  SheetCloseButton,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -99,6 +100,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
     resetDeveloperModeUnlockProgress,
   } = useDeveloperMode()
   const [draftSettings, setDraftSettings] = useState<UserSettings>(settings)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
 
   const displayedDraftSettings = open ? draftSettings : settings
 
@@ -152,7 +154,11 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
       <SheetContent
         side="right"
         className="flex w-full flex-col sm:max-w-lg"
-        onOpenAutoFocus={(event) => event.preventDefault()}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault()
+          closeButtonRef.current?.focus()
+        }}
+        showCloseButton={false}
       >
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="space-y-6">
@@ -292,6 +298,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
             </button>
           </div>
         </div>
+        <SheetCloseButton ref={closeButtonRef} />
       </SheetContent>
     </Sheet>
   )

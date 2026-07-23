@@ -20,16 +20,14 @@ describe('Settings screen integration', () => {
     vi.unstubAllGlobals()
   })
 
-  it('keeps focus on the settings trigger when the sheet opens', async () => {
+  it('focuses the close button when the sheet opens', async () => {
     const user = userEvent.setup()
     const storage = createMemoryStorage()
 
     renderApp({ storage })
-    const settingsTrigger = screen.getByRole('button', { name: 'Settings' })
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
 
-    await user.click(settingsTrigger)
-
-    expect(settingsTrigger).toHaveFocus()
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus()
     expect(screen.getByLabelText('Name')).not.toHaveFocus()
   })
 
