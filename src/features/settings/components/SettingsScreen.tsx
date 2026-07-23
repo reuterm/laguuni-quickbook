@@ -165,8 +165,8 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
             <SheetHeader className="space-y-2 pr-10 text-left">
               <SheetTitle>Booking details</SheetTitle>
               <SheetDescription>
-                Your name, phone, email, season pass code, and default cable
-                are saved only in this browser for faster checkout.
+                Your name, phone, email, season pass code, and default cable are
+                saved only in this browser for faster checkout.
               </SheetDescription>
             </SheetHeader>
 
