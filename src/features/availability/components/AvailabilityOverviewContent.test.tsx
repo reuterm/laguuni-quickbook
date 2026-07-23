@@ -264,6 +264,74 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.queryByTestId('availability-content')).not.toBeInTheDocument()
   })
 
+  it.each([
+    [{ isLoadingMore: false, status: 'loading' }],
+    [{ isLoadingMore: false, message: 'Fixture outage', status: 'error' }],
+    [createLoadedState('ready', createEmptyDayGroups())],
+    [createLoadedState('ready')],
+  ] as const)(
+    'renders basket review access for a retained selection',
+    (availabilityState) => {
+      const onReview = vi.fn()
+
+      renderContent(availabilityState, {
+        basket: { onReview, selections: [selectedSlot] },
+      })
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Review selection' }),
+      )
+
+      expect(onReview).toHaveBeenCalledOnce()
+    },
+  )
+
+  it('renders basket review access offline for a retained selection', () => {
+    const onReview = vi.fn()
+
+    renderContent(
+      createLoadedState('ready'),
+      { basket: { onReview, selections: [selectedSlot] } },
+      undefined,
+      undefined,
+      { isOffline: true },
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review selection' }))
+
+    expect(onReview).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    [{ isLoadingMore: false, status: 'loading' }],
+    [{ isLoadingMore: false, message: 'Fixture outage', status: 'error' }],
+    [createLoadedState('ready', createEmptyDayGroups())],
+    [createLoadedState('ready')],
+  ] as const)(
+    'does not render basket review access without selections',
+    (availabilityState) => {
+      renderContent(availabilityState)
+
+      expect(
+        screen.queryByRole('button', { name: 'Review selection' }),
+      ).toBeNull()
+    },
+  )
+
+  it('does not render basket review access offline without selections', () => {
+    renderContent(
+      createLoadedState('ready'),
+      undefined,
+      undefined,
+      undefined,
+      { isOffline: true },
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Review selection' }),
+    ).toBeNull()
+  })
+
   it('shows a bottom loading state while appending another week', () => {
     renderContent(
       createLoadedState('ready', undefined, { isLoadingMore: true }),

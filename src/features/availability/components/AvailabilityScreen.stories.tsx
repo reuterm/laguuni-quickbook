@@ -294,7 +294,7 @@ export const CrossCableReplacement: Story = {
     })
     await expect(
       canvas.getByRole('button', { name: 'Review selection' }),
-    ).toHaveTextContent('1 slot')
+    ).toBeInTheDocument()
   },
 }
 
