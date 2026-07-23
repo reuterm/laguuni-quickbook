@@ -19,7 +19,6 @@ import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGr
 import { AvailabilityDayGroups } from './AvailabilityDayGroups'
 import type { AvailabilityBookingActionProps } from './availability-booking-action'
 import { getAvailabilityOverviewContentModel } from './availability-overview-content-model'
-import { BasketReviewAction } from './BasketReviewAction'
 import type { BookingBasketProps } from './booking-basket-props'
 import { useAvailabilityAutoLoad } from './use-availability-auto-load'
 
@@ -59,83 +58,58 @@ export function AvailabilityOverviewContent({
     loadedDayGroupCount: contentModel.renderedDayGroups.length,
     onLoadMore,
   })
-  const basketReviewAction = (
-    <BasketReviewAction
-      selections={basket.selections}
-      onReview={basket.onReview}
-    />
-  )
-
   if (isOffline) {
     return (
-      <>
-        {basketReviewAction}
-        <Alert
-          role="status"
-          className={cn(subtleSurfaceBackgroundClassName, 'text-center')}
-        >
-          <AlertTitle className="text-center">
-            Reconnect to load availability
-          </AlertTitle>
-          <AlertDescription className="text-center">
-            Saved settings stay available on this device, but availability and
-            booking for {activeCableLabel} need an internet connection.
-          </AlertDescription>
-        </Alert>
-      </>
+      <Alert
+        role="status"
+        className={cn(subtleSurfaceBackgroundClassName, 'text-center')}
+      >
+        <AlertTitle className="text-center">
+          Reconnect to load availability
+        </AlertTitle>
+        <AlertDescription className="text-center">
+          Saved settings stay available on this device, but availability and
+          booking for {activeCableLabel} need an internet connection.
+        </AlertDescription>
+      </Alert>
     )
   }
 
   if (availabilityState.status === 'loading') {
     if (contentModel.isCalendarView) {
       return (
-        <>
-          {basketReviewAction}
-          <AvailabilityCalendarLoadingGrid
-            availabilityReferenceDate={availabilityReferenceDate}
-          />
-        </>
+        <AvailabilityCalendarLoadingGrid
+          availabilityReferenceDate={availabilityReferenceDate}
+        />
       )
     }
 
     return (
-      <>
-        {basketReviewAction}
-        <output aria-live="polite" className="space-y-6">
-          <p className="sr-only">Loading availability…</p>
-          {[0, 1, 2].map((index) => (
-            <div
-              key={index}
-              className={cn(
-                panelSurfaceClassName,
-                'overflow-hidden p-4 sm:p-5',
-              )}
-            >
-              <Skeleton className="h-5 w-28" />
-              <div className="mt-4 space-y-2">
-                {[0, 1, 2].map((slotIndex) => (
-                  <Skeleton
-                    key={slotIndex}
-                    className="h-18 w-full rounded-xl"
-                  />
-                ))}
-              </div>
+      <output aria-live="polite" className="space-y-6">
+        <p className="sr-only">Loading availability…</p>
+        {[0, 1, 2].map((index) => (
+          <div
+            key={index}
+            className={cn(panelSurfaceClassName, 'overflow-hidden p-4 sm:p-5')}
+          >
+            <Skeleton className="h-5 w-28" />
+            <div className="mt-4 space-y-2">
+              {[0, 1, 2].map((slotIndex) => (
+                <Skeleton key={slotIndex} className="h-18 w-full rounded-xl" />
+              ))}
             </div>
-          ))}
-        </output>
-      </>
+          </div>
+        ))}
+      </output>
     )
   }
 
   if (availabilityState.status === 'error') {
     return (
-      <>
-        {basketReviewAction}
-        <Alert variant="destructive" role="alert">
-          <AlertTitle>Availability unavailable</AlertTitle>
-          <AlertDescription>{availabilityState.message}</AlertDescription>
-        </Alert>
-      </>
+      <Alert variant="destructive" role="alert">
+        <AlertTitle>Availability unavailable</AlertTitle>
+        <AlertDescription>{availabilityState.message}</AlertDescription>
+      </Alert>
     )
   }
 
@@ -222,7 +196,6 @@ export function AvailabilityOverviewContent({
 
   return (
     <div className="space-y-3">
-      {basketReviewAction}
       {refreshNotice}
       {renderAvailability()}
       {renderAppendError()}

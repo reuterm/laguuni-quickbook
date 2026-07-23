@@ -221,6 +221,16 @@ describe('AvailabilityScreen', () => {
     }
   })
 
+  it('keeps basket review outside availability content', () => {
+    mocks.bookingBasket.selections = [currentSelection]
+
+    render(<AvailabilityScreen isOnline={false} onOpenSettings={vi.fn()} />)
+
+    expect(
+      screen.getByRole('button', { name: 'Review selection' }),
+    ).toBeInTheDocument()
+  })
+
   it('refreshes every distinct cable and date after a successful booking', async () => {
     render(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
 
