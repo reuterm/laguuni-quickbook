@@ -12,6 +12,7 @@ import { localDate } from '../../../../tests/local-date'
 import { UserSettingsProvider } from '../../settings/use-user-settings'
 import type { AvailabilityDayGroup } from '../availability-service'
 import type { AvailabilityState } from '../use-availability-overview'
+import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
 import { AvailabilityOverviewContent } from './AvailabilityOverviewContent'
 import type { BookingBasketProps } from './booking-basket-props'
 
@@ -87,6 +88,18 @@ describe('AvailabilityOverviewContent', () => {
     expect(screen.getAllByRole('table')).toHaveLength(2)
     expect(screen.getByText('11 May - 17 May')).toBeInTheDocument()
     expect(screen.getByText('18 May - 24 May')).toBeInTheDocument()
+  })
+
+  it('renders one calendar skeleton week when requested', () => {
+    stubMatchMedia(true)
+
+    render(
+      <TestProviders>
+        <AvailabilityCalendarLoadingGrid skeletonWeekCount={1} />
+      </TestProviders>,
+    )
+
+    expect(screen.getAllByRole('table')).toHaveLength(1)
   })
 
   it('keeps rendered slots visible while refreshing availability', () => {

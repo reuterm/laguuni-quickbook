@@ -12,7 +12,6 @@ import {
   listCalendarSkeletonWeeks,
   listVisibleWeekdayIndices,
 } from '../availability-calendar'
-import { AVAILABILITY_INITIAL_RANGE_DAY_COUNT } from '../availability-service'
 import { AvailabilityCalendarTableFrame } from './AvailabilityCalendarTableFrame'
 import { availabilityCalendarColumnClassNames } from './availability-calendar-ui'
 
@@ -20,10 +19,12 @@ const loadingTimeKeys = ['time-1', 'time-2', 'time-3', 'time-4', 'time-5']
 
 type AvailabilityCalendarLoadingGridProps = {
   availabilityReferenceDate?: Date | undefined
+  skeletonWeekCount: number
 }
 
 export function AvailabilityCalendarLoadingGrid({
   availabilityReferenceDate,
+  skeletonWeekCount,
 }: AvailabilityCalendarLoadingGridProps) {
   const rangeStartDate = startOfWeek(availabilityReferenceDate ?? new Date())
   const showFullWeekColumns = useMediaQuery(
@@ -31,7 +32,7 @@ export function AvailabilityCalendarLoadingGrid({
   )
   const loadingWeekStartDates = listCalendarSkeletonWeeks(
     rangeStartDate,
-    AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
+    skeletonWeekCount,
   )
 
   return (
@@ -42,6 +43,7 @@ export function AvailabilityCalendarLoadingGrid({
         <AvailabilityCalendarLoadingWeek
           key={formatLocalDate(weekStartDate)}
           rangeStartDate={rangeStartDate}
+          skeletonWeekCount={skeletonWeekCount}
           showFullWeekColumns={showFullWeekColumns}
           weekStartDate={weekStartDate}
         />
@@ -52,12 +54,14 @@ export function AvailabilityCalendarLoadingGrid({
 
 type AvailabilityCalendarLoadingWeekProps = {
   rangeStartDate: Date
+  skeletonWeekCount: number
   showFullWeekColumns: boolean
   weekStartDate: Date
 }
 
 function AvailabilityCalendarLoadingWeek({
   rangeStartDate,
+  skeletonWeekCount,
   showFullWeekColumns,
   weekStartDate,
 }: AvailabilityCalendarLoadingWeekProps) {
@@ -66,7 +70,7 @@ function AvailabilityCalendarLoadingWeek({
     weekStartDate,
     rangeStartDate,
     showFullWeekColumns,
-    AVAILABILITY_INITIAL_RANGE_DAY_COUNT,
+    skeletonWeekCount,
     [],
   )
   const dayHeaders = visibleDayIndices.map((dayIndex) => (

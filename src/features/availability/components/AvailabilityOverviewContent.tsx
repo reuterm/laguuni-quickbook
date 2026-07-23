@@ -13,6 +13,7 @@ import { useMediaQuery } from '@/lib/hooks/use-media-query'
 import { cn } from '@/lib/utils'
 import { useUserSettings } from '../../settings/use-user-settings'
 import { AVAILABILITY_CALENDAR_BREAKPOINT_QUERY } from '../availability-calendar'
+import { AVAILABILITY_INITIAL_RANGE_DAY_COUNT } from '../availability-service'
 import type { AvailabilityState } from '../use-availability-overview'
 import { AvailabilityCalendarGrid } from './AvailabilityCalendarGrid'
 import { AvailabilityCalendarLoadingGrid } from './AvailabilityCalendarLoadingGrid'
@@ -80,6 +81,7 @@ export function AvailabilityOverviewContent({
       return (
         <AvailabilityCalendarLoadingGrid
           availabilityReferenceDate={availabilityReferenceDate}
+          skeletonWeekCount={AVAILABILITY_INITIAL_RANGE_DAY_COUNT}
         />
       )
     }
