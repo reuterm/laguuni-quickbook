@@ -28,16 +28,21 @@ function SheetTrigger(
   return <DialogPrimitive.Trigger data-slot="sheet-trigger" {...props} />
 }
 
-function SheetClose(props: React.ComponentProps<typeof DialogPrimitive.Close>) {
-  return <DialogPrimitive.Close data-slot="sheet-close" {...props} />
-}
+const SheetClose = forwardRef<
+  React.ComponentRef<typeof DialogPrimitive.Close>,
+  React.ComponentProps<typeof DialogPrimitive.Close>
+>(function SheetClose(props, ref) {
+  return (
+    <DialogPrimitive.Close ref={ref} data-slot="sheet-close" {...props} />
+  )
+})
 
 const SheetCloseButton = forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Close>,
   React.ComponentProps<typeof DialogPrimitive.Close>
 >(function SheetCloseButton({ className, ...props }, ref) {
   return (
-    <DialogPrimitive.Close
+    <SheetClose
       ref={ref}
       type="button"
       className={cn(
@@ -49,7 +54,7 @@ const SheetCloseButton = forwardRef<
     >
       <X className="size-4" />
       <span className="sr-only">Close</span>
-    </DialogPrimitive.Close>
+    </SheetClose>
   )
 })
 

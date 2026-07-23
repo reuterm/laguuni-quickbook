@@ -47,7 +47,10 @@ describe('Sheet', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open' }))
 
-    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveAttribute(
+      'data-slot',
+      'sheet-close',
+    )
   })
 
   it('omits the close button when opted out', async () => {
