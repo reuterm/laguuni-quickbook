@@ -23,10 +23,6 @@ type AvailabilityState =
     }
   | ({
       isLoadingMore: boolean
-      status: 'refreshing'
-    } & LoadedAvailabilityData)
-  | ({
-      isLoadingMore: boolean
       status: 'ready'
     } & LoadedAvailabilityData)
   | {
@@ -50,7 +46,6 @@ type AvailabilityOverviewStore = {
   appendErrorMessage: string | null
   errorMessage: string | null
   isAppending: boolean
-  isRefreshingRange: boolean
   latestDayRefreshTokens: Readonly<Record<string, number>>
   loadedRange: LoadedRange
   phase: 'error' | 'loading' | 'ready'
@@ -168,20 +163,7 @@ function availabilityOverviewReducer(
     }
 
     case 'refreshRangeStarted': {
-      if (state.phase !== 'ready') {
-        return createRangeStore(action.range, action.rangeVersion, 'loading')
-      }
-
-      return {
-        ...state,
-        activeDayRefreshCount: 0,
-        appendErrorMessage: null,
-        errorMessage: null,
-        isAppending: false,
-        isRefreshingRange: true,
-        loadedRange: action.range,
-        rangeVersion: action.rangeVersion,
-      }
+      return createRangeStore(action.range, action.rangeVersion, 'loading')
     }
 
     case 'refreshRangeSucceeded': {
@@ -341,10 +323,7 @@ function deriveAvailabilityState(
     canLoadMore: store.weekPages.length < AVAILABILITY_MAX_WEEK_COUNT,
     dayGroups: flattenWeekPages(store.weekPages),
     isLoadingMore: store.isAppending,
-    status:
-      store.isRefreshingRange || store.activeDayRefreshCount > 0
-        ? 'refreshing'
-        : 'ready',
+    status: 'ready',
     weekPages: store.weekPages,
   }
 }
@@ -466,7 +445,6 @@ function createRangeStore(
     appendErrorMessage: null,
     errorMessage,
     isAppending: false,
-    isRefreshingRange: false,
     latestDayRefreshTokens: {},
     loadedRange,
     phase,
@@ -529,7 +507,7 @@ function decrementActiveDayRefreshCount(activeDayRefreshCount: number) {
 }
 
 function canRefreshDay(store: AvailabilityOverviewStore) {
-  return store.phase === 'ready' && !store.isRefreshingRange
+  return store.phase === 'ready'
 }
 
 function canAppendWeek(
@@ -538,7 +516,6 @@ function canAppendWeek(
 ) {
   return (
     store.phase === 'ready' &&
-    !store.isRefreshingRange &&
     !hasPendingAppend &&
     store.weekPages.length < AVAILABILITY_MAX_WEEK_COUNT
   )
