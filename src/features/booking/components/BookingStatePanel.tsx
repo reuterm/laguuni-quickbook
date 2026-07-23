@@ -34,14 +34,14 @@ export function BookingStatePanel({
       )}
     >
       <div className="space-y-2">
-        <div className="flex items-start gap-3">
-          {Icon ? (
-            <Icon className={cn('mt-0.5 size-4 shrink-0', iconClassName)} />
-          ) : null}
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold text-foreground">{title}</h3>
-            <p className="text-sm leading-6 text-muted-foreground">{body}</p>
+        {Icon ? (
+          <div className="flex justify-center" data-testid="booking-state-icon">
+            <Icon className={cn('size-8 shrink-0', iconClassName)} />
           </div>
+        ) : null}
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-foreground">{title}</h3>
+          <p className="text-sm leading-6 text-muted-foreground">{body}</p>
         </div>
       </div>
 

@@ -193,5 +193,7 @@ describe('BookingResultPanel', () => {
 
     expect(paymentLink).toHaveAttribute('target', '_blank')
     expect(paymentLink).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(paymentLink).toHaveClass('w-full')
+    expect(paymentLink).not.toHaveClass('sm:w-auto')
   })
 })

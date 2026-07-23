@@ -38,6 +38,27 @@ export const Confirm: Story = {
   },
 }
 
+export const LongReview: Story = {
+  name: 'Long review',
+  args: {
+    actions: noContinuationActions,
+    bookingSheetState: {
+      kind: 'initial',
+      selections: Array.from({ length: 16 }, (_, index) =>
+        createSelection({
+          date: `2026-05-${String(index + 1).padStart(2, '0')}`,
+          endTime: '16:00',
+          startTime: '15:00',
+        }),
+      ),
+      status: 'confirm',
+    },
+    confirmBooking: noopAsync,
+    dismissBookingSheet: noop,
+    onExportTrace: noopAsync,
+  },
+}
+
 export const InitialConfirmation: Story = {
   args: {
     actions: {
@@ -72,7 +93,8 @@ export const Submitting: Story = {
   },
 }
 
-export const Completed: Story = {
+export const CompletedFailed: Story = {
+  name: 'Failed',
   args: {
     actions: noContinuationActions,
     bookingSheetState: createCompletedBookingSheetState('failed'),

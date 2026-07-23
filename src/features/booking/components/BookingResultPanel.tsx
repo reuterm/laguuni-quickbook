@@ -75,7 +75,7 @@ function BookingResultAction({
   switch (action.kind) {
     case 'payment':
       return (
-        <Button asChild className="w-full sm:w-auto">
+        <Button asChild className="w-full">
           <a href={action.href} rel="noopener noreferrer" target="_blank">
             Continue to payment
           </a>
@@ -90,6 +90,7 @@ function BookingResultAction({
               Copy diagnostics
             </>
           }
+          buttonClassName="w-full"
           onCopy={() => onExportTrace(traceId)}
         />
       )
@@ -98,7 +99,7 @@ function BookingResultAction({
         <div className="space-y-2">
           <Button
             type="button"
-            className="w-full sm:w-auto"
+            className="w-full"
             disabled={isAddingToCalendar}
             onClick={async () => {
               setInlineErrorMessage(null)

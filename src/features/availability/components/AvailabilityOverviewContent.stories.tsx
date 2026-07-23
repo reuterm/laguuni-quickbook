@@ -81,17 +81,3 @@ export const Offline: Story = {
     settings: BOOKING_ENABLED_SETTINGS,
   },
 }
-
-export const ApiError: Story = {
-  args: {
-    activeCableLabel: 'Pro',
-    availabilityState: {
-      isLoadingMore: false,
-      message: 'Fixture outage',
-      status: 'error',
-    },
-    bookingActionMode: 'hidden',
-    basket: emptyBookingBasket,
-    onLoadMore: noopAsync,
-  },
-}
