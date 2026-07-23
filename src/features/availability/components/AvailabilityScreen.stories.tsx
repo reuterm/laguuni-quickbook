@@ -216,6 +216,9 @@ export const BasketSelection: Story = {
 
     await userEvent.click(firstBookButton)
     await userEvent.click(page.getByRole('button', { name: 'Add more' }))
+    await waitFor(() => {
+      expect(page.queryByRole('dialog')).not.toBeInTheDocument()
+    })
     await userEvent.click(
       canvas.getAllByRole('button', { name: /^Book 15:00-16:00/ })[0],
     )
