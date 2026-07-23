@@ -23,8 +23,7 @@ export const Cards: Story = {
   args: {
     availabilityReferenceDate: STORYBOOK_REFERENCE_DATE,
     contentModel: createContentModel(false),
-    skeletonCardCount: 3,
-    skeletonWeekCount: 2,
+    skeletonCount: 2,
   },
 }
 
@@ -32,8 +31,7 @@ export const Calendar: Story = {
   args: {
     availabilityReferenceDate: STORYBOOK_REFERENCE_DATE,
     contentModel: createContentModel(true),
-    skeletonCardCount: 3,
-    skeletonWeekCount: 2,
+    skeletonCount: 2,
   },
   decorators: [withMatchMedia(AVAILABILITY_CALENDAR_BREAKPOINT_QUERY, true)],
 }

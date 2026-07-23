@@ -53,7 +53,7 @@ describe('AvailabilityOverviewContent', () => {
       status: 'loading',
     })
 
-    expect(screen.getAllByTestId('availability-card-skeleton')).toHaveLength(3)
+    expect(screen.getAllByTestId('availability-card-skeleton')).toHaveLength(2)
     expect(screen.queryByText('Loading availability…')).not.toBeInTheDocument()
   })
 
@@ -126,7 +126,7 @@ describe('AvailabilityOverviewContent', () => {
       status: 'loading',
     })
 
-    expect(screen.getAllByTestId('availability-card-skeleton')).toHaveLength(3)
+    expect(screen.getAllByTestId('availability-card-skeleton')).toHaveLength(2)
     expect(screen.queryByText('3')).not.toBeInTheDocument()
     expect(screen.queryByText(/loading|refreshing/i)).not.toBeInTheDocument()
   })

@@ -76,8 +76,7 @@ export function AvailabilityOverviewContent({
       <AvailabilityLoadingSkeleton
         availabilityReferenceDate={availabilityReferenceDate}
         contentModel={contentModel}
-        skeletonCardCount={3}
-        skeletonWeekCount={availabilityState.skeletonWeekCount}
+        skeletonCount={availabilityState.skeletonWeekCount}
       />
     )
   }
@@ -171,8 +170,7 @@ export function AvailabilityOverviewContent({
             : availabilityReferenceDate
         }
         contentModel={contentModel}
-        skeletonCardCount={1}
-        skeletonWeekCount={1}
+        skeletonCount={1}
       />
     )
   }

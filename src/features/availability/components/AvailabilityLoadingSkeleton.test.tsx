@@ -9,8 +9,7 @@ describe('AvailabilityLoadingSkeleton', () => {
       <AvailabilityLoadingSkeleton
         availabilityReferenceDate={new Date('2026-05-11T12:00:00')}
         contentModel={createContentModel(false)}
-        skeletonCardCount={2}
-        skeletonWeekCount={1}
+        skeletonCount={2}
       />,
     )
 
@@ -23,8 +22,7 @@ describe('AvailabilityLoadingSkeleton', () => {
       <AvailabilityLoadingSkeleton
         availabilityReferenceDate={new Date('2026-05-11T12:00:00')}
         contentModel={createContentModel(true)}
-        skeletonCardCount={1}
-        skeletonWeekCount={2}
+        skeletonCount={2}
       />,
     )
 

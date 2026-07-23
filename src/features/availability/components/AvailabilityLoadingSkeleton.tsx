@@ -5,24 +5,22 @@ import type { AvailabilityOverviewContentModel } from './availability-overview-c
 type AvailabilityLoadingSkeletonProps = {
   availabilityReferenceDate?: Date | undefined
   contentModel: AvailabilityOverviewContentModel
-  skeletonCardCount: number
-  skeletonWeekCount: number
+  skeletonCount: number
 }
 
 export function AvailabilityLoadingSkeleton({
   availabilityReferenceDate,
   contentModel,
-  skeletonCardCount,
-  skeletonWeekCount,
+  skeletonCount,
 }: AvailabilityLoadingSkeletonProps) {
   if (contentModel.isCalendarView) {
     return (
       <AvailabilityCalendarLoadingGrid
         availabilityReferenceDate={availabilityReferenceDate}
-        skeletonWeekCount={skeletonWeekCount}
+        skeletonWeekCount={skeletonCount}
       />
     )
   }
 
-  return <AvailabilityCardLoadingSkeleton skeletonCount={skeletonCardCount} />
+  return <AvailabilityCardLoadingSkeleton skeletonCount={skeletonCount} />
 }
