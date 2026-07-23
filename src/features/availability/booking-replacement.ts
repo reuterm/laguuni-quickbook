@@ -11,7 +11,7 @@ export type BookingReplacementDecision =
   | { kind: 'add' }
   | {
       current: BookingSlotSelection
-      kind: 'confirm-replacement'
+      kind: 'confirm'
     }
 
 export function getSelectionForDate(
@@ -31,7 +31,7 @@ export function getBookingReplacementDecision(
     return { kind: 'add' }
   }
 
-  return { current, kind: 'confirm-replacement' }
+  return { current, kind: 'confirm' }
 }
 
 export function getBookingReplacementMessage({

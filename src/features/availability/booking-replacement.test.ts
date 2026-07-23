@@ -42,7 +42,7 @@ describe('booking replacement helpers', () => {
       getBookingReplacementDecision([proSelection], easySelection),
     ).toEqual({
       current: proSelection,
-      kind: 'confirm-replacement',
+      kind: 'confirm',
     })
   })
 

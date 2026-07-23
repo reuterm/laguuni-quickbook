@@ -127,11 +127,7 @@ export function AvailabilityScreen({
   })
 
   useEffect(() => {
-    if (
-      pendingReplacement === null ||
-      (availabilityState.status !== 'ready' &&
-        availabilityState.status !== 'refreshing')
-    ) {
+    if (availabilityState.status !== 'ready') {
       return
     }
 
@@ -230,10 +226,12 @@ export function AvailabilityScreen({
       return
     }
 
-    setPendingReplacement({
-      current: replacementDecision.current,
-      proposed: selection,
-    })
+    if (replacementDecision.kind === 'confirm') {
+      setPendingReplacement({
+        current: replacementDecision.current,
+        proposed: selection,
+      })
+    }
   }
 
   return (

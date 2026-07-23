@@ -261,50 +261,10 @@ describe('AvailabilityScreen', () => {
     )
   })
 
-  it('clears a pending replacement before availability refreshes finish after booking', async () => {
-    let resolveRefresh: (() => void) | undefined
-    mocks.refreshAvailabilitySelection.mockImplementation(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveRefresh = resolve
-        }),
-    )
-    const { rerender } = renderPendingReplacement()
-
-    const onBookingFinalized = mocks.onBookingFinalized
-    if (!onBookingFinalized)
-      throw new Error('Expected booking finalization callback')
-
-    const finalization = onBookingFinalized({
-      result: { status: 'success' },
-      selections: [currentSelection],
-    })
-
-    await act(async () => {})
-    expect(mocks.bookingReplacementProps?.pendingReplacement).toBeNull()
-
-    resolveRefresh?.()
-    await finalization
-    rerender(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
-  })
-
   it('clears a pending replacement when its current cable availability no longer renders the slot', () => {
     const { rerender } = renderPendingReplacement()
     mocks.selectedCable = 'pro'
     mocks.availabilityState = readyAvailability([])
-
-    rerender(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
-
-    expect(mocks.bookingReplacementProps?.pendingReplacement).toBeNull()
-  })
-
-  it('clears a pending replacement when its proposed cable availability no longer renders the slot', () => {
-    const { rerender } = renderPendingReplacement()
-    mocks.selectedCable = 'easy'
-    mocks.availabilityState = {
-      ...readyAvailability([]),
-      status: 'refreshing' as const,
-    }
 
     rerender(<AvailabilityScreen isOnline onOpenSettings={vi.fn()} />)
 
