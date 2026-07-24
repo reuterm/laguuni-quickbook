@@ -9,7 +9,7 @@ const { exportBookingCalendarMock } = vi.hoisted(() => ({
     (
       _selections: readonly import('../../domain/booking').BookingSlotSelection[],
       _bookingIdentifier: string,
-    ) => Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
+    ) => Promise<'downloaded' | 'failed'>
   >(async () => 'downloaded'),
 }))
 
@@ -22,7 +22,7 @@ afterEach(() => {
 })
 
 describe('useBookingCalendarAction', () => {
-  it('exports every selection through the shared calendar export', async () => {
+  it('exports every selection through the calendar download', async () => {
     const selections = [
       {
         cableId: 'pro',

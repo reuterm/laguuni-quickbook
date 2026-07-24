@@ -285,13 +285,10 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                     onClick={async () => {
                       setCalendarExportState('idle')
                       try {
-                        const result =
-                          await exportDeveloperCalendarFixture(diagnostics)
-                        if (result === 'failed') {
-                          setCalendarExportState('failed')
-                        } else if (result !== 'cancelled') {
-                          setCalendarExportState('succeeded')
-                        }
+                        const result = await exportDeveloperCalendarFixture()
+                        setCalendarExportState(
+                          result === 'failed' ? 'failed' : 'succeeded',
+                        )
                       } catch {
                         setCalendarExportState('failed')
                       }

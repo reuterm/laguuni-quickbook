@@ -20,25 +20,18 @@ vi.mock('./BookingConfirmPanel', async (importOriginal) => {
   }
 })
 
-const shareOrDownloadCalendarFileMock = vi.fn<
-  (
-    _file: File,
-    _options: { text: string; title: string },
-  ) => Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
+const downloadCalendarFileMock = vi.fn<
+  (_file: File) => Promise<'downloaded' | 'failed'>
 >(async () => 'downloaded')
 
-vi.mock('../../calendar/calendar-share', () => ({
-  observeCalendarShare: () => {},
-  shareOrDownloadCalendarFile: (
-    file: File,
-    options: { text: string; title: string },
-  ) => shareOrDownloadCalendarFileMock(file, options),
+vi.mock('../../calendar/calendar-download', () => ({
+  downloadCalendarFile: (file: File) => downloadCalendarFileMock(file),
 }))
 
 afterEach(() => {
   cleanup()
   bookingConfirmPanelMock.mockReset()
-  shareOrDownloadCalendarFileMock.mockReset()
+  downloadCalendarFileMock.mockReset()
 })
 
 describe('BookingSheetFlow', () => {
@@ -308,7 +301,7 @@ describe('BookingSheetFlow', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
 
-    expect(shareOrDownloadCalendarFileMock).toHaveBeenCalledOnce()
+    expect(downloadCalendarFileMock).toHaveBeenCalledOnce()
   })
 
   it('exports every successful booking selection in one calendar file', async () => {
@@ -351,10 +344,10 @@ describe('BookingSheetFlow', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
 
-    const [file] = shareOrDownloadCalendarFileMock.mock.calls[0] ?? []
+    const [file] = downloadCalendarFileMock.mock.calls[0] ?? []
     expect(file).toBeInstanceOf(File)
     if (!file) {
-      throw new Error('Expected a calendar file to be shared.')
+      throw new Error('Expected a calendar file to be downloaded.')
     }
     const calendarText = await file.text()
     expect(calendarText).toContain('SUMMARY:Wakeboarding - Pro')
@@ -388,58 +381,20 @@ describe('BookingSheetFlow', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
 
-    const [file] = shareOrDownloadCalendarFileMock.mock.calls[0] ?? []
+    const [file] = downloadCalendarFileMock.mock.calls[0] ?? []
     expect(file).toBeInstanceOf(File)
     if (!file) {
-      throw new Error('Expected a calendar file to be shared.')
+      throw new Error('Expected a calendar file to be downloaded.')
     }
     expect(await file.text()).toContain(
       'UID:laguuni-booking-trace-uid-fallback',
     )
   })
 
-  it('keeps calendar export cancellation neutral in the completed success flow', async () => {
-    const user = userEvent.setup()
-
-    shareOrDownloadCalendarFileMock.mockResolvedValueOnce('cancelled')
-
-    render(
-      <BookingSheetFlow
-        actions={noContinuationActions}
-        bookingSheetState={{
-          result: {
-            orderIdentifier: 'fixture-order-id',
-            status: 'success',
-          },
-          selections: [
-            {
-              cableId: 'pro',
-              date: localDate('2026-05-20'),
-              endTime: '16:00',
-              startTime: '15:00',
-            },
-          ],
-          status: 'completed',
-          traceId: 'trace-success-cancelled',
-        }}
-        confirmBooking={async () => {}}
-        dismissBookingSheet={() => {}}
-        onExportTrace={async () => {}}
-      />,
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
-
-    expect(shareOrDownloadCalendarFileMock).toHaveBeenCalledOnce()
-    expect(
-      screen.queryByText('Could not add this booking to your calendar.'),
-    ).not.toBeInTheDocument()
-  })
-
   it('shows an inline error when calendar export fully fails in the completed success flow', async () => {
     const user = userEvent.setup()
 
-    shareOrDownloadCalendarFileMock.mockResolvedValueOnce('failed')
+    downloadCalendarFileMock.mockResolvedValueOnce('failed')
 
     render(
       <BookingSheetFlow
@@ -468,7 +423,7 @@ describe('BookingSheetFlow', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add to calendar' }))
 
-    expect(shareOrDownloadCalendarFileMock).toHaveBeenCalledOnce()
+    expect(downloadCalendarFileMock).toHaveBeenCalledOnce()
     expect(
       screen.getByText('Could not add this booking to your calendar.'),
     ).toBeVisible()

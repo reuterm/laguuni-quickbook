@@ -1,7 +1,5 @@
 import { toLocalDateString } from '../../lib/date'
-import { isStandaloneMode } from '../../lib/standalone-mode'
 import { exportBookingCalendar } from '../calendar/booking-calendar-export'
-import type { Diagnostics, DiagnosticsTrace } from '../diagnostics/logs'
 
 const DEVELOPER_CALENDAR_SELECTIONS = [
   {
@@ -18,52 +16,9 @@ const DEVELOPER_CALENDAR_SELECTIONS = [
   },
 ] as const
 
-function readStandaloneMode() {
-  try {
-    return isStandaloneMode()
-  } catch {
-    return false
-  }
-}
-
-export async function exportDeveloperCalendarFixture(diagnostics: Diagnostics) {
-  let trace: DiagnosticsTrace | undefined
-
-  try {
-    trace = diagnostics.beginTrace({ name: 'developer.calendar_export' })
-  } catch {
-    // Diagnostics must not affect the developer export.
-  }
-
-  const append = (event: Parameters<DiagnosticsTrace['append']>[0]) => {
-    try {
-      trace?.append(event)
-    } catch {
-      // Diagnostics must not affect the developer export.
-    }
-  }
-
-  append({
-    event: 'developer.calendar_export_standalone_mode',
-    data: { standalone: readStandaloneMode() },
-  })
-
-  const result = await exportBookingCalendar(
+export function exportDeveloperCalendarFixture() {
+  return exportBookingCalendar(
     DEVELOPER_CALENDAR_SELECTIONS,
     'developer-calendar-export',
-    (calendarEvent) => {
-      const { type, ...data } = calendarEvent
-      append({
-        event: `developer.calendar_export_${type.replaceAll('-', '_')}`,
-        data,
-      })
-    },
   )
-
-  append({
-    event: 'developer.calendar_export_result',
-    data: { result },
-  })
-
-  return result
 }
