@@ -1,9 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import type { BookingSlotSelection } from '../../domain/booking'
-import { createBookingCalendarEvent } from './calendar-event'
-import { shareOrDownloadCalendarFile } from './calendar-share'
-import { createBookingCalendarFile } from './ical'
+import { exportBookingCalendar } from './booking-calendar-export'
 
 type UseBookingCalendarActionResult = {
   addToCalendar: () => Promise<void>
@@ -23,18 +21,7 @@ export function useBookingCalendarAction(
     try {
       setErrorMessage(null)
 
-      const events = selections.map((selection) =>
-        createBookingCalendarEvent(selection, bookingIdentifier),
-      )
-      const file = createBookingCalendarFile(
-        events,
-        `laguuni-booking-${bookingIdentifier}.ics`,
-      )
-
-      const result = await shareOrDownloadCalendarFile(file, {
-        text: 'Add bookings to your calendar.',
-        title: 'Add to calendar',
-      })
+      const result = await exportBookingCalendar(selections, bookingIdentifier)
 
       if (result === 'failed') {
         setErrorMessage(CALENDAR_EXPORT_ERROR_MESSAGE)

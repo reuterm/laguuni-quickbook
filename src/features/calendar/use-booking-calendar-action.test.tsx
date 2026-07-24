@@ -4,25 +4,25 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { localDate } from '../../../tests/local-date'
 import { useBookingCalendarAction } from './use-booking-calendar-action'
 
-const { shareOrDownloadCalendarFileMock } = vi.hoisted(() => ({
-  shareOrDownloadCalendarFileMock: vi.fn<
+const { exportBookingCalendarMock } = vi.hoisted(() => ({
+  exportBookingCalendarMock: vi.fn<
     (
-      _file: File,
-      _options: { text: string; title: string },
+      _selections: readonly import('../../domain/booking').BookingSlotSelection[],
+      _bookingIdentifier: string,
     ) => Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
   >(async () => 'downloaded'),
 }))
 
-vi.mock('./calendar-share', () => ({
-  shareOrDownloadCalendarFile: shareOrDownloadCalendarFileMock,
+vi.mock('./booking-calendar-export', () => ({
+  exportBookingCalendar: exportBookingCalendarMock,
 }))
 
 afterEach(() => {
-  shareOrDownloadCalendarFileMock.mockClear()
+  exportBookingCalendarMock.mockClear()
 })
 
 describe('useBookingCalendarAction', () => {
-  it('shares every selection in one calendar file', async () => {
+  it('exports every selection through the shared calendar export', async () => {
     const selections = [
       {
         cableId: 'pro',
@@ -43,16 +43,9 @@ describe('useBookingCalendarAction', () => {
 
     await act(() => result.current.addToCalendar())
 
-    const [file] = shareOrDownloadCalendarFileMock.mock.calls[0] ?? []
-    expect(file).toBeInstanceOf(File)
-    if (!file) {
-      throw new Error('Expected a calendar file to be shared.')
-    }
-    await expect(file.text()).resolves.toContain(
-      'UID:laguuni-booking-fixture-order-id-2026-05-20',
-    )
-    await expect(file.text()).resolves.toContain(
-      'UID:laguuni-booking-fixture-order-id-2026-05-22',
+    expect(exportBookingCalendarMock).toHaveBeenCalledWith(
+      selections,
+      'fixture-order-id',
     )
   })
 })
