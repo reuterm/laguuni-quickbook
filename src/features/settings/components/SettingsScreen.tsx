@@ -255,7 +255,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                 </div>
                 <DiagnosticsCopyAction
                   buttonContent="Export all diagnostics logs"
-                  buttonClassName="w-full justify-start sm:w-auto"
+                  buttonClassName="w-full sm:w-auto"
                   buttonVariant="outline"
                   onCopy={() =>
                     exportDiagnostics((options) =>
