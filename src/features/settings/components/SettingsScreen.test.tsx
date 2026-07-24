@@ -10,6 +10,16 @@ import {
 import { renderApp } from '../../../test/render-app'
 import { DEVELOPER_MODE_STORAGE_KEY } from '../developer-mode-storage'
 
+const { exportDeveloperCalendarFixtureMock } = vi.hoisted(() => ({
+  exportDeveloperCalendarFixtureMock: vi.fn<
+    () => Promise<'downloaded' | 'failed'>
+  >(async () => 'downloaded'),
+}))
+
+vi.mock('../developer-calendar-export', () => ({
+  exportDeveloperCalendarFixture: exportDeveloperCalendarFixtureMock,
+}))
+
 describe('Settings screen integration', () => {
   beforeEach(() => {
     cleanup()
@@ -17,6 +27,8 @@ describe('Settings screen integration', () => {
   })
 
   afterEach(() => {
+    exportDeveloperCalendarFixtureMock.mockReset()
+    exportDeveloperCalendarFixtureMock.mockResolvedValue('downloaded')
     vi.unstubAllGlobals()
   })
 
@@ -223,6 +235,52 @@ describe('Settings screen integration', () => {
     await user.click(versionButton)
 
     expect(screen.getByText('Developer tools')).toBeVisible()
+  })
+
+  it('keeps the calendar export test hidden until developer mode is enabled', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+
+    renderApp({ storage })
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+
+    expect(
+      screen.queryByRole('button', { name: 'Test two-event calendar export' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('runs the two-event calendar export test from developer tools', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+    enableDeveloperMode(storage)
+
+    renderApp({ storage })
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Test two-event calendar export' }),
+    )
+
+    expect(exportDeveloperCalendarFixtureMock).toHaveBeenCalledOnce()
+    expect(await screen.findByText('Calendar export started.')).toBeVisible()
+  })
+
+  it('shows the calendar export failure message from developer tools', async () => {
+    const user = userEvent.setup()
+    const storage = createMemoryStorage()
+    enableDeveloperMode(storage)
+    exportDeveloperCalendarFixtureMock.mockResolvedValueOnce('failed')
+
+    renderApp({ storage })
+    await user.click(screen.getByRole('button', { name: 'Settings' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Test two-event calendar export' }),
+    )
+
+    expect(
+      await screen.findByText(
+        'Calendar export could not be started on this device.',
+      ),
+    ).toBeVisible()
   })
 
   it('persists developer mode until it is disabled', async () => {
