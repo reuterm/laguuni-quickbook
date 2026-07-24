@@ -24,6 +24,7 @@ import type {
 } from '../../../domain/settings'
 import { DiagnosticsCopyAction } from '../../diagnostics/DiagnosticsCopyAction'
 import { exportDiagnostics } from '../../diagnostics/export'
+import { exportDeveloperCalendarFixture } from '../developer-calendar-export'
 import { useDeveloperMode } from '../use-developer-mode'
 import { useUserSettings } from '../use-user-settings'
 
@@ -100,6 +101,9 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
     resetDeveloperModeUnlockProgress,
   } = useDeveloperMode()
   const [draftSettings, setDraftSettings] = useState<UserSettings>(settings)
+  const [calendarExportState, setCalendarExportState] = useState<
+    'idle' | 'failed' | 'succeeded'
+  >('idle')
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
   const displayedDraftSettings = open ? draftSettings : settings
@@ -273,6 +277,38 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                 >
                   Clear diagnostics log
                 </Button>
+                <div className="space-y-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    onClick={async () => {
+                      setCalendarExportState('idle')
+                      try {
+                        const result = await exportDeveloperCalendarFixture()
+                        if (result === 'failed') {
+                          setCalendarExportState('failed')
+                        } else if (result !== 'cancelled') {
+                          setCalendarExportState('succeeded')
+                        }
+                      } catch {
+                        setCalendarExportState('failed')
+                      }
+                    }}
+                  >
+                    Test two-event calendar export
+                  </Button>
+                  {calendarExportState === 'succeeded' ? (
+                    <p className="text-xs text-muted-foreground">
+                      Calendar export started.
+                    </p>
+                  ) : null}
+                  {calendarExportState === 'failed' ? (
+                    <p className="text-xs text-muted-foreground">
+                      Calendar export could not be started on this device.
+                    </p>
+                  ) : null}
+                </div>
               </div>
 
               <div className="pt-6">
