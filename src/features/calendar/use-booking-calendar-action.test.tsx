@@ -22,7 +22,7 @@ afterEach(() => {
 })
 
 describe('useBookingCalendarAction', () => {
-  it('exports every selection through the shared calendar export', async () => {
+  it('exports every selection through the calendar download', async () => {
     const selections = [
       {
         cableId: 'pro',

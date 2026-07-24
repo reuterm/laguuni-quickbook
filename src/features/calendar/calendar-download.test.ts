@@ -14,6 +14,7 @@ describe('calendar-download', () => {
     const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
       type: 'text/calendar;charset=utf-8',
     })
+    const canShare = vi.fn(() => true)
     const share = vi.fn()
     const createObjectURL = vi.fn(() => 'blob:fixture')
     const revokeObjectURL = vi.fn()
@@ -23,13 +24,14 @@ describe('calendar-download', () => {
       href: '',
     } satisfies Pick<HTMLAnchorElement, 'click' | 'download' | 'href'>
 
-    vi.stubGlobal('navigator', { canShare: vi.fn(() => true), share })
+    vi.stubGlobal('navigator', { canShare, share })
     vi.stubGlobal('URL', { createObjectURL, revokeObjectURL })
     vi.spyOn(document, 'createElement').mockReturnValue(
       anchor as unknown as HTMLAnchorElement,
     )
 
     await expect(downloadCalendarFile(file)).resolves.toBe('downloaded')
+    expect(canShare).not.toHaveBeenCalled()
     expect(share).not.toHaveBeenCalled()
     expect(createObjectURL).toHaveBeenCalledWith(file)
     expect(anchor).toMatchObject({
