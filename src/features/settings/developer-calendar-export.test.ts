@@ -91,4 +91,48 @@ describe('developer-calendar-export', () => {
       expect.any(Function),
     )
   })
+
+  it('returns the exporter result when beginning diagnostics throws', async () => {
+    const diagnostics = {
+      beginTrace: vi.fn(() => {
+        throw new Error('begin trace failed')
+      }),
+      clear: vi.fn(),
+      exportLogs: vi.fn(() => ''),
+      listEntries: vi.fn(() => []),
+      loadState: vi.fn(() => ({ entries: [], recoveryIssue: null })),
+      sessionId: 'developer-calendar-export-session',
+    } satisfies Diagnostics
+    exportBookingCalendarMock.mockResolvedValueOnce('downloaded')
+
+    await expect(exportDeveloperCalendarFixture(diagnostics)).resolves.toBe(
+      'downloaded',
+    )
+  })
+
+  it('returns the exporter result when appending diagnostics throws', async () => {
+    const trace = {
+      append: vi.fn(() => {
+        throw new Error('append failed')
+      }),
+      traceId: 'developer-calendar-export-trace',
+    } satisfies DiagnosticsTrace
+    const diagnostics = {
+      beginTrace: vi.fn(() => trace),
+      clear: vi.fn(),
+      exportLogs: vi.fn(() => ''),
+      listEntries: vi.fn(() => []),
+      loadState: vi.fn(() => ({ entries: [], recoveryIssue: null })),
+      sessionId: 'developer-calendar-export-session',
+    } satisfies Diagnostics
+    exportBookingCalendarMock.mockImplementationOnce(async (_a, _b, observer) => {
+      observer?.({ type: 'share-result', result: 'cancelled' })
+
+      return 'cancelled'
+    })
+
+    await expect(exportDeveloperCalendarFixture(diagnostics)).resolves.toBe(
+      'cancelled',
+    )
+  })
 })
