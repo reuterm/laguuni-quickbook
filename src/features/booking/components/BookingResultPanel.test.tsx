@@ -72,7 +72,7 @@ describe('BookingResultPanel', () => {
   it('shows an inline calendar export error when the action fails', async () => {
     const user = userEvent.setup()
     const addToCalendar = vi.fn(async () => {
-      throw new Error('share failed')
+      throw new Error('calendar export failed')
     })
 
     render(
