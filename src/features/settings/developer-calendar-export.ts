@@ -18,6 +18,14 @@ const DEVELOPER_CALENDAR_SELECTIONS = [
   },
 ] as const
 
+function readStandaloneMode() {
+  try {
+    return isStandaloneMode()
+  } catch {
+    return false
+  }
+}
+
 export async function exportDeveloperCalendarFixture(diagnostics: Diagnostics) {
   let trace: DiagnosticsTrace | undefined
 
@@ -37,7 +45,7 @@ export async function exportDeveloperCalendarFixture(diagnostics: Diagnostics) {
 
   append({
     event: 'developer.calendar_export_standalone_mode',
-    data: { standalone: isStandaloneMode() },
+    data: { standalone: readStandaloneMode() },
   })
 
   const result = await exportBookingCalendar(

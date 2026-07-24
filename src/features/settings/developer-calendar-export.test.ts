@@ -1,17 +1,23 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import type { exportBookingCalendar } from '../calendar/booking-calendar-export'
+import type { isStandaloneMode } from '../../lib/standalone-mode'
 import type { Diagnostics, DiagnosticsTrace } from '../diagnostics/logs'
 import { exportDeveloperCalendarFixture } from './developer-calendar-export'
 
-const { exportBookingCalendarMock } = vi.hoisted(() => ({
+const { exportBookingCalendarMock, isStandaloneModeMock } = vi.hoisted(() => ({
   exportBookingCalendarMock: vi.fn<typeof exportBookingCalendar>(
     async () => 'shared',
   ),
+  isStandaloneModeMock: vi.fn<typeof isStandaloneMode>(() => false),
 }))
 
 vi.mock('../calendar/booking-calendar-export', () => ({
   exportBookingCalendar: exportBookingCalendarMock,
+}))
+
+vi.mock('../../lib/standalone-mode', () => ({
+  isStandaloneMode: isStandaloneModeMock,
 }))
 
 describe('developer-calendar-export', () => {
@@ -133,6 +139,25 @@ describe('developer-calendar-export', () => {
 
     await expect(exportDeveloperCalendarFixture(diagnostics)).resolves.toBe(
       'cancelled',
+    )
+  })
+
+  it('returns the exporter result when reading standalone mode throws', async () => {
+    const diagnostics = {
+      beginTrace: vi.fn(),
+      clear: vi.fn(),
+      exportLogs: vi.fn(() => ''),
+      listEntries: vi.fn(() => []),
+      loadState: vi.fn(() => ({ entries: [], recoveryIssue: null })),
+      sessionId: 'developer-calendar-export-session',
+    } satisfies Diagnostics
+    isStandaloneModeMock.mockImplementationOnce(() => {
+      throw new Error('standalone mode failed')
+    })
+    exportBookingCalendarMock.mockResolvedValueOnce('failed')
+
+    await expect(exportDeveloperCalendarFixture(diagnostics)).resolves.toBe(
+      'failed',
     )
   })
 })
