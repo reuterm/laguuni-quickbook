@@ -9,7 +9,7 @@ const { exportBookingCalendarMock } = vi.hoisted(() => ({
     (
       _selections: readonly import('../../domain/booking').BookingSlotSelection[],
       _bookingIdentifier: string,
-    ) => Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
+    ) => Promise<'downloaded' | 'failed'>
   >(async () => 'downloaded'),
 }))
 

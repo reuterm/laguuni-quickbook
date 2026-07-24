@@ -3,21 +3,18 @@ import { describe, expect, it, vi } from 'vitest'
 import { localDate } from '../../../tests/local-date'
 import { exportBookingCalendar } from './booking-calendar-export'
 
-const { shareOrDownloadCalendarFileMock } = vi.hoisted(() => ({
-  shareOrDownloadCalendarFileMock: vi.fn<
-    (
-      _file: File,
-      _options: { text: string; title: string },
-    ) => Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
-  >(async () => 'shared'),
+const { downloadCalendarFileMock } = vi.hoisted(() => ({
+  downloadCalendarFileMock: vi.fn<
+    (_file: File) => Promise<'downloaded' | 'failed'>
+  >(async () => 'downloaded'),
 }))
 
-vi.mock('./calendar-share', () => ({
-  shareOrDownloadCalendarFile: shareOrDownloadCalendarFileMock,
+vi.mock('./calendar-download', () => ({
+  downloadCalendarFile: downloadCalendarFileMock,
 }))
 
 describe('booking-calendar-export', () => {
-  it('shares every selection in one calendar file', async () => {
+  it('downloads every selection in one calendar file', async () => {
     const result = await exportBookingCalendar(
       [
         {
@@ -36,11 +33,13 @@ describe('booking-calendar-export', () => {
       'calendar-export-test',
     )
 
-    expect(result).toBe('shared')
-    const [file] = shareOrDownloadCalendarFileMock.mock.calls[0] ?? []
+    expect(result).toBe('downloaded')
+    expect(downloadCalendarFileMock).toHaveBeenCalledOnce()
+    expect(downloadCalendarFileMock.mock.calls[0]).toHaveLength(1)
+    const [file] = downloadCalendarFileMock.mock.calls[0] ?? []
     expect(file).toBeInstanceOf(File)
     if (!file) {
-      throw new Error('Expected a calendar file to be shared.')
+      throw new Error('Expected a calendar file to be downloaded.')
     }
     await expect(file.text()).resolves.toContain('SUMMARY:Wakeboarding - Pro')
     await expect(file.text()).resolves.toContain('SUMMARY:Wakeboarding - Easy')

@@ -12,8 +12,8 @@ import { DEVELOPER_MODE_STORAGE_KEY } from '../developer-mode-storage'
 
 const { exportDeveloperCalendarFixtureMock } = vi.hoisted(() => ({
   exportDeveloperCalendarFixtureMock: vi.fn<
-    () => Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
-  >(async () => 'shared'),
+    () => Promise<'downloaded' | 'failed'>
+  >(async () => 'downloaded'),
 }))
 
 vi.mock('../developer-calendar-export', () => ({
@@ -28,7 +28,7 @@ describe('Settings screen integration', () => {
 
   afterEach(() => {
     exportDeveloperCalendarFixtureMock.mockReset()
-    exportDeveloperCalendarFixtureMock.mockResolvedValue('shared')
+    exportDeveloperCalendarFixtureMock.mockResolvedValue('downloaded')
     vi.unstubAllGlobals()
   })
 

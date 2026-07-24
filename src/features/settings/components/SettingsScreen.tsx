@@ -288,7 +288,7 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                         const result = await exportDeveloperCalendarFixture()
                         if (result === 'failed') {
                           setCalendarExportState('failed')
-                        } else if (result !== 'cancelled') {
+                        } else {
                           setCalendarExportState('succeeded')
                         }
                       } catch {

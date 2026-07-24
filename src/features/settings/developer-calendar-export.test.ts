@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { exportDeveloperCalendarFixture } from './developer-calendar-export'
 
 const { exportBookingCalendarMock } = vi.hoisted(() => ({
-  exportBookingCalendarMock: vi.fn(async () => 'shared' as const),
+  exportBookingCalendarMock: vi.fn(async () => 'downloaded' as const),
 }))
 
 vi.mock('../calendar/booking-calendar-export', () => ({
@@ -12,7 +12,7 @@ vi.mock('../calendar/booking-calendar-export', () => ({
 
 describe('developer-calendar-export', () => {
   it('exports a two-day mixed-cable fixture through the booking exporter', async () => {
-    await expect(exportDeveloperCalendarFixture()).resolves.toBe('shared')
+    await expect(exportDeveloperCalendarFixture()).resolves.toBe('downloaded')
 
     expect(exportBookingCalendarMock).toHaveBeenCalledWith(
       [

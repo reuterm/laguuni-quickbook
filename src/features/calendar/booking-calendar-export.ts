@@ -1,6 +1,6 @@
 import type { BookingSlotSelection } from '../../domain/booking'
+import { downloadCalendarFile } from './calendar-download'
 import { createBookingCalendarEvent } from './calendar-event'
-import { shareOrDownloadCalendarFile } from './calendar-share'
 import { createBookingCalendarFile } from './ical'
 
 export async function exportBookingCalendar(
@@ -15,8 +15,5 @@ export async function exportBookingCalendar(
     `laguuni-booking-${bookingIdentifier}.ics`,
   )
 
-  return shareOrDownloadCalendarFile(file, {
-    text: 'Add bookings to your calendar.',
-    title: 'Add to calendar',
-  })
+  return downloadCalendarFile(file)
 }
