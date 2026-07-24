@@ -1,5 +1,7 @@
 import { toLocalDateString } from '../../lib/date'
+import { isStandaloneMode } from '../../lib/standalone-mode'
 import { exportBookingCalendar } from '../calendar/booking-calendar-export'
+import type { Diagnostics } from '../diagnostics/logs'
 
 const DEVELOPER_CALENDAR_SELECTIONS = [
   {
@@ -16,9 +18,29 @@ const DEVELOPER_CALENDAR_SELECTIONS = [
   },
 ] as const
 
-export function exportDeveloperCalendarFixture() {
-  return exportBookingCalendar(
+export async function exportDeveloperCalendarFixture(diagnostics: Diagnostics) {
+  const trace = diagnostics.beginTrace({ name: 'developer.calendar_export' })
+  trace.append({
+    event: 'developer.calendar_export_standalone_mode',
+    data: { standalone: isStandaloneMode() },
+  })
+
+  const result = await exportBookingCalendar(
     DEVELOPER_CALENDAR_SELECTIONS,
     'developer-calendar-export',
+    (calendarEvent) => {
+      const { type, ...data } = calendarEvent
+      trace.append({
+        event: `developer.calendar_export_${type.replaceAll('-', '_')}`,
+        data,
+      })
+    },
   )
+
+  trace.append({
+    event: 'developer.calendar_export_result',
+    data: { result },
+  })
+
+  return result
 }

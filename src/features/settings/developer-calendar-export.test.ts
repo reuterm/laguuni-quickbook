@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
+import type { DiagnosticsTrace } from '../diagnostics/logs'
 import { exportDeveloperCalendarFixture } from './developer-calendar-export'
 
 const { exportBookingCalendarMock } = vi.hoisted(() => ({
@@ -11,8 +12,57 @@ vi.mock('../calendar/booking-calendar-export', () => ({
 }))
 
 describe('developer-calendar-export', () => {
-  it('exports a two-day mixed-cable fixture through the booking exporter', async () => {
-    await expect(exportDeveloperCalendarFixture()).resolves.toBe('shared')
+  it('records standalone mode, calendar export diagnostics, and the final result', async () => {
+    const trace = {
+      append: vi.fn(),
+      traceId: 'developer-calendar-export-trace',
+    } satisfies DiagnosticsTrace
+    const diagnostics = {
+      beginTrace: vi.fn(() => trace),
+    }
+    exportBookingCalendarMock.mockImplementationOnce(
+      async (_selections, _bookingIdentifier, observer) => {
+        observer?.({
+          type: 'calendar-export-prepared',
+          fileName: 'laguuni-booking-developer-calendar-export.ics',
+          fileSize: 100,
+          fileType: 'text/calendar;charset=utf-8',
+          selectionCount: 2,
+        })
+        observer?.({ type: 'share-result', result: 'shared' })
+
+        return 'shared'
+      },
+    )
+
+    await expect(exportDeveloperCalendarFixture(diagnostics)).resolves.toBe(
+      'shared',
+    )
+
+    expect(diagnostics.beginTrace).toHaveBeenCalledWith({
+      name: 'developer.calendar_export',
+    })
+    expect(trace.append).toHaveBeenNthCalledWith(1, {
+      event: 'developer.calendar_export_standalone_mode',
+      data: { standalone: expect.any(Boolean) },
+    })
+    expect(trace.append).toHaveBeenNthCalledWith(2, {
+      event: 'developer.calendar_export_calendar_export_prepared',
+      data: {
+        fileName: 'laguuni-booking-developer-calendar-export.ics',
+        fileSize: 100,
+        fileType: 'text/calendar;charset=utf-8',
+        selectionCount: 2,
+      },
+    })
+    expect(trace.append).toHaveBeenNthCalledWith(3, {
+      event: 'developer.calendar_export_share_result',
+      data: { result: 'shared' },
+    })
+    expect(trace.append).toHaveBeenLastCalledWith({
+      event: 'developer.calendar_export_result',
+      data: { result: 'shared' },
+    })
 
     expect(exportBookingCalendarMock).toHaveBeenCalledWith(
       [
@@ -30,6 +80,7 @@ describe('developer-calendar-export', () => {
         },
       ],
       'developer-calendar-export',
+      expect.any(Function),
     )
   })
 })

@@ -28,8 +28,12 @@ export async function exportBookingCalendar(
     selectionCount: selections.length,
   })
 
-  return shareOrDownloadCalendarFile(file, {
-    text: 'Add bookings to your calendar.',
-    title: 'Add to calendar',
-  }, observer)
+  return shareOrDownloadCalendarFile(
+    file,
+    {
+      text: 'Add bookings to your calendar.',
+      title: 'Add to calendar',
+    },
+    observer,
+  )
 }

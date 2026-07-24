@@ -28,6 +28,7 @@ const shareOrDownloadCalendarFileMock = vi.fn<
 >(async () => 'downloaded')
 
 vi.mock('../../calendar/calendar-share', () => ({
+  observeCalendarShare: () => {},
   shareOrDownloadCalendarFile: (
     file: File,
     options: { text: string; title: string },
