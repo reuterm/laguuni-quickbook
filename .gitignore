@@ -25,3 +25,5 @@ storybook-static
 *.sw?
 
 .playwright-cli/*
+.superpowers/*
+docs/superpowers/*
