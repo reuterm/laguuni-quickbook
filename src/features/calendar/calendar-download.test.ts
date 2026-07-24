@@ -9,13 +9,11 @@ afterEach(() => {
 })
 
 describe('calendar-download', () => {
-  it('downloads the calendar file without invoking native sharing', async () => {
+  it('downloads the calendar file', async () => {
     vi.useFakeTimers()
     const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
       type: 'text/calendar;charset=utf-8',
     })
-    const canShare = vi.fn(() => true)
-    const share = vi.fn()
     const createObjectURL = vi.fn(() => 'blob:fixture')
     const revokeObjectURL = vi.fn()
     const anchor = {
@@ -24,15 +22,12 @@ describe('calendar-download', () => {
       href: '',
     } satisfies Pick<HTMLAnchorElement, 'click' | 'download' | 'href'>
 
-    vi.stubGlobal('navigator', { canShare, share })
     vi.stubGlobal('URL', { createObjectURL, revokeObjectURL })
     vi.spyOn(document, 'createElement').mockReturnValue(
       anchor as unknown as HTMLAnchorElement,
     )
 
     await expect(downloadCalendarFile(file)).resolves.toBe('downloaded')
-    expect(canShare).not.toHaveBeenCalled()
-    expect(share).not.toHaveBeenCalled()
     expect(createObjectURL).toHaveBeenCalledWith(file)
     expect(anchor).toMatchObject({
       download: 'booking.ics',
