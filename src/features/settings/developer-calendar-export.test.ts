@@ -1,10 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import type { DiagnosticsTrace } from '../diagnostics/logs'
+import type { exportBookingCalendar } from '../calendar/booking-calendar-export'
+import type { Diagnostics, DiagnosticsTrace } from '../diagnostics/logs'
 import { exportDeveloperCalendarFixture } from './developer-calendar-export'
 
 const { exportBookingCalendarMock } = vi.hoisted(() => ({
-  exportBookingCalendarMock: vi.fn(async () => 'shared' as const),
+  exportBookingCalendarMock: vi.fn<typeof exportBookingCalendar>(
+    async () => 'shared',
+  ),
 }))
 
 vi.mock('../calendar/booking-calendar-export', () => ({
@@ -19,7 +22,12 @@ describe('developer-calendar-export', () => {
     } satisfies DiagnosticsTrace
     const diagnostics = {
       beginTrace: vi.fn(() => trace),
-    }
+      clear: vi.fn(),
+      exportLogs: vi.fn(() => ''),
+      listEntries: vi.fn(() => []),
+      loadState: vi.fn(() => ({ entries: [], recoveryIssue: null })),
+      sessionId: 'developer-calendar-export-session',
+    } satisfies Diagnostics
     exportBookingCalendarMock.mockImplementationOnce(
       async (_selections, _bookingIdentifier, observer) => {
         observer?.({
