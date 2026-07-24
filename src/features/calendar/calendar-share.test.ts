@@ -77,6 +77,59 @@ describe('calendar-share', () => {
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:fixture')
   })
 
+  it('observes unavailable native sharing before downloading', async () => {
+    vi.useFakeTimers()
+
+    const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
+      type: 'text/calendar;charset=utf-8',
+    })
+    const observer = vi.fn()
+    const anchor = {
+      click: vi.fn(),
+      download: '',
+      href: '',
+    } satisfies Pick<HTMLAnchorElement, 'click' | 'download' | 'href'>
+
+    vi.stubGlobal('navigator', {
+      canShare: vi.fn(() => false),
+      share: vi.fn(),
+    })
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => 'blob:fixture'),
+      revokeObjectURL: vi.fn(),
+    })
+    vi.spyOn(document, 'createElement').mockReturnValue(
+      anchor as unknown as HTMLAnchorElement,
+    )
+
+    await expect(
+      shareOrDownloadCalendarFile(
+        file,
+        {
+          text: 'Add this booking to your calendar.',
+          title: 'Add to calendar',
+        },
+        observer,
+      ),
+    ).resolves.toBe('downloaded')
+
+    expect(observer).toHaveBeenCalledWith({
+      type: 'share-capability',
+      phase: 'before-can-share',
+      canShareAvailable: true,
+      shareAvailable: true,
+    })
+    expect(observer).toHaveBeenCalledWith({
+      type: 'share-capability',
+      phase: 'after-can-share',
+      canShare: false,
+    })
+    expect(observer).toHaveBeenCalledWith({
+      type: 'share-result',
+      result: 'downloaded',
+    })
+  })
+
   it('treats share sheet cancellation as a neutral outcome', async () => {
     const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
       type: 'text/calendar;charset=utf-8',
@@ -140,6 +193,55 @@ describe('calendar-share', () => {
     expect(revokeObjectURL).not.toHaveBeenCalled()
     await vi.runAllTimersAsync()
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:fixture')
+  })
+
+  it('observes native share rejection details before downloading', async () => {
+    vi.useFakeTimers()
+
+    const file = new File(['BEGIN:VCALENDAR'], 'booking.ics', {
+      type: 'text/calendar;charset=utf-8',
+    })
+    const observer = vi.fn()
+    const anchor = {
+      click: vi.fn(),
+      download: '',
+      href: '',
+    } satisfies Pick<HTMLAnchorElement, 'click' | 'download' | 'href'>
+
+    vi.stubGlobal('navigator', {
+      canShare: vi.fn(() => true),
+      share: vi.fn(async () => {
+        throw new Error('share failed')
+      }),
+    })
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => 'blob:fixture'),
+      revokeObjectURL: vi.fn(),
+    })
+    vi.spyOn(document, 'createElement').mockReturnValue(
+      anchor as unknown as HTMLAnchorElement,
+    )
+
+    await expect(
+      shareOrDownloadCalendarFile(
+        file,
+        {
+          text: 'Add this booking to your calendar.',
+          title: 'Add to calendar',
+        },
+        observer,
+      ),
+    ).resolves.toBe('downloaded')
+
+    expect(observer).toHaveBeenCalledWith({
+      type: 'share-rejected',
+      name: 'Error',
+      message: 'share failed',
+    })
+    expect(observer).toHaveBeenCalledWith({
+      type: 'share-result',
+      result: 'downloaded',
+    })
   })
 
   it('defers URL cleanup when the download click fails', async () => {

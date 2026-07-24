@@ -285,7 +285,8 @@ export function SettingsScreen({ onOpenChange, open }: SettingsScreenProps) {
                     onClick={async () => {
                       setCalendarExportState('idle')
                       try {
-                        const result = await exportDeveloperCalendarFixture()
+                        const result =
+                          await exportDeveloperCalendarFixture(diagnostics)
                         if (result === 'failed') {
                           setCalendarExportState('failed')
                         } else if (result !== 'cancelled') {

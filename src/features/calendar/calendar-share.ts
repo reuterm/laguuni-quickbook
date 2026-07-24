@@ -5,11 +5,70 @@ type ShareCalendarFileOptions = {
 
 type ShareCalendarFileResult = 'shared' | 'downloaded' | 'cancelled' | 'failed'
 
+export type CalendarShareDiagnosticEvent =
+  | {
+      type: 'calendar-export-prepared'
+      fileName: string
+      fileSize: number
+      fileType: string
+      selectionCount: number
+    }
+  | {
+      type: 'share-capability'
+      phase: 'before-can-share'
+      canShareAvailable: boolean
+      shareAvailable: boolean
+    }
+  | {
+      type: 'share-capability'
+      phase: 'after-can-share'
+      canShare: boolean
+    }
+  | {
+      type: 'share-rejected'
+      message: string
+      name: string
+    }
+  | {
+      type: 'share-result'
+      result: ShareCalendarFileResult
+    }
+
+export type CalendarShareObserver = (
+  event: CalendarShareDiagnosticEvent,
+) => void
+
+export function observeCalendarShare(
+  observer: CalendarShareObserver | undefined,
+  event: CalendarShareDiagnosticEvent,
+): void {
+  try {
+    observer?.(event)
+  } catch {
+    // Diagnostics must never alter calendar share or download behavior.
+  }
+}
+
 export async function shareOrDownloadCalendarFile(
   file: File,
   options: ShareCalendarFileOptions,
+  observer?: CalendarShareObserver,
 ): Promise<ShareCalendarFileResult> {
-  if (canShareCalendarFile(file)) {
+  observeCalendarShare(observer, {
+    type: 'share-capability',
+    phase: 'before-can-share',
+    canShareAvailable: typeof navigator.canShare === 'function',
+    shareAvailable: typeof navigator.share === 'function',
+  })
+
+  const canShare = canShareCalendarFile(file)
+  observeCalendarShare(observer, {
+    type: 'share-capability',
+    phase: 'after-can-share',
+    canShare,
+  })
+
+  if (canShare) {
     try {
       await navigator.share({
         files: [file],
@@ -17,18 +76,23 @@ export async function shareOrDownloadCalendarFile(
         title: options.title,
       })
 
-      return 'shared'
+      return finish('shared', observer)
     } catch (error) {
+      observeCalendarShare(observer, {
+        type: 'share-rejected',
+        ...shareRejectionDetails(error),
+      })
+
       if (isShareCancellation(error)) {
-        return 'cancelled'
+        return finish('cancelled', observer)
       }
     }
   }
 
   try {
-    return downloadCalendarFile(file)
+    return finish(downloadCalendarFile(file), observer)
   } catch {
-    return 'failed'
+    return finish('failed', observer)
   }
 }
 
@@ -58,4 +122,24 @@ function downloadCalendarFile(file: File): ShareCalendarFileResult {
 
 function isShareCancellation(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError'
+}
+
+function finish(
+  result: ShareCalendarFileResult,
+  observer: CalendarShareObserver | undefined,
+): ShareCalendarFileResult {
+  observeCalendarShare(observer, { type: 'share-result', result })
+
+  return result
+}
+
+function shareRejectionDetails(error: unknown): {
+  message: string
+  name: string
+} {
+  if (error instanceof Error) {
+    return { message: error.message, name: error.name }
+  }
+
+  return { message: String(error), name: typeof error }
 }

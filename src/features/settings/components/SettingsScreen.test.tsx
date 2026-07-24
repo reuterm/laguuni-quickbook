@@ -12,7 +12,9 @@ import { DEVELOPER_MODE_STORAGE_KEY } from '../developer-mode-storage'
 
 const { exportDeveloperCalendarFixtureMock } = vi.hoisted(() => ({
   exportDeveloperCalendarFixtureMock: vi.fn<
-    () => Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
+    (
+      _diagnostics: import('../../diagnostics/logs').Diagnostics,
+    ) => Promise<'shared' | 'downloaded' | 'cancelled' | 'failed'>
   >(async () => 'shared'),
 }))
 
@@ -249,7 +251,7 @@ describe('Settings screen integration', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('runs the two-event calendar export test from developer tools', async () => {
+  it('passes app diagnostics to the two-event calendar export test', async () => {
     const user = userEvent.setup()
     const storage = createMemoryStorage()
     enableDeveloperMode(storage)
@@ -260,7 +262,13 @@ describe('Settings screen integration', () => {
       screen.getByRole('button', { name: 'Test two-event calendar export' }),
     )
 
-    expect(exportDeveloperCalendarFixtureMock).toHaveBeenCalledOnce()
+    expect(exportDeveloperCalendarFixtureMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        beginTrace: expect.any(Function),
+        clear: expect.any(Function),
+        exportLogs: expect.any(Function),
+      }),
+    )
     expect(await screen.findByText('Calendar export started.')).toBeVisible()
   })
 

@@ -1,11 +1,16 @@
 import type { BookingSlotSelection } from '../../domain/booking'
 import { createBookingCalendarEvent } from './calendar-event'
-import { shareOrDownloadCalendarFile } from './calendar-share'
+import {
+  type CalendarShareObserver,
+  observeCalendarShare,
+  shareOrDownloadCalendarFile,
+} from './calendar-share'
 import { createBookingCalendarFile } from './ical'
 
 export async function exportBookingCalendar(
   selections: readonly BookingSlotSelection[],
   bookingIdentifier: string,
+  observer?: CalendarShareObserver,
 ) {
   const events = selections.map((selection) =>
     createBookingCalendarEvent(selection, bookingIdentifier),
@@ -15,8 +20,20 @@ export async function exportBookingCalendar(
     `laguuni-booking-${bookingIdentifier}.ics`,
   )
 
-  return shareOrDownloadCalendarFile(file, {
-    text: 'Add bookings to your calendar.',
-    title: 'Add to calendar',
+  observeCalendarShare(observer, {
+    type: 'calendar-export-prepared',
+    fileName: file.name,
+    fileSize: file.size,
+    fileType: file.type,
+    selectionCount: selections.length,
   })
+
+  return shareOrDownloadCalendarFile(
+    file,
+    {
+      text: 'Add bookings to your calendar.',
+      title: 'Add to calendar',
+    },
+    observer,
+  )
 }
