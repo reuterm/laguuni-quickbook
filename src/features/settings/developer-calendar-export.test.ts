@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-
-import type { exportBookingCalendar } from '../calendar/booking-calendar-export'
 import type { isStandaloneMode } from '../../lib/standalone-mode'
+import type { exportBookingCalendar } from '../calendar/booking-calendar-export'
 import type { Diagnostics, DiagnosticsTrace } from '../diagnostics/logs'
 import { exportDeveloperCalendarFixture } from './developer-calendar-export'
 
@@ -131,11 +130,13 @@ describe('developer-calendar-export', () => {
       loadState: vi.fn(() => ({ entries: [], recoveryIssue: null })),
       sessionId: 'developer-calendar-export-session',
     } satisfies Diagnostics
-    exportBookingCalendarMock.mockImplementationOnce(async (_a, _b, observer) => {
-      observer?.({ type: 'share-result', result: 'cancelled' })
+    exportBookingCalendarMock.mockImplementationOnce(
+      async (_a, _b, observer) => {
+        observer?.({ type: 'share-result', result: 'cancelled' })
 
-      return 'cancelled'
-    })
+        return 'cancelled'
+      },
+    )
 
     await expect(exportDeveloperCalendarFixture(diagnostics)).resolves.toBe(
       'cancelled',
